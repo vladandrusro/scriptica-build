@@ -39,13 +39,8 @@
   }
 
   function getArchiveDocs() {
-    if (!isClientView()) return MOCK.documents || [];
-    var client = (MOCK.clients || []).find(function (c) { return c.id === MOCK.currentClientId; });
-    if (!client) return [];
-    var ids = client.situationIds || [];
-    return (MOCK.documents || []).filter(function (doc) {
-      return ids.indexOf(doc.situationId) !== -1;
-    });
+    if (typeof window.getVisibleDocuments === 'function') return window.getVisibleDocuments();
+    return MOCK.documents || [];
   }
 
   function init() {
@@ -234,7 +229,7 @@
     var node = state.tree[clientId];
     var c = node.client;
     var kExp = key('client', clientId);
-    var expanded = state.expanded.has(kExp);
+    var expanded = isClientView() ? true : state.expanded.has(kExp);
     var active = isActiveNode('client', clientId);
 
     var childrenHtml = '';
@@ -243,6 +238,16 @@
         .map(function (y) { return parseInt(y, 10); })
         .sort(function (a, b) { return b - a; });
       years.forEach(function (year) { childrenHtml += yearNodeHtml(clientId, year); });
+    }
+
+    if (isClientView()) {
+      // De-emphasized header, not a clickable folder
+      return '<div>' +
+        '<div class="arhiva-tree__node arhiva-tree__node--client arhiva-tree__node--client-header" aria-level="1">' +
+          '<span class="arhiva-tree__label">' + esc(c.companyName) + '</span>' +
+        '</div>' +
+        '<div class="arhiva-tree__children is-open">' + childrenHtml + '</div>' +
+      '</div>';
     }
 
     return '<div>' +
@@ -381,7 +386,7 @@
     var crumbs = '<nav class="arhiva-breadcrumb" aria-label="Cale">' +
       '<button class="arhiva-breadcrumb__item" data-crumb="root">Arhivă</button>';
 
-    if (client) {
+    if (client && !isClientView()) {
       crumbs += '<span class="arhiva-breadcrumb__separator">▸</span>';
       if (sel.level === 'client') {
         crumbs += '<span class="arhiva-breadcrumb__item arhiva-breadcrumb__item--current">' + esc(client.companyName) + '</span>';

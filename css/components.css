@@ -5328,6 +5328,27 @@ body:not(.body--client) [data-client-only] {
   opacity: 0.4;
 }
 
+/* Arhivă — client view: hide client search, de-emphasize Canvas node as a header */
+.body--client .arhiva-tree__search { display: none; }
+
+.body--client .arhiva-tree__node--client-header {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--space-2) var(--space-3);
+  cursor: default;
+  background: transparent;
+  border: none;
+  display: block;
+}
+
+.body--client .arhiva-tree__node--client-header:hover {
+  background: transparent;
+  cursor: default;
+}
+
 /* Hide accountant-only row actions (keep download + the filename click) */
 .body--client .doc-actions__icon[data-act="share"],
 .body--client .doc-actions__icon[data-act="edit"],
