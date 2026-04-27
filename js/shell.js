@@ -228,6 +228,10 @@
         '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
         '<span data-view-toggle-label>Vezi ca și client</span>' +
       '</button>' +
+      '<a href="prezentare.html" class="header__user-menu-item header__user-menu-item--primary" role="menuitem">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">slideshow</span>' +
+        'Vezi prezentarea' +
+      '</a>' +
       '<div class="header__user-menu-divider"></div>' +
       '<button type="button" class="header__user-menu-item" disabled title="Funcție disponibilă în versiunea finală">' +
         '<span class="material-symbols-outlined" aria-hidden="true">settings</span>' +

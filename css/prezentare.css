@@ -1,0 +1,239 @@
+/* ============================================================
+   Scriptica — Phase 8: Presentation deck (prezentare.html)
+   All classes prefixed `.prez-` to avoid collision with the prototype.
+   No edits to tokens.css, base.css, or components.css.
+   ============================================================ */
+
+html.prez-html,
+body.prez-body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--color-surface-2);
+}
+
+/* ----- Deck container --------------------------------------- */
+.prez-deck {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--color-surface-2);
+  font-family: var(--font-family-base);
+  cursor: pointer;
+}
+
+/* ----- Slides ------------------------------------------------ */
+.prez-slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-surface-2);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 400ms ease;
+}
+
+.prez-slide--active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.prez-slide--1 { background-image: url('../assets/prezentare/slide-1.png'); }
+.prez-slide--2 { background-image: url('../assets/prezentare/slide-2.png'); }
+.prez-slide--3 { background-image: url('../assets/prezentare/slide-3.png'); }
+
+/* ----- Image fallback (renders when image is missing) ------- */
+.prez-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--color-default);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.prez-fallback .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--color-default);
+}
+
+.prez-fallback-text {
+  font-size: var(--font-size-body);
+  color: var(--color-default);
+  opacity: 0.7;
+  text-align: center;
+}
+
+.prez-slide--has-image .prez-fallback { display: none; }
+
+/* ----- Top-left watermark ----------------------------------- */
+.prez-watermark {
+  position: absolute;
+  top: var(--space-5);
+  left: var(--space-5);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.prez-watermark__mark {
+  height: 24px;
+  width: auto;
+  display: block;
+}
+
+.prez-watermark__wordmark {
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-black);
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: var(--color-default-highlight);
+}
+
+.prez-watermark--subtle { opacity: 0.2; }
+.prez-watermark--hidden { display: none; }
+
+/* ----- Title + subtitle overlay ----------------------------- */
+.prez-overlay {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 900px;
+  width: calc(100vw - var(--space-7) * 2);
+  text-align: center;
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
+  background: rgba(245, 245, 253, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  z-index: 4;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+  .prez-overlay { background: rgba(245, 245, 253, 0.95); }
+}
+
+.prez-title {
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-headline-1);
+  line-height: var(--line-height-tight);
+  color: var(--color-default-highlight);
+  margin: 0;
+}
+
+.prez-subtitle {
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--line-height-normal);
+  color: var(--color-content);
+  opacity: 0.85;
+  margin: var(--space-3) 0 0;
+}
+
+/* ----- Frosted-glass nav pill (bottom-center) --------------- */
+.prez-nav {
+  position: absolute;
+  bottom: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 24px rgba(71, 56, 106, 0.15);
+  z-index: 6;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px))) {
+  .prez-nav { background: rgba(255, 255, 255, 0.92); }
+}
+
+.prez-nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-default-highlight);
+  opacity: 0.7;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: opacity var(--transition-fast);
+}
+
+.prez-nav-arrow:hover { opacity: 1; }
+
+.prez-nav-arrow .material-symbols-outlined { font-size: 20px; }
+
+.prez-nav-arrow--disabled {
+  opacity: 0.3;
+  cursor: default;
+  pointer-events: none;
+}
+
+.prez-nav-indicator {
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+  min-width: 48px;
+  text-align: center;
+  user-select: none;
+}
+
+/* ----- Slide-3 "press again" hint --------------------------- */
+.prez-hint {
+  position: absolute;
+  bottom: calc(var(--space-6) + 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: opacity 200ms ease;
+  z-index: 6;
+}
+
+.prez-hint--visible {
+  opacity: 0.95;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+  .prez-hint { background: rgba(255, 255, 255, 0.92); }
+}
