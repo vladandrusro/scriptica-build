@@ -39,11 +39,9 @@
   function routeClientHome() {
     if (typeof getCurrentView !== 'function' || getCurrentView() !== 'client') return false;
     if (!document.querySelector('.dashboard')) return false;
-    var client = (MOCK.clients || []).find(function (c) { return c.id === MOCK.currentClientId; });
-    if (!client) return false;
-    var ids = client.situationIds || [];
-    var active = MOCK.situations.filter(function (s) {
-      return ids.indexOf(s.id) !== -1 && s.status !== 'inchisa' && s.status !== 'anulata';
+    var visible = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
+    var active = visible.filter(function (s) {
+      return s.status !== 'inchisa' && s.status !== 'anulata';
     });
     if (active.length === 0) {
       renderClientZeroState();
@@ -150,11 +148,10 @@
   }
 
   function filterForCurrentView(list) {
+    if (typeof window.scripticaIsClientView === 'function' && !window.scripticaIsClientView()) return list;
     if (typeof getCurrentView !== 'function' || getCurrentView() !== 'client') return list;
-    var client = (MOCK.clients || []).find(function (c) { return c.id === MOCK.currentClientId; });
-    if (!client) return [];
-    var ids = client.situationIds || [];
-    return list.filter(function (s) { return ids.indexOf(s.id) !== -1; });
+    var canvasId = window.SCRIPTICA_CANVAS_CLIENT_ID || 1;
+    return list.filter(function (s) { return s.clientId === canvasId; });
   }
 
   /* ---------- Region 2: Alerte ---------- */
@@ -270,7 +267,7 @@
   function renderMessaging() {
     var list = document.getElementById('messaging-list');
     if (!list) return;
-    var msgs = MOCK.messages;
+    var msgs = (typeof window.getVisibleMessages === 'function') ? window.getVisibleMessages() : MOCK.messages;
     if (!msgs.length) {
       list.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>Nu ai mesaje noi.</p></div>';
       return;
@@ -358,17 +355,19 @@
   }
 
   function initNotificationBadge() {
-    var overdue = MOCK.situations.filter(function (s) { return s.status === 'intarziere'; }).length;
-    var unreadMsgs = MOCK.messages.filter(function (m) { return !m.read; }).length;
-    var total = overdue + unreadMsgs;
+    var sits = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
+    var msgs = (typeof window.getVisibleMessages === 'function') ? window.getVisibleMessages() : MOCK.messages;
+    var overdue = sits.filter(function (s) { return s.status === 'intarziere'; }).length;
+    var unreadMsgs = msgs.filter(function (m) { return !m.read; }).length;
     var badge = document.querySelector('.header__notification .header__badge');
-    if (badge) badge.textContent = String(total);
+    if (badge) badge.textContent = String(overdue + unreadMsgs);
   }
 
   function initMessagingBadge() {
     var el = document.querySelector('[data-messaging-count]');
     if (!el) return;
-    var unread = MOCK.messages.filter(function (m) { return !m.read; }).length;
+    var msgs = (typeof window.getVisibleMessages === 'function') ? window.getVisibleMessages() : MOCK.messages;
+    var unread = msgs.filter(function (m) { return !m.read; }).length;
     el.textContent = '(' + unread + ')';
   }
 

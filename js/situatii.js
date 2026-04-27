@@ -153,10 +153,15 @@
 
   /* ---------- Filter application ---------- */
 
+  function isClient() {
+    return !!(window.scripticaIsClientView && window.scripticaIsClientView());
+  }
+
   function getFiltered() {
     var f = state.filters;
     var q = normalize(f.search);
-    return MOCK.situations.filter(function (s) {
+    var source = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
+    return source.filter(function (s) {
       if (q && normalize(s.clientCompany).indexOf(q) === -1) return false;
       if (f.status && s.status !== f.status) return false;
       if (f.tip && s.typeId !== f.tip) return false;
@@ -175,9 +180,39 @@
   /* ---------- Rendering ---------- */
 
   function render() {
+    renderThead();
     var filtered = getFiltered();
     renderTable(filtered);
     renderPagination(filtered.length);
+  }
+
+  function renderThead() {
+    var thead = $('#sit-thead');
+    if (!thead) return;
+    if (isClient()) {
+      thead.innerHTML =
+        '<tr>' +
+          '<th>Raport</th>' +
+          '<th style="width:160px;">Perioadă</th>' +
+          '<th style="width:110px;">Termen</th>' +
+          '<th style="width:200px;">Status</th>' +
+          '<th style="width:240px;">Acțiune necesară</th>' +
+        '</tr>';
+    } else {
+      thead.innerHTML =
+        '<tr>' +
+          '<th style="width:44px;"></th>' +
+          '<th style="width:140px;">Cod</th>' +
+          '<th>Client</th>' +
+          '<th style="width:160px;">Titular</th>' +
+          '<th style="width:120px;">Dată Start</th>' +
+          '<th style="width:110px;">Termen</th>' +
+          '<th style="width:160px;">Responsabil Pas</th>' +
+          '<th style="width:180px;">Status</th>' +
+          '<th>Denumire Raport</th>' +
+          '<th style="width:80px;">Pas</th>' +
+        '</tr>';
+    }
   }
 
   function renderTable(filtered) {
@@ -190,6 +225,16 @@
       tbody.innerHTML = '';
       empty.style.display = 'flex';
       wrap.style.display = 'none';
+      var allVisible = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
+      var emptyMsg = empty.querySelector('p');
+      var emptyLink = empty.querySelector('a');
+      if (isClient() && allVisible.length === 0) {
+        if (emptyMsg) emptyMsg.textContent = 'Nu aveți situații contabile active.';
+        if (emptyLink) emptyLink.style.display = 'none';
+      } else {
+        if (emptyMsg) emptyMsg.textContent = 'Nicio situație nu corespunde filtrelor selectate.';
+        if (emptyLink) emptyLink.style.display = '';
+      }
       return;
     }
     empty.style.display = 'none';
@@ -205,6 +250,7 @@
   }
 
   function rowHtml(s) {
+    if (isClient()) return clientRowHtml(s);
     var isExpanded = state.expandedId === s.id;
     var main =
       '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(s.id) + '" data-row>' +
@@ -222,6 +268,32 @@
         '<td>' + progressHtml(s) + '</td>' +
       '</tr>';
     return main + (isExpanded ? expandedHtml(s) : '');
+  }
+
+  function clientRowHtml(s) {
+    return '<tr class="sit-row sit-row--client" data-id="' + esc(s.id) + '" data-row>' +
+      '<td class="sit-cell--raport"><strong>' + esc(s.typeLabel || s.typeName) + '</strong></td>' +
+      '<td class="sit-cell--perioada">' + esc(window.formatRomanianMonth(s.startDate)) + '</td>' +
+      '<td class="sit-cell--termen">' + termenHtml(s) + '</td>' +
+      '<td>' + clientStatusHtml(s.status) + '</td>' +
+      '<td class="sit-cell--actiune">' + clientActionHtml(s) + '</td>' +
+    '</tr>';
+  }
+
+  function clientStatusHtml(status) {
+    var label = (typeof window.getClientFriendlyStatus === 'function') ? window.getClientFriendlyStatus(status) : status;
+    return '<span class="sit-status sit-status--' + esc(status) + '">' +
+      '<span class="status-dot status-dot--' + esc(status) + '"></span>' +
+      esc(label) +
+    '</span>';
+  }
+
+  function clientActionHtml(s) {
+    var action = (typeof window.getRequiredClientAction === 'function') ? window.getRequiredClientAction(s) : '—';
+    if (action === '—') {
+      return '<span class="sit-action sit-action--none">—</span>';
+    }
+    return '<span class="sit-action sit-action--required">' + esc(action) + '</span>';
   }
 
   function termenHtml(s) {
@@ -314,12 +386,16 @@
     var tbody = $('#sit-tbody');
     if (!tbody) return;
 
-    // Row click → expand/collapse (ignore clicks on inputs / links / the expanded panel)
+    // Row click → in client view: navigate to detail; in firm view: expand/collapse
     tbody.addEventListener('click', function (e) {
       if (e.target.closest('input, a, .task-row, .sit-row-exp')) return;
       var row = e.target.closest('[data-row]');
       if (!row) return;
       var id = row.getAttribute('data-id');
+      if (isClient()) {
+        window.location.href = 'situatie-detaliu.html?id=' + encodeURIComponent(id) + '&view=client';
+        return;
+      }
       state.expandedId = (state.expandedId === id) ? null : id;
       render();
     });

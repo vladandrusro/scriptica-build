@@ -81,11 +81,16 @@
   function parseUrl() {
     var params = new URLSearchParams(window.location.search);
     var id = params.get('id');
-    currentSituation = MOCK.situations.find(function (s) { return s.id === id; });
+    var pool = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
+    currentSituation = pool.find(function (s) { return s.id === id; });
     if (!currentSituation) {
-      currentSituation = MOCK.situations[0];
-      // Update URL without reloading
-      if (history && history.replaceState) {
+      // Deep-link out of scope (e.g. another client's situation in client view) → redirect to dashboard
+      if (typeof window.scripticaIsClientView === 'function' && window.scripticaIsClientView() && id) {
+        window.location.replace('acasa.html?view=client');
+        return;
+      }
+      currentSituation = pool[0] || MOCK.situations[0];
+      if (currentSituation && history && history.replaceState) {
         history.replaceState(null, '', '?id=' + currentSituation.id);
       }
     }

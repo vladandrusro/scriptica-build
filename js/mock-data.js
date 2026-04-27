@@ -1379,3 +1379,93 @@ window.SCRIPTICA_MOCK = {
       .sort(function (a, b) { return b.seconds - a.seconds; });
   };
 })();
+
+/* ============================================================
+   Client-view scoping helpers + label mappers.
+   In production these would be auth-scoped server queries; for
+   the prototype, frontend filtering keyed on body--client view.
+   ============================================================ */
+(function () {
+  'use strict';
+
+  var CANVAS_CLIENT_ID = 1;
+  window.SCRIPTICA_CANVAS_CLIENT_ID = CANVAS_CLIENT_ID;
+
+  function isClientView() {
+    return typeof window.getCurrentView === 'function' && window.getCurrentView() === 'client';
+  }
+  window.scripticaIsClientView = isClientView;
+
+  window.getVisibleSituations = function () {
+    var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.situations) || [];
+    if (!isClientView()) return all;
+    return all.filter(function (s) { return s.clientId === CANVAS_CLIENT_ID; });
+  };
+
+  window.getVisibleClients = function () {
+    var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.clients) || [];
+    if (!isClientView()) return all;
+    return all.filter(function (c) { return c.id === CANVAS_CLIENT_ID; });
+  };
+
+  window.getVisibleDocuments = function () {
+    var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.documents) || [];
+    if (!isClientView()) return all;
+    var visibleSitIds = window.getVisibleSituations().map(function (s) { return s.id; });
+    return all.filter(function (d) { return visibleSitIds.indexOf(d.situationId) !== -1; });
+  };
+
+  window.getVisibleMessages = function () {
+    var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.messages) || [];
+    if (!isClientView()) return all;
+    var canvas = ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.clients) || [])
+      .find(function (c) { return c.id === CANVAS_CLIENT_ID; });
+    var canvasName = canvas ? canvas.companyName : '';
+    var visibleSitIds = window.getVisibleSituations().map(function (s) { return s.id; });
+    return all.filter(function (m) {
+      if (m.situationId && visibleSitIds.indexOf(m.situationId) === -1) return false;
+      if (m.clientCompany && m.clientCompany !== canvasName) return false;
+      return true;
+    });
+  };
+
+  var CLIENT_STATUS_LABELS = {
+    analiza:            'În procesare',
+    asteapta_documente: 'Așteaptă documente de la dvs.',
+    in_verificare:      'În procesare',
+    in_intarziere:      'În întârziere',
+    intarziere:         'În întârziere',
+    finalizat:          'Finalizat',
+    inchisa:            'Finalizat',
+    anulata:            'Anulată'
+  };
+
+  window.getClientFriendlyStatus = function (internalStatus) {
+    return CLIENT_STATUS_LABELS[internalStatus] || internalStatus;
+  };
+
+  window.getRequiredClientAction = function (situation) {
+    if (!situation) return '—';
+    if (situation.status === 'asteapta_documente') return 'Trimiteți documentele';
+    if ((situation.status === 'intarziere' || situation.status === 'in_intarziere') &&
+        (situation.currentStep === 1 || situation.currentStep === 'receptie')) {
+      return 'Trimiteți documentele urgent';
+    }
+    return '—';
+  };
+
+  var ROMANIAN_MONTHS = [
+    'Ianuarie', 'Februarie', 'Martie',  'Aprilie',
+    'Mai',      'Iunie',     'Iulie',   'August',
+    'Septembrie','Octombrie','Noiembrie','Decembrie'
+  ];
+
+  window.formatRomanianMonth = function (iso) {
+    if (!iso) return '';
+    var parts = String(iso).split('-');
+    if (parts.length < 2) return iso;
+    var monthIdx = parseInt(parts[1], 10) - 1;
+    if (monthIdx < 0 || monthIdx > 11) return iso;
+    return ROMANIAN_MONTHS[monthIdx] + ' ' + parts[0];
+  };
+})();
