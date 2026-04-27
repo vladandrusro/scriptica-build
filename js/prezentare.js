@@ -25,11 +25,26 @@
 
     if (!slides.length || !prevArrow || !nextArrow || !indicator) return;
 
+    bindFallbacks();
     bindControls();
     bindKeyboard();
     bindViewportClicks();
     render();
   });
+
+  function bindFallbacks() {
+    slides.forEach(function (slide) {
+      var wrapper = slide.querySelector('.prez-image-wrapper');
+      var img = slide.querySelector('.prez-image');
+      if (!wrapper || !img) return;
+      img.addEventListener('error', function () {
+        wrapper.classList.add('has-fallback');
+      });
+      if (img.complete && img.naturalWidth === 0) {
+        wrapper.classList.add('has-fallback');
+      }
+    });
+  }
 
   function bindControls() {
     prevArrow.addEventListener('click', function (e) {
@@ -75,7 +90,8 @@
 
   function bindViewportClicks() {
     document.addEventListener('click', function (e) {
-      if (e.target.closest('.prez-nav')) return;
+      var t = e.target;
+      if (t && typeof t.closest === 'function' && t.closest('.prez-nav')) return;
       if (e.clientX > window.innerWidth / 2) forwardAction();
       else backAction();
     });
@@ -123,7 +139,7 @@
 
   function render() {
     slides.forEach(function (el, i) {
-      el.classList.toggle('prez-slide--active', i + 1 === currentSlide);
+      el.classList.toggle('is-active', i + 1 === currentSlide);
     });
     indicator.textContent = currentSlide + ' / ' + TOTAL_SLIDES;
     prevArrow.classList.toggle('prez-nav-arrow--disabled', currentSlide === 1);
