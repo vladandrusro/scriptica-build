@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design System — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong>Andrei</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări (3 necitite)">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main: Design System Showcase -->
+    <main class="main" id="main" role="main">
+      <header style="margin-bottom: var(--space-6);">
+        <h1>Design System</h1>
+        <p class="text-muted">Pagină internă pentru QA vizual — fiecare token și componentă din Faza 1.</p>
+      </header>
+
+      <!-- Colors -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">1. Culori</h2>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Suprafețe</h3>
+          <div class="ds-grid">
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-surface-1);"></div><div class="ds-swatch__name">surface-1</div><div class="ds-swatch__hex">#ECECF6</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-surface-2);"></div><div class="ds-swatch__name">surface-2</div><div class="ds-swatch__hex">#F5F5FD</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-surface-white);"></div><div class="ds-swatch__name">surface-white</div><div class="ds-swatch__hex">#FFFFFF</div></div>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Interactive &amp; tipografie</h3>
+          <div class="ds-grid">
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-default);"></div><div class="ds-swatch__name">default</div><div class="ds-swatch__hex">#B4AEC4</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-default-highlight);"></div><div class="ds-swatch__name">default-highlight</div><div class="ds-swatch__hex">#47386A</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-content);"></div><div class="ds-swatch__name">content</div><div class="ds-swatch__hex">#000000</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-important);"></div><div class="ds-swatch__name">important</div><div class="ds-swatch__hex">#FFBF14</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-important-highlight);"></div><div class="ds-swatch__name">important-highlight</div><div class="ds-swatch__hex">#FFDF89</div></div>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Semantice</h3>
+          <div class="ds-grid">
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-critical);"></div><div class="ds-swatch__name">critical</div><div class="ds-swatch__hex">#FF3C80</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-pending);"></div><div class="ds-swatch__name">pending</div><div class="ds-swatch__hex">#F9A956</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-success);"></div><div class="ds-swatch__name">success</div><div class="ds-swatch__hex">#38BA31</div></div>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Derivate / suport</h3>
+          <div class="ds-grid">
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-text-primary);"></div><div class="ds-swatch__name">text-primary</div><div class="ds-swatch__hex">#1A1433</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-text-secondary);"></div><div class="ds-swatch__name">text-secondary</div><div class="ds-swatch__hex">#4B4560</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-text-muted);"></div><div class="ds-swatch__name">text-muted</div><div class="ds-swatch__hex">#918D9C</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-border);"></div><div class="ds-swatch__name">border</div><div class="ds-swatch__hex">#D4CFDA</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-border-strong);"></div><div class="ds-swatch__name">border-strong</div><div class="ds-swatch__hex">#B4AEC4</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-chat-left);"></div><div class="ds-swatch__name">chat-left</div><div class="ds-swatch__hex">#F7F7F7</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-chat-right);"></div><div class="ds-swatch__name">chat-right</div><div class="ds-swatch__hex">#F4F0FF</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-important-hover);"></div><div class="ds-swatch__name">important-hover</div><div class="ds-swatch__hex">#E5A800</div></div>
+            <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--color-purple-hover);"></div><div class="ds-swatch__name">purple-hover</div><div class="ds-swatch__hex">#3C2F59</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Typography -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">2. Tipografie</h2>
+        <div class="card">
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-headline-1); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight);">Contabilitate fără haos</div>
+            <div class="ds-type-sample__meta">headline-1 · 36px / bold 700</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-headline-2); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight);">Situațiile lunii aprilie</div>
+            <div class="ds-type-sample__meta">headline-2 · 24px / bold 700</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-subtitle); font-weight: var(--font-weight-regular); line-height: var(--line-height-tight);">Subtitlu — context secundar pentru o pagină</div>
+            <div class="ds-type-sample__meta">subtitle · 18px / regular 400</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-headline-3); font-weight: var(--font-weight-bold);">Headline 3 — titlu de secțiune</div>
+            <div class="ds-type-sample__meta">headline-3 · 16px / bold 700</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-body);">Text de corp — „Toate documentele clientului au fost verificate și trimise spre aprobare.”</div>
+            <div class="ds-type-sample__meta">body · 14px / regular 400</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-small); color: var(--color-text-secondary);">Metadate și timestamp-uri — „Actualizat acum 3 minute”</div>
+            <div class="ds-type-sample__meta">small · 12px / regular 400</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-size: var(--font-size-tiny); color: var(--color-text-muted);">Tiny — „v0.1.0 · build 2026-04”</div>
+            <div class="ds-type-sample__meta">tiny · 10px / regular 400</div>
+          </div>
+          <div class="ds-type-sample">
+            <div style="font-family: var(--font-family-base); font-weight: var(--font-weight-black); font-size: 20px; letter-spacing: 0.15em; color: var(--color-default-highlight);">SCRIPTICA</div>
+            <div class="ds-type-sample__meta">wordmark · Lato Black 900 / letter-spacing 0.15em</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Spacing -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">3. Spațiere (grid 8pt)</h2>
+        <div class="card">
+          <div class="ds-row" style="align-items: flex-end;">
+            <div><div class="ds-space-box" style="width:4px; height:4px;"></div><div class="ds-space-label">1 · 4px</div></div>
+            <div><div class="ds-space-box" style="width:8px; height:8px;"></div><div class="ds-space-label">2 · 8px</div></div>
+            <div><div class="ds-space-box" style="width:12px; height:12px;"></div><div class="ds-space-label">3 · 12px</div></div>
+            <div><div class="ds-space-box" style="width:16px; height:16px;"></div><div class="ds-space-label">4 · 16px</div></div>
+            <div><div class="ds-space-box" style="width:24px; height:24px;"></div><div class="ds-space-label">5 · 24px</div></div>
+            <div><div class="ds-space-box" style="width:32px; height:32px;"></div><div class="ds-space-label">6 · 32px</div></div>
+            <div><div class="ds-space-box" style="width:48px; height:48px;"></div><div class="ds-space-label">7 · 48px</div></div>
+            <div><div class="ds-space-box" style="width:64px; height:64px;"></div><div class="ds-space-label">8 · 64px</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Radius -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">4. Rază de colț</h2>
+        <div class="ds-row">
+          <div class="ds-radius-box" style="border-radius: var(--radius-sm);">sm · 6</div>
+          <div class="ds-radius-box" style="border-radius: var(--radius-md);">md · 10</div>
+          <div class="ds-radius-box" style="border-radius: var(--radius-lg);">lg · 16</div>
+          <div class="ds-radius-box" style="border-radius: var(--radius-pill);">pill · 999</div>
+        </div>
+      </section>
+
+      <!-- Shadows -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">5. Umbre</h2>
+        <div class="ds-row" style="gap: var(--space-5); padding: var(--space-4) 0;">
+          <div class="ds-shadow-card" style="box-shadow: var(--shadow-sm);">shadow-sm</div>
+          <div class="ds-shadow-card" style="box-shadow: var(--shadow-md);">shadow-md</div>
+          <div class="ds-shadow-card" style="box-shadow: var(--shadow-lg);">shadow-lg</div>
+        </div>
+      </section>
+
+      <!-- Buttons -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">6. Butoane</h2>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Primary · Yellow CTA</h3>
+          <div class="ds-row">
+            <button class="btn btn--primary" type="button">Adaugă</button>
+            <button class="btn btn--primary" type="button"><span class="material-symbols-outlined">add</span>Adaugă</button>
+            <button class="btn btn--primary is-disabled" type="button" disabled>Dezactivat</button>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Secondary · Outlined purple</h3>
+          <div class="ds-row">
+            <button class="btn btn--secondary" type="button">Editează</button>
+            <button class="btn btn--secondary" type="button"><span class="material-symbols-outlined">edit</span>Editează</button>
+            <button class="btn btn--secondary is-disabled" type="button" disabled>Dezactivat</button>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Ghost · Borderless</h3>
+          <div class="ds-row">
+            <button class="btn btn--ghost" type="button">Vezi detalii</button>
+            <button class="btn btn--ghost" type="button"><span class="material-symbols-outlined">open_in_new</span>Deschide</button>
+            <button class="btn btn--ghost is-disabled" type="button" disabled>Dezactivat</button>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Critical · Destructive</h3>
+          <div class="ds-row">
+            <button class="btn btn--critical" type="button">Anulează</button>
+            <button class="btn btn--critical" type="button"><span class="material-symbols-outlined">delete</span>Șterge</button>
+            <button class="btn btn--critical is-disabled" type="button" disabled>Dezactivat</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inputs -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">7. Input-uri</h2>
+        <div class="card" style="display: grid; gap: var(--space-4); max-width: 480px;">
+          <div>
+            <label for="ds-in-default" class="text-small text-bold">Default</label>
+            <input id="ds-in-default" class="input" type="text" placeholder="Introdu un nume de firmă" style="margin-top: var(--space-1);">
+          </div>
+          <div>
+            <label for="ds-in-focus" class="text-small text-bold">Focus (dă click în câmp)</label>
+            <input id="ds-in-focus" class="input" type="text" value="SC Exemplu SRL" style="margin-top: var(--space-1);">
+          </div>
+          <div>
+            <label for="ds-in-placeholder" class="text-small text-bold">Placeholder</label>
+            <input id="ds-in-placeholder" class="input" type="text" placeholder="CUI / CIF" style="margin-top: var(--space-1);">
+          </div>
+          <div>
+            <label for="ds-in-disabled" class="text-small text-bold">Disabled</label>
+            <input id="ds-in-disabled" class="input" type="text" value="Câmp blocat" disabled style="margin-top: var(--space-1);">
+          </div>
+        </div>
+      </section>
+
+      <!-- Pills -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">8. Pill-uri / Badge-uri</h2>
+        <div class="ds-row">
+          <span class="pill pill--neutral">Neutru</span>
+          <span class="pill pill--critical">Restant</span>
+          <span class="pill pill--pending">În așteptare</span>
+          <span class="pill pill--success">Finalizat</span>
+          <span class="pill pill--highlight">Nou</span>
+          <span class="pill pill--purple">Privilegiat</span>
+        </div>
+      </section>
+
+      <!-- Icons -->
+      <section class="ds-section">
+        <h2 class="ds-section__title">9. Iconuri Material Symbols</h2>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Outlined</h3>
+          <div class="ds-icon-grid">
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">home</span><span class="ds-icon-cell__label">home</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">fact_check</span><span class="ds-icon-cell__label">fact_check</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">archive</span><span class="ds-icon-cell__label">archive</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">search</span><span class="ds-icon-cell__label">search</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">notifications</span><span class="ds-icon-cell__label">notifications</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">person</span><span class="ds-icon-cell__label">person</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">menu</span><span class="ds-icon-cell__label">menu</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">expand_less</span><span class="ds-icon-cell__label">expand_less</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">expand_more</span><span class="ds-icon-cell__label">expand_more</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">close</span><span class="ds-icon-cell__label">close</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">check_circle</span><span class="ds-icon-cell__label">check_circle</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">warning</span><span class="ds-icon-cell__label">warning</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined">error</span><span class="ds-icon-cell__label">error</span></div>
+          </div>
+        </div>
+
+        <div class="ds-subsection">
+          <h3 class="ds-subsection__title">Filled</h3>
+          <div class="ds-icon-grid">
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">home</span><span class="ds-icon-cell__label">home</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">fact_check</span><span class="ds-icon-cell__label">fact_check</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">archive</span><span class="ds-icon-cell__label">archive</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">search</span><span class="ds-icon-cell__label">search</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">notifications</span><span class="ds-icon-cell__label">notifications</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">person</span><span class="ds-icon-cell__label">person</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">menu</span><span class="ds-icon-cell__label">menu</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">expand_less</span><span class="ds-icon-cell__label">expand_less</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">expand_more</span><span class="ds-icon-cell__label">expand_more</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">close</span><span class="ds-icon-cell__label">close</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">check_circle</span><span class="ds-icon-cell__label">check_circle</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">warning</span><span class="ds-icon-cell__label">warning</span></div>
+            <div class="ds-icon-cell"><span class="material-symbols-outlined filled">error</span><span class="ds-icon-cell__label">error</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Messaging panel -->
+    <aside class="messaging" aria-label="Mesagerie">
+      <div class="messaging__header">
+        <div class="messaging__title-group">
+          <h3 class="messaging__title">Mesagerie</h3>
+          <span class="pill pill--count" aria-label="3 mesaje noi">(3)</span>
+        </div>
+        <button class="messaging__toggle" type="button" aria-label="Restrânge panoul de mesagerie">
+          <span class="material-symbols-outlined" aria-hidden="true">expand_less</span>
+        </button>
+      </div>
+      <p class="messaging__placeholder">Mesajele vor apărea aici în Faza 2.</p>
+    </aside>
+
+  </div>
+
+  <script src="js/shell.js"></script>
+  <script src="js/mock-data.js"></script>
+  <script src="js/timer.js"></script>
+</body>
+</html>

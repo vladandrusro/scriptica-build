@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Time Tracking — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=11">
+  <link rel="stylesheet" href="css/base.css?v=11">
+  <link rel="stylesheet" href="css/components.css?v=11">
+</head>
+<body>
+  <div class="shell">
+
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Anca</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main" id="tt-main" role="main">
+
+      <header class="tt-page-header">
+        <h1>Time Tracking</h1>
+        <div class="tt-month-nav">
+          <button type="button" class="btn btn--ghost" id="tt-prev" aria-label="Luna anterioară">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <span class="tt-month-nav__label" id="tt-month-label">Aprilie 2026</span>
+          <button type="button" class="btn btn--ghost" id="tt-next" aria-label="Luna următoare">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="tt-total-card" aria-label="Total lunar">
+        <div class="tt-total-card__label">Total lunar</div>
+        <div class="tt-total-card__value" id="tt-total-value">0h 0m</div>
+        <div class="tt-total-card__sub" id="tt-total-days">pe 0 zile lucrate</div>
+      </section>
+
+      <section class="tt-chart-card" aria-label="Grafic zilnic">
+        <h2 class="tt-chart-title">Repartizare zilnică</h2>
+        <div id="tt-chart"></div>
+      </section>
+
+      <section class="tt-filters" aria-label="Filtre">
+        <div class="filter-field">
+          <label class="filter-field__label" for="tt-f-client">Client</label>
+          <select id="tt-f-client" class="select"></select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-field__label" for="tt-f-situation">Situație</label>
+          <select id="tt-f-situation" class="select"></select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-field__label" for="tt-f-task">Task</label>
+          <select id="tt-f-task" class="select"></select>
+        </div>
+        <div class="filter-field">
+          <label class="filter-field__label" for="tt-f-period">Perioada</label>
+          <select id="tt-f-period" class="select">
+            <option value="month">Luna curentă</option>
+            <option value="week">Săptămâna curentă</option>
+            <option value="today">Azi</option>
+            <option value="prevmonth">Luna trecută</option>
+          </select>
+        </div>
+      </section>
+
+      <div id="sessions-table-wrap"></div>
+      <nav class="pagination" id="sessions-pagination" aria-label="Paginare"></nav>
+
+    </main>
+
+  </div>
+
+  <!-- Modal: Edit session -->
+  <div class="modal" id="modal-session-edit" role="dialog" aria-modal="true" aria-labelledby="modal-session-edit-title" aria-hidden="true">
+    <div class="modal__dialog" role="document" style="width: min(520px, 90vw);">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="modal-session-edit-title">Editează sesiune</h2>
+        <p class="modal__subtitle" data-session-subtitle></p>
+      </header>
+      <div class="modal__body">
+        <div class="form-field">
+          <span class="form-label">Durată</span>
+          <div class="time-input-group">
+            <div class="time-stepper">
+              <button type="button" class="time-stepper__btn" data-time-step="hours-down" aria-label="-1 oră">
+                <span class="material-symbols-outlined" aria-hidden="true">remove</span>
+              </button>
+              <input type="number" class="input" name="hours" min="0" max="24" value="0">
+              <button type="button" class="time-stepper__btn" data-time-step="hours-up" aria-label="+1 oră">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              </button>
+            </div>
+            <span class="time-unit-label">ore</span>
+            <span class="time-colon">:</span>
+            <div class="time-stepper">
+              <button type="button" class="time-stepper__btn" data-time-step="minutes-down" aria-label="-5 minute">
+                <span class="material-symbols-outlined" aria-hidden="true">remove</span>
+              </button>
+              <input type="number" class="input" name="minutes" min="0" max="59" value="0">
+              <button type="button" class="time-stepper__btn" data-time-step="minutes-up" aria-label="+5 minute">
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              </button>
+            </div>
+            <span class="time-unit-label">minute</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <span class="form-label">Task-uri asociate</span>
+          <div class="picker-list" id="session-tasks-list" style="max-height: 220px;"></div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="session-obs">Observație</label>
+          <textarea id="session-obs" class="textarea" rows="3" placeholder="Opțional — adaugă detalii despre sesiune."></textarea>
+        </div>
+      </div>
+      <footer class="modal__footer modal__footer--split">
+        <div class="modal__footer-left">
+          <button type="button" class="btn btn--critical" data-session-delete>
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            Șterge sesiunea
+          </button>
+        </div>
+        <div class="modal__footer-right">
+          <button type="button" class="btn btn--ghost" data-session-cancel>Anulează</button>
+          <button type="button" class="btn btn--primary" data-session-save>Salvează modificările</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=13"></script>
+  <script src="js/mock-data.js?v=13"></script>
+  <script src="js/timer.js?v=13"></script>
+  <script src="js/dashboard.js?v=13"></script>
+  <script src="js/time-tracking.js?v=13"></script>
+</body>
+</html>

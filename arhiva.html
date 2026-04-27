@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arhivă — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=11">
+  <link rel="stylesheet" href="css/base.css?v=11">
+  <link rel="stylesheet" href="css/components.css?v=11">
+</head>
+<body>
+  <div class="shell shell--messaging-closed">
+
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Anca</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main" id="arhiva-main" role="main"></main>
+
+  </div>
+
+  <!-- Modal: AI Extraction (reused from Phase 4b in read-only mode) -->
+  <div class="modal modal--doc-ai" id="modal-ai" role="dialog" aria-modal="true" aria-labelledby="modal-ai-title" aria-hidden="true">
+    <div class="doc-modal__layout">
+      <aside class="doc-preview-card" data-ai-preview-card role="button" tabindex="0" aria-label="Deschide previzualizarea documentului în ecran complet">
+        <div class="doc-preview-card__page" data-ai-preview-svg></div>
+        <div class="doc-preview-card__footer">
+          <span class="doc-preview-card__filename" data-ai-preview-filename></span>
+          <span class="doc-preview-card__hint">
+            <span class="material-symbols-outlined" aria-hidden="true">open_in_full</span>
+            Click pentru ecran complet
+          </span>
+        </div>
+      </aside>
+
+      <div class="modal__dialog doc-modal doc-modal__panel" role="document">
+        <header class="doc-modal__header">
+          <button type="button" class="doc-modal__close" data-modal-close aria-label="Închide">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+          <h2 class="doc-modal__title" id="modal-ai-title">Detalii document</h2>
+          <p class="doc-modal__meta" data-ai-meta></p>
+        </header>
+
+        <div class="doc-modal__body">
+          <div class="doc-modal__status-strip" data-ai-status></div>
+          <div class="doc-modal__observation" data-ai-observation></div>
+          <section class="doc-modal__fields" data-ai-fields></section>
+        </div>
+
+        <footer class="doc-modal__footer">
+          <button type="button" class="btn btn--ghost doc-modal__footer-download" data-ai-download>
+            <span class="material-symbols-outlined" aria-hidden="true">download</span>
+            Descarcă
+          </button>
+          <div class="doc-modal__footer-spacer"></div>
+          <button type="button" class="btn btn--ghost" data-ai-edit>Editează detalii</button>
+          <button type="button" class="btn btn--ghost" data-ai-reclass>Reclasifică</button>
+          <button type="button" class="btn btn--primary" data-ai-close>Închide</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen preview overlay -->
+  <div class="doc-preview-fullscreen" id="doc-preview-fullscreen" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+    <div class="doc-preview-fullscreen__backdrop" data-preview-backdrop></div>
+    <div class="doc-preview-fullscreen__panel" role="document">
+      <header class="doc-preview-fullscreen__header">
+        <span class="doc-preview-fullscreen__filename" data-preview-filename></span>
+        <span class="doc-preview-fullscreen__pagenum" data-preview-pagenum></span>
+        <button type="button" class="doc-preview-fullscreen__close" data-preview-close aria-label="Închide previzualizarea">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </header>
+      <div class="doc-preview-fullscreen__body">
+        <div class="doc-preview-fullscreen__page" data-preview-svg></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=13"></script>
+  <script src="js/mock-data.js?v=13"></script>
+  <script src="js/timer.js?v=13"></script>
+  <script src="js/dashboard.js?v=13"></script>
+  <script src="js/documents.js?v=13"></script>
+  <script src="js/arhiva.js?v=13"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acasă — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=11">
+  <link rel="stylesheet" href="css/base.css?v=11">
+  <link rel="stylesheet" href="css/components.css?v=11">
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Anca</strong></span>
+
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Left rail -->
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main" id="main" role="main">
+      <div class="dashboard">
+
+        <div class="dashboard__top">
+
+          <!-- Region 1: Situații Contabile Noi -->
+          <section class="region-card" data-region="situatii-noi" aria-labelledby="region-new-title">
+            <header class="region-card__header">
+              <span class="material-symbols-outlined" aria-hidden="true">description</span>
+              <h2 class="region-card__title" id="region-new-title">
+                <span data-title-original>Situații Contabile Noi</span>
+                <span data-title-client>Situațiile tale</span>
+              </h2>
+              <span class="pill pill--count">(0)</span>
+            </header>
+            <div class="region-card__body"></div>
+            <footer class="region-card__footer">
+              <button id="open-new-situation" class="btn btn--primary" type="button" data-action="open-new-situation-modal">
+                Situație Nouă
+                <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              </button>
+              <a class="ghost-link" href="situatii.html">Toate situațiile Contabile</a>
+            </footer>
+          </section>
+
+          <!-- Region 2: Alerte -->
+          <section class="region-card" data-region="alerte" aria-labelledby="region-alerts-title">
+            <header class="region-card__header">
+              <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+              <h2 class="region-card__title" id="region-alerts-title">
+                <span data-title-original>Alerte</span>
+                <span data-title-client>Atenția ta</span>
+              </h2>
+              <span class="pill pill--count">(0)</span>
+            </header>
+            <div class="region-card__body"></div>
+            <footer class="region-card__footer region-card__footer--single">
+              <a class="ghost-link" href="situatii.html?filter=intarziere">Toate Alertele</a>
+            </footer>
+          </section>
+
+        </div>
+
+        <!-- Region 3: Clienții Mei -->
+        <section data-region="clienti-mei" aria-labelledby="clients-title">
+          <div class="clients-header">
+            <h2 class="clients-header__title" id="clients-title">Clienții Mei</h2>
+            <span class="pill pill--count" id="clients-count">(0)</span>
+          </div>
+          <div class="clients-grid" id="clients-grid"></div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Messaging panel -->
+    <aside class="messaging" aria-label="Mesagerie">
+      <div class="messaging__header">
+        <div class="messaging__title-group">
+          <h3 class="messaging__title">Mesagerie</h3>
+          <span class="pill pill--count" data-messaging-count>(0)</span>
+        </div>
+        <button class="messaging__toggle" type="button" aria-label="Restrânge panoul de mesagerie">
+          <span class="material-symbols-outlined" aria-hidden="true">expand_less</span>
+        </button>
+      </div>
+      <div class="messaging__list" id="messaging-list"></div>
+    </aside>
+
+  </div>
+
+  <!-- Modal: Situație Contabilă Nouă -->
+  <div class="modal" id="modal-new-situation" role="dialog" aria-modal="true" aria-labelledby="modal-new-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="modal-new-title">Situație Contabilă Nouă</h2>
+        <p class="modal__subtitle">Completează detaliile pentru a începe o nouă situație contabilă.</p>
+      </header>
+
+      <form class="modal__body" novalidate>
+
+        <!-- Tip Situație -->
+        <div class="form-field" data-field="tip">
+          <label class="form-label" for="f-tip">Tip Situație Contabilă</label>
+          <select id="f-tip" name="tip" class="select" required></select>
+          <span class="form-helper">Tipurile sunt configurate de administrator.</span>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <!-- Client (combobox) -->
+        <div class="form-field" data-field="client">
+          <label class="form-label" for="f-client">Client</label>
+          <div class="combo">
+            <input id="f-client" type="text" class="combo__input" placeholder="Caută client..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false">
+            <input type="hidden" name="clientId" value="">
+            <div class="combo__list" role="listbox"></div>
+          </div>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <!-- Responsabil -->
+        <div class="form-field" data-field="responsabil">
+          <label class="form-label" for="f-resp">Responsabil</label>
+          <select id="f-resp" name="responsabil" class="select" required></select>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <!-- Data început -->
+        <div class="form-field" data-field="dataInceput">
+          <label class="form-label" for="f-date">Data început</label>
+          <input id="f-date" type="date" name="dataInceput" class="input" required>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <!-- Termene estimate -->
+        <div class="form-field">
+          <span class="form-label">Termene estimate</span>
+          <span class="form-helper">Calculate automat din data de început și tipul situației.</span>
+          <div class="deadlines" style="margin-top: var(--space-2);">
+            <div class="deadlines__row">
+              <span class="deadlines__step">Pas 1 — Recepție documente</span>
+              <span class="deadlines__date" data-deadline="1">—</span>
+            </div>
+            <div class="deadlines__row">
+              <span class="deadlines__step">Pas 2 — Verificare documente</span>
+              <span class="deadlines__date" data-deadline="2">—</span>
+            </div>
+            <div class="deadlines__row">
+              <span class="deadlines__step">Pas 3 — Validare și închidere</span>
+              <span class="deadlines__date" data-deadline="3">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notificări automate -->
+        <div class="form-field" data-field="notif">
+          <span class="form-label">Notificări automate</span>
+          <span class="form-helper">Selectează momentele în care notificările automate vor fi trimise clientului și echipei.</span>
+          <div class="checkbox-group" style="margin-top: var(--space-2);">
+            <label class="checkbox"><input type="checkbox" name="notif" value="start" checked> La începerea procesului</label>
+            <label class="checkbox"><input type="checkbox" name="notif" value="before1" checked> Cu 5 zile înainte de termenul documentelor (Pas 1)</label>
+            <label class="checkbox"><input type="checkbox" name="notif" value="start2" checked> La începerea Pasului 2 — Verificare documente</label>
+            <label class="checkbox"><input type="checkbox" name="notif" value="end2" checked> La finalizarea Pasului 2 — Verificare documente</label>
+            <label class="checkbox"><input type="checkbox" name="notif" value="start3" checked> La începerea Pasului 3 — Validare și închidere</label>
+            <label class="checkbox"><input type="checkbox" name="notif" value="end3" checked> La finalizarea Pasului 3 — Validare și închidere</label>
+          </div>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+      </form>
+
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Toate câmpurile sunt obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" data-modal-submit>Creează Situație</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=13"></script>
+  <script src="js/mock-data.js?v=13"></script>
+  <script src="js/timer.js?v=13"></script>
+  <script src="js/dashboard.js?v=13"></script>
+</body>
+</html>
