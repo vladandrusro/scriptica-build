@@ -25,20 +25,11 @@
 
     if (!slides.length || !prevArrow || !nextArrow || !indicator) return;
 
-    detectImages();
     bindControls();
     bindKeyboard();
     bindViewportClicks();
     render();
   });
-
-  function detectImages() {
-    slides.forEach(function (el, i) {
-      var img = new Image();
-      img.onload = function () { el.classList.add('prez-slide--has-image'); };
-      img.src = 'assets/prezentare/slide-' + (i + 1) + '.png';
-    });
-  }
 
   function bindControls() {
     prevArrow.addEventListener('click', function (e) {
