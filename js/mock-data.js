@@ -17,13 +17,19 @@ window.SCRIPTICA_MOCK = {
     role: "Contabil"
   },
 
+  /* Phase 9 — firm administrator (admin view persona) */
+  admins: [
+    { id: 100, name: "Victor Stanciu", fullName: "Victor Stanciu", role: "Administrator", avatarId: 59,
+      email: "victor.stanciu@scriptica.ro", username: "victor.stanciu", status: "activ" }
+  ],
+
   employees: [
-    { id: 1, name: "Anca Cobzaru",       role: "Contabil",          avatarId: 47 },
-    { id: 2, name: "Cristina Popescu",   role: "Contabil senior",   avatarId: 32 },
-    { id: 3, name: "Cosmin Zicemult",    role: "Contabil",          avatarId: 12 },
-    { id: 4, name: "Andrei Juvanesco",   role: "Contabil",          avatarId: 60 },
-    { id: 5, name: "Anca Revinovici",    role: "Salarizare",        avatarId: 25 },
-    { id: 6, name: "Pavel Romanovici",   role: "Consultant fiscal", avatarId: 15 }
+    { id: 1, name: "Anca Cobzaru",       role: "Contabil",          avatarId: 47, email: "anca.cobzaru@scriptica.ro",     username: "anca.cobzaru",     status: "activ" },
+    { id: 2, name: "Cristina Popescu",   role: "Contabil senior",   avatarId: 32, email: "cristina.popescu@scriptica.ro", username: "cristina.popescu", status: "activ" },
+    { id: 3, name: "Cosmin Zicemult",    role: "Contabil",          avatarId: 12, email: "cosmin.zicemult@scriptica.ro",  username: "cosmin.zicemult",  status: "activ" },
+    { id: 4, name: "Andrei Juvanesco",   role: "Contabil",          avatarId: 60, email: "andrei.juvanesco@scriptica.ro", username: "andrei.juvanesco", status: "activ" },
+    { id: 5, name: "Anca Revinovici",    role: "Salarizare",        avatarId: 25, email: "anca.revinovici@scriptica.ro",  username: "anca.revinovici",  status: "activ" },
+    { id: 6, name: "Pavel Romanovici",   role: "Consultant fiscal", avatarId: 15, email: "pavel.romanovici@scriptica.ro", username: "pavel.romanovici", status: "inactiv" }
   ],
 
   departments: [
@@ -39,24 +45,217 @@ window.SCRIPTICA_MOCK = {
     step3: { name: "Validare și închidere",  number: 3 }
   },
 
+  /* Phase 10 — situation types carry their full per-step definition:
+     step name, deadline offset (days from start), tasks (free text, defined
+     in the admin editor) and attached anexe (ids from anexeTypes, picked
+     in the admin editor). Minimum one step per type. */
   situationTypes: [
-    { id: "raport_lunar",    name: "Raport Lunar",            frequency: "lunar",        offsets: { step1: 10, step2: 20, step3: 30 } },
-    { id: "jurnal_tva",      name: "Jurnal TVA",              frequency: "lunar",        offsets: { step1: 7,  step2: 14, step3: 25 } },
-    { id: "salarizari",      name: "Salarizări",              frequency: "lunar",        offsets: { step1: 5,  step2: 10, step3: 15 } },
-    { id: "declaratii_trim", name: "Declarații Trimestriale", frequency: "trimestrial",  offsets: { step1: 30, step2: 60, step3: 85 } }
+    {
+      id: "raport_lunar", name: "Raport Lunar", frequency: "lunar", status: "activ",
+      description: "Raport contabil lunar complet: înregistrare documente, închidere balanță și rapoarte.",
+      offsets: { step1: 10, step2: 20, step3: 30 },
+      steps: [
+        { name: "Recepție documente",    offsetDays: 10,
+          tasks: ["Primire documente de la client", "Verificare completitudine", "Confirmare recepție"],
+          anexeIds: ["anx_2"] },
+        { name: "Verificare documente",  offsetDays: 20,
+          tasks: ["Verificare organizare dosar", "E-Factura", "Înregistrare Documente", "Ștat Salarii", "Închidere Balanță", "Salvare Rapoarte", "Declarație OP-uri"],
+          anexeIds: ["anx_4", "anx_5"] },
+        { name: "Validare și închidere", offsetDays: 30,
+          tasks: ["Verificare finală de contabil senior", "Închidere situație"],
+          anexeIds: ["anx_3"] }
+      ]
+    },
+    {
+      id: "jurnal_tva", name: "Jurnal TVA", frequency: "lunar", status: "activ",
+      description: "Jurnal de TVA cu verificarea corelațiilor D300 ↔ D394.",
+      offsets: { step1: 7, step2: 14, step3: 25 },
+      steps: [
+        { name: "Recepție documente",    offsetDays: 7,
+          tasks: ["Primire documente de la client", "Verificare completitudine", "Confirmare recepție"],
+          anexeIds: [] },
+        { name: "Verificare documente",  offsetDays: 14,
+          tasks: ["Verificare organizare dosar", "E-Factura", "Înregistrare Documente", "Ștat Salarii", "Închidere Balanță", "Salvare Rapoarte", "Declarație OP-uri"],
+          anexeIds: ["anx_1"] },
+        { name: "Validare și închidere", offsetDays: 25,
+          tasks: ["Verificare finală de contabil senior", "Închidere situație"],
+          anexeIds: [] }
+      ]
+    },
+    {
+      id: "salarizari", name: "Salarizări", frequency: "lunar", status: "activ",
+      description: "Calcul salarii, ștat de plată și declarația D112.",
+      offsets: { step1: 5, step2: 10, step3: 15 },
+      steps: [
+        { name: "Recepție documente",    offsetDays: 5,
+          tasks: ["Primire documente de la client", "Verificare completitudine", "Confirmare recepție"],
+          anexeIds: [] },
+        { name: "Verificare documente",  offsetDays: 10,
+          tasks: ["Verificare organizare dosar", "E-Factura", "Înregistrare Documente", "Ștat Salarii", "Închidere Balanță", "Salvare Rapoarte", "Declarație OP-uri"],
+          anexeIds: [] },
+        { name: "Validare și închidere", offsetDays: 15,
+          tasks: ["Verificare finală de contabil senior", "Închidere situație"],
+          anexeIds: [] }
+      ]
+    },
+    {
+      id: "declaratii_trim", name: "Declarații Trimestriale", frequency: "trimestrial", status: "activ",
+      description: "Declarații fiscale trimestriale (D100, D101).",
+      offsets: { step1: 30, step2: 60, step3: 85 },
+      steps: [
+        { name: "Recepție documente",    offsetDays: 30,
+          tasks: ["Primire documente de la client", "Verificare completitudine", "Confirmare recepție"],
+          anexeIds: [] },
+        { name: "Verificare documente",  offsetDays: 60,
+          tasks: ["Verificare organizare dosar", "E-Factura", "Înregistrare Documente", "Ștat Salarii", "Închidere Balanță", "Salvare Rapoarte", "Declarație OP-uri"],
+          anexeIds: [] },
+        { name: "Validare și închidere", offsetDays: 85,
+          tasks: ["Verificare finală de contabil senior", "Închidere situație"],
+          anexeIds: [] }
+      ]
+    }
   ],
 
+  /* Phase 9 — taguri administrabile (admin panel) */
+  adminTags: [
+    { id: 1, name: "Urgent",             usageCount: 12 },
+    { id: 2, name: "De verificat",       usageCount: 31 },
+    { id: 3, name: "TVA",                usageCount: 18 },
+    { id: 4, name: "Client nou",         usageCount: 4 },
+    { id: 5, name: "Salarizare",         usageCount: 9 },
+    { id: 6, name: "Bilanț anual",       usageCount: 2 },
+    { id: 7, name: "Lipsă documente",    usageCount: 7 },
+    { id: 8, name: "Prioritate scăzută", usageCount: 1 }
+  ],
+
+  /* Phase 9/10 — Tipuri de anexe (Constructor de Anexe).
+     Standalone, reusable templates — NOT bound to a type or step here.
+     Attachment happens in situationTypes[].steps[].anexeIds, configured
+     in the admin editor. `schema.fields` uses the module types of the
+     constructor (see js/constructor-anexe.js). */
+  anexeTypes: [
+    {
+      id: "anx_1",
+      name: "Anexă verificare corelație D300 ↔ D394",
+      status: "activ",
+      updatedAt: "2026-04-18",
+      schema: { fields: [
+        { type: "section_title", text: "Date generale" },
+        { type: "paragraph", text: "Completează datele de identificare ale documentului supus verificării. Toate câmpurile marcate cu * sunt obligatorii." },
+        { type: "client_picker", label: "Client", required: true, help: "Alege din portofoliul firmei.", multi: false, source: "all_clients", filterActive: true, filterAssigned: false },
+        { type: "month", label: "Perioada fiscală", required: true, help: "" },
+        { type: "divider" },
+        { type: "section_title", text: "Corelație D300 ↔ D394" },
+        { type: "banner", variant: "warning", text: "Diferențele între D300 și D394 generează notificări de conformare ANAF. Verifică cu atenție." },
+        { type: "currency", label: "Total livrări D300 (rd. 13)", required: true, currency: "RON", help: "" },
+        { type: "currency", label: "Total livrări D394 (Secțiunea C)", required: true, currency: "RON", help: "" },
+        { type: "calculated", label: "Diferență", formula: "D300_rd13 - D394_C", help: "Trebuie să fie 0. Orice diferență necesită justificare." },
+        { type: "radio", label: "Sumele se corelează?", required: true, help: "", options: ["Da, perfect", "Da, cu diferență minoră justificată", "Nu, necesită corectură"] },
+        { type: "text_long", label: "Observații verificare", rows: 3, placeholder: "Notează orice neconcordanță observată...", required: false, help: "" },
+        { type: "document_picker", label: "Documente justificative consultate", required: false, help: "Selectează documentele din pasul Recepție pe care le-ai folosit.", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_2",
+      name: "Fișă intake documente client",
+      status: "activ",
+      updatedAt: "2026-04-10",
+      schema: { fields: [
+        { type: "section_title", text: "Date despre luna raportată" },
+        { type: "paragraph", text: "Completează aceste informații împreună cu documentele lunii. Ne ajută să procesăm corect și rapid." },
+        { type: "month", label: "Perioada raportată", required: true, help: "" },
+        { type: "number", label: "Salariați activi", required: true, help: "Numărul de angajați activi în luna raportată.", min: 0, max: null, decimals: 0 },
+        { type: "currency", label: "Cifră de afaceri estimată", required: false, currency: "RON", help: "" },
+        { type: "boolean", label: "Au existat modificări față de luna trecută?", required: true, help: "Angajări, încetări, contracte noi, investiții." },
+        { type: "text_long", label: "Detalii modificări", rows: 3, placeholder: "Descrie pe scurt modificările...", required: false, help: "" },
+        { type: "file_upload", label: "Documente suplimentare", required: false, help: "", multi: true, maxSizeMB: 10, allowedTypes: "PDF, JPG, PNG, XLSX" }
+      ] }
+    },
+    {
+      id: "anx_3",
+      name: "Fișă validare finală contabil senior",
+      status: "activ",
+      updatedAt: "2026-03-28",
+      schema: { fields: [
+        { type: "banner", variant: "info", text: "Această fișă se completează de contabilul senior înainte de închiderea situației." },
+        { type: "checkboxes", label: "Verificări efectuate", required: true, help: "", options: ["Balanță închisă", "Jurnale TVA corelate", "Declarații depuse", "Rapoarte salvate în arhivă"] },
+        { type: "boolean", label: "Confirm că situația poate fi închisă", required: true, help: "" },
+        { type: "text_long", label: "Observații validare", rows: 3, placeholder: "", required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_4",
+      name: "Fișă verificare balanță lunară",
+      status: "activ",
+      updatedAt: "2026-04-15",
+      schema: { fields: [
+        { type: "section_title", text: "Verificare balanță" },
+        { type: "paragraph", text: "Confirmă verificările de balanță efectuate înainte de închiderea lunii. Fișa se completează de responsabilul pasului." },
+        { type: "month", label: "Perioada verificată", required: true, help: "" },
+        { type: "checkboxes", label: "Verificări efectuate", required: true, help: "", options: ["Solduri inițiale preluate corect", "Rulaje complete pe toate conturile", "Conturi furnizori/clienți reconciliate", "Amortizări înregistrate"] },
+        { type: "boolean", label: "Balanța este echilibrată?", required: true, help: "Totalul debitelor egal cu totalul creditelor." },
+        { type: "text_long", label: "Observații", rows: 3, placeholder: "Notează orice diferență sau ajustare efectuată...", required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_5",
+      name: "Reconciliere extras bancar",
+      status: "activ",
+      updatedAt: "2026-04-19",
+      schema: { fields: [
+        { type: "section_title", text: "Reconciliere bancară" },
+        { type: "banner", variant: "info", text: "Compară soldul din extrasul bancar cu soldul din contabilitate înainte de închiderea lunii." },
+        { type: "month", label: "Perioada reconciliată", required: true, help: "" },
+        { type: "dropdown", label: "Banca", required: true, help: "", options: ["Banca Transilvania", "BCR", "ING Bank", "BRD"] },
+        { type: "currency", label: "Sold final extras bancar", required: true, currency: "RON", help: "" },
+        { type: "currency", label: "Sold final în contabilitate", required: true, currency: "RON", help: "" },
+        { type: "calculated", label: "Diferență", formula: "sold_extras - sold_contabilitate", help: "Trebuie să fie 0. Orice diferență necesită explicație." },
+        { type: "radio", label: "Soldurile corespund?", required: true, help: "", options: ["Da, perfect", "Diferență justificată", "Nu, necesită investigare"] },
+        { type: "text_long", label: "Explicația diferențelor", rows: 3, placeholder: "Comisioane neînregistrate, încasări în tranzit...", required: false, help: "" },
+        { type: "file_upload", label: "Extras de cont atașat", required: true, help: "", multi: true, maxSizeMB: 10, allowedTypes: "PDF, JPG, PNG" }
+      ] }
+    }
+  ],
+
+  /* Phase 10 — seeded anexă responses (per situation instance).
+     Base layer for the fill state: localStorage 'scriptica.anexaResponses'
+     overrides these per key. Keys: situationId + '::' + anexaTypeId.
+     Values map is keyed by the field's index in schema.fields (as string).
+     anx_4 on situation 126: all 3 mandatory fields filled → 100%, complete.
+     anx_5 on situation 126: 3 of 6 mandatory filled → 50%, in progress. */
+  anexaResponseSeeds: {
+    "0000000126::anx_4": {
+      values: {
+        "2": "2026-03",
+        "3": ["Solduri inițiale preluate corect", "Rulaje complete pe toate conturile", "Conturi furnizori/clienți reconciliate", "Amortizări înregistrate"],
+        "4": "Da",
+        "5": "Verificat integral, fără diferențe."
+      },
+      updatedAt: "2026-04-18",
+      completedByName: "Anca Cobzaru"
+    },
+    "0000000126::anx_5": {
+      values: {
+        "2": "2026-03",
+        "3": "Banca Transilvania",
+        "4": "48250.75"
+      },
+      updatedAt: "2026-04-19",
+      completedByName: null
+    }
+  },
+
   clients: [
-    { id: 1,  companyName: "Canvas S.R.L.",         contactName: "Antonio Popescu",     avatarId: 33, email: "antonio@canvas.ro",  phone: "+40712345678", situationIds: ["0000000126"] },
-    { id: 2,  companyName: "Ionuț Profan PFA",      contactName: "Ionuț Profan",        avatarId: 11, situationIds: ["0000000127"] },
-    { id: 3,  companyName: "Simbio Cost Control",   contactName: "Mihai Andrei",        avatarId: 14, situationIds: [] },
-    { id: 4,  companyName: "Style S.R.L.",          contactName: "Laura Dinu",          avatarId: 44, situationIds: [] },
-    { id: 5,  companyName: "Simba Commercial",      contactName: "Radu Ionescu",        avatarId: 17, situationIds: [] },
-    { id: 6,  companyName: "Textile Cluj",          contactName: "Ana Maria Stoica",    avatarId: 49, situationIds: [] },
-    { id: 7,  companyName: "Simpozion S.R.L.",      contactName: "Vlad Georgescu",      avatarId: 22, situationIds: [] },
-    { id: 8,  companyName: "Alexandru Popa PFA",    contactName: "Alexandru Popa",      avatarId: 13, situationIds: [] },
-    { id: 9,  companyName: "Simonis S.R.L.",        contactName: "Irina Marin",         avatarId: 48, situationIds: [] },
-    { id: 10, companyName: "Talisman Expert",       contactName: "Corneliu Băjenaru",   avatarId: 16, situationIds: [] }
+    { id: 1,  companyName: "Canvas S.R.L.",         contactName: "Antonio Popescu",     avatarId: 33, email: "antonio@canvas.ro",        phone: "+40712345678", cui: "RO18234561", personType: "pj",  status: "activ",   situationIds: ["0000000126"] },
+    { id: 2,  companyName: "Ionuț Profan PFA",      contactName: "Ionuț Profan",        avatarId: 11, email: "ionut.profan@gmail.com",   phone: "+40723118430", cui: "29415876",   personType: "pfa", status: "activ",   situationIds: ["0000000127"] },
+    { id: 3,  companyName: "Simbio Cost Control",   contactName: "Mihai Andrei",        avatarId: 14, email: "office@simbio.ro",         phone: "+40745220817", cui: "RO33108294", personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 4,  companyName: "Style S.R.L.",          contactName: "Laura Dinu",          avatarId: 44, email: "laura@style-srl.ro",       phone: "+40731652209", cui: "RO15890327", personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 5,  companyName: "Simba Commercial",      contactName: "Radu Ionescu",        avatarId: 17, email: "radu@simbacom.ro",         phone: "+40762914556", cui: "RO24471053", personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 6,  companyName: "Textile Cluj",          contactName: "Ana Maria Stoica",    avatarId: 49, email: "contact@textilecluj.ro",   phone: "+40755381194", cui: "RO9822146",  personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 7,  companyName: "Simpozion S.R.L.",      contactName: "Vlad Georgescu",      avatarId: 22, email: "vlad@simpozion.ro",        phone: "+40728443067", cui: "RO40117825", personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 8,  companyName: "Alexandru Popa PFA",    contactName: "Alexandru Popa",      avatarId: 13, email: "alex.popa.pfa@gmail.com",  phone: "+40741906122", cui: "31556204",   personType: "pfa", status: "activ",   situationIds: [] },
+    { id: 9,  companyName: "Simonis S.R.L.",        contactName: "Irina Marin",         avatarId: 48, email: "irina@simonis.ro",         phone: "+40769230815", cui: "RO27384910", personType: "pj",  status: "activ",   situationIds: [] },
+    { id: 10, companyName: "Talisman Expert",       contactName: "Corneliu Băjenaru",   avatarId: 16, email: "office@talisman-expert.ro", phone: "+40733517248", cui: "RO36205178", personType: "pj",  status: "inactiv", situationIds: [] }
   ],
 
   currentClientId: 1,
@@ -488,6 +687,38 @@ window.SCRIPTICA_MOCK = {
 };
 
 /* ------------------------------------------------------------
+   PHASE 10 — Admin overrides from localStorage
+   The admin panel persists content-type edits so the demo survives
+   navigation: 'scriptica.anexe' and 'scriptica.situationTypes' are
+   maps id → full record ({ deleted: true } acts as a tombstone).
+   Applied once at load, BEFORE task augmentation, so every page
+   reads SCRIPTICA_MOCK directly and sees the configured state.
+   ------------------------------------------------------------ */
+(function applyAdminOverrides() {
+  function mergeInto(list, storageKey) {
+    var map;
+    try { map = JSON.parse(localStorage.getItem(storageKey) || '{}'); }
+    catch (e) { map = {}; }
+    if (!map || typeof map !== 'object') return list;
+    var out = [];
+    list.forEach(function (item) {
+      var ov = map[item.id];
+      if (ov && ov.deleted) { delete map[item.id]; return; }
+      out.push(ov ? ov : item);
+      delete map[item.id];
+    });
+    Object.keys(map).forEach(function (id) {
+      var ov = map[id];
+      if (ov && !ov.deleted) out.push(ov);
+    });
+    return out;
+  }
+  var M = window.SCRIPTICA_MOCK;
+  M.anexeTypes = mergeInto(M.anexeTypes || [], 'scriptica.anexe');
+  M.situationTypes = mergeInto(M.situationTypes || [], 'scriptica.situationTypes');
+})();
+
+/* ------------------------------------------------------------
    PHASE 5 — Archival situations
    Seeded BEFORE augmentTasks so their task lists get populated too.
    ------------------------------------------------------------ */
@@ -573,50 +804,42 @@ window.SCRIPTICA_MOCK = {
    based on each situation's currentStep and status.
    ------------------------------------------------------------ */
 (function augmentTasks() {
-  var TASK_TEMPLATES = {
-    step1: [
-      { id: 1, label: "Primire documente de la client" },
-      { id: 2, label: "Verificare completitudine" },
-      { id: 3, label: "Confirmare recepție" }
-    ],
-    step2: [
-      { id: 4,  label: "Verificare organizare dosar" },
-      { id: 5,  label: "E-Factura" },
-      { id: 6,  label: "Înregistrare Documente" },
-      { id: 7,  label: "Ștat Salarii" },
-      { id: 8,  label: "Închidere Balanță" },
-      { id: 9,  label: "Salvare Rapoarte" },
-      { id: 10, label: "Declarație OP-uri" }
-    ],
-    step3: [
-      { id: 11, label: "Verificare finală de contabil senior" },
-      { id: 12, label: "Închidere situație" }
-    ]
-  };
-
-  var STEP_KEYS = ['step1', 'step2', 'step3'];
+  /* Phase 10 — tasks now come from each situation's TYPE definition
+     (situationTypes[].steps[].tasks, configured in the admin editor).
+     Ids are assigned sequentially across steps (1, 2, 3... per
+     situation) which keeps them identical to the old fixed template
+     ids for the seeded 3-step types — time sessions depend on that. */
+  var FALLBACK_STEPS = [
+    { name: "Recepție documente",
+      tasks: ["Primire documente de la client", "Verificare completitudine", "Confirmare recepție"] },
+    { name: "Verificare documente",
+      tasks: ["Verificare organizare dosar", "E-Factura", "Înregistrare Documente", "Ștat Salarii", "Închidere Balanță", "Salvare Rapoarte", "Declarație OP-uri"] },
+    { name: "Validare și închidere",
+      tasks: ["Verificare finală de contabil senior", "Închidere situație"] }
+  ];
 
   window.SCRIPTICA_MOCK.situations.forEach(function (s) {
     /* Default helper state if not already set on the situation */
     if (!s.activeHelpers)   s.activeHelpers = { step1: [], step2: [], step3: [] };
     if (!s.helperRequests)  s.helperRequests = [];
 
+    var type = window.SCRIPTICA_MOCK.situationTypes.find(function (t) { return t.id === s.typeId; });
+    var steps = (type && type.steps && type.steps.length) ? type.steps : FALLBACK_STEPS;
+
     var tasks = {};
-    STEP_KEYS.forEach(function (key, idx) {
+    var nextId = 1;
+    steps.forEach(function (step, idx) {
       var stepNum = idx + 1;
-      var template = TASK_TEMPLATES[key];
       var allDone;
       if (s.status === 'inchisa' || s.status === 'finalizat') {
         allDone = true;
-      } else if (s.status === 'anulata') {
-        allDone = stepNum < s.currentStep;
       } else {
         allDone = stepNum < s.currentStep;
       }
-      tasks[key] = template.map(function (t) {
+      tasks['step' + stepNum] = (step.tasks || []).map(function (label) {
         return {
-          id: t.id,
-          label: t.label,
+          id: nextId++,
+          label: label,
           completed: allDone,
           assigneeId: allDone ? s.titularId : null,
           completedAt: allDone ? '2026-04-15T10:00:00' : null,

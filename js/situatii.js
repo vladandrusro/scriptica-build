@@ -322,7 +322,13 @@
 
   function expandedHtml(s) {
     var stepKey = 'step' + s.currentStep;
-    var stepInfo = MOCK.standardSteps[stepKey] || { name: '', number: s.currentStep };
+    /* Phase 10: numele pasului vine din steps[] al tipului situației,
+       cu standardSteps drept fallback (ca în situatie-detaliu.js). */
+    var type = (MOCK.situationTypes || []).find(function (t) { return t.id === s.typeId; });
+    var typeStep = (type && type.steps) ? type.steps[s.currentStep - 1] : null;
+    var stepInfo = (typeStep && typeStep.name)
+      ? { name: typeStep.name, number: s.currentStep }
+      : (MOCK.standardSteps[stepKey] || { name: '', number: s.currentStep });
     var tasks = (s.tasks && s.tasks[stepKey]) ? s.tasks[stepKey] : [];
     var tasksHtml = tasks.map(function (t) { return taskRowHtml(s.id, t); }).join('');
     return '<tr class="sit-row-exp"><td colspan="10">' +

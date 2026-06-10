@@ -21,6 +21,9 @@
   --color-pending: #F9A956;
   --color-success: #38BA31;
 
+  /* Surface tint for pending/warning banners (pending la 15% pe alb) */
+  --color-pending-surface: #FEF2E6;
+
   /* --- Colors — Derived / Supporting --- */
   --color-text-primary: #1A1433;
   --color-text-secondary: #4B4560;

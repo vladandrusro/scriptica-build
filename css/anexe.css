@@ -1,0 +1,587 @@
+/* ============================================================
+   Scriptica — Anexe (Phase 10)
+   Cardurile de anexe din pasul curent (.anexa-*) + formularul
+   din modalul full-screen de completare (.afield-*).
+   Tokens only — see css/tokens.css.
+   ============================================================ */
+
+/* Suprafață succes — --color-success #38BA31 la 8% pe alb.
+   Definită O SINGURĂ DATĂ aici; folosită doar pe cardul 100%. */
+.anexa-card--done {
+  --anexa-success-surface: rgba(56, 186, 49, 0.08);
+}
+
+/* ------------------------------------------------------------
+   Secțiunea de carduri (deasupra listei de task-uri)
+   ------------------------------------------------------------ */
+.task-panel__anexe:empty {
+  display: none;
+}
+
+.anexa-cards {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.anexa-cards__label {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.anexa-cards__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+/* ------------------------------------------------------------
+   Card anexă
+   ------------------------------------------------------------ */
+.anexa-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 116px;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.anexa-card:hover {
+  border-color: var(--color-default-highlight);
+  box-shadow: var(--shadow-md);
+}
+
+.anexa-card:focus-visible {
+  outline: 2px solid var(--color-default-highlight);
+  outline-offset: 2px;
+}
+
+.anexa-card--done {
+  background: var(--anexa-success-surface);
+  border-color: var(--color-success);
+}
+
+.anexa-card__body {
+  padding: var(--space-3) var(--space-4);
+}
+
+.anexa-card__eyebrow {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.anexa-card__name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.anexa-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+.anexa-card__footer .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.anexa-card__footer--neutral {
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.anexa-card__footer--progress {
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+}
+
+.anexa-card__footer--done {
+  background: var(--color-success);
+  color: var(--color-surface-white);
+}
+
+/* ------------------------------------------------------------
+   Modal full-screen de completare (pattern .modal--splitter)
+   ------------------------------------------------------------ */
+.modal--anexa {
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.modal--anexa .modal__dialog {
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  animation: none;
+}
+
+.anexa-modal__header {
+  height: 72px;
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.anexa-modal__title-block {
+  min-width: 0;
+}
+
+.anexa-modal__title {
+  font-size: var(--font-size-headline-2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anexa-modal__sub {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anexa-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--color-surface-2);
+  padding: var(--space-6) var(--space-5);
+}
+
+.anexa-form {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--color-surface-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.anexa-modal__footer {
+  min-height: 72px;
+  background: var(--color-surface-white);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* .btn are display:inline-flex (components.css) și bate regula UA
+   [hidden] — fără acest override, „Salvează progresul" rămâne vizibil
+   în modul read-only (pattern: administrare.css .form-field[hidden]). */
+.anexa-modal__footer .btn[hidden] {
+  display: none;
+}
+
+.anexa-modal__progress {
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 240px;
+}
+
+.anexa-modal__progress-text {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.anexa-modal__progress-track {
+  height: 4px;
+  max-width: 320px;
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.anexa-modal__progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--color-default-highlight);
+  border-radius: var(--radius-pill);
+  transition: width var(--transition-base);
+}
+
+.anexa-modal__progress-bar.is-complete {
+  background: var(--color-success);
+}
+
+/* ------------------------------------------------------------
+   Câmpurile formularului (.afield)
+   ------------------------------------------------------------ */
+.afield__label {
+  display: block;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.afield__required {
+  color: var(--color-critical);
+}
+
+.afield__help {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-2);
+}
+
+.afield__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  background: var(--color-surface-white);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.afield__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.afield__input:focus-visible {
+  outline: none;
+  border-color: var(--color-default-highlight);
+  box-shadow: 0 0 0 2px rgba(71, 56, 106, 0.18);
+}
+
+.afield__input:disabled {
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+textarea.afield__input {
+  resize: vertical;
+  min-height: 70px;
+  line-height: var(--line-height-normal);
+}
+
+select.afield__input {
+  cursor: pointer;
+}
+
+.afield__group {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.afield__unit {
+  background: var(--color-surface-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.afield__radios,
+.afield__checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.afield__radios label,
+.afield__checks label {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-regular);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.afield__radios input,
+.afield__checks input {
+  accent-color: var(--color-default-highlight);
+  margin: 0;
+  cursor: pointer;
+}
+
+.afield__radios input:disabled,
+.afield__checks input:disabled {
+  cursor: not-allowed;
+}
+
+/* Câmpuri de layout */
+.afield__section-title {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-default-highlight);
+  margin: 0;
+  padding-top: var(--space-2);
+}
+
+.afield__paragraph {
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+
+.afield__divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 0;
+}
+
+/* Banner — același pattern ca în constructor (css/constructor.css) */
+.afield__banner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: var(--font-size-body);
+}
+
+.afield__banner .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.afield__banner--info {
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+}
+
+.afield__banner--warning {
+  background: var(--color-pending-surface);
+  color: var(--color-text-primary);
+}
+
+.afield__banner--warning .material-symbols-outlined {
+  color: var(--color-pending);
+}
+
+.afield__banner--critical {
+  background: #FFEBF2; /* pattern reused from .cancelled-banner (components.css) */
+  color: var(--color-critical);
+}
+
+/* Câmp calculat — doar formula, read-only */
+.afield__calculated {
+  background: var(--color-surface-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.afield__calculated .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--color-default-highlight);
+}
+
+/* Încărcare fișiere */
+.afield__upload {
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-surface-2);
+}
+
+.afield__upload-meta {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.afield__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.afield__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-small);
+  color: var(--color-text-primary);
+  max-width: 100%;
+}
+
+.afield__chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.afield__chip-remove {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color var(--transition-fast);
+}
+
+.afield__chip-remove:hover {
+  color: var(--color-critical);
+}
+
+.afield__chip-remove .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Tabel editabil */
+.afield__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-body);
+}
+
+.afield__table th {
+  background: var(--color-surface-1);
+  padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-tiny);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.afield__table td {
+  padding: var(--space-1) var(--space-1) var(--space-1) 0;
+  vertical-align: middle;
+}
+
+.afield__cell-input {
+  padding: var(--space-1) var(--space-2);
+}
+
+.afield__cell-del {
+  width: 32px;
+  text-align: center;
+}
+
+.afield__cell-del button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.afield__cell-del button:hover {
+  background: var(--color-surface-1);
+  color: var(--color-critical);
+}
+
+.afield__cell-del .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.afield__table-add {
+  margin-top: var(--space-2);
+  background: var(--color-surface-1);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-default-highlight);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.afield__table-add:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-default-highlight);
+}
+
+.afield__table-add .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Mesaje goale (fără documente / fără fișiere / fără rânduri) */
+.afield__empty-note {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: var(--space-2) 0;
+}

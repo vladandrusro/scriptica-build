@@ -55,6 +55,8 @@
     // Re-render after timer events so the banner indicator flips and task times update
     window.addEventListener('scriptica:timer-started', render);
     window.addEventListener('scriptica:timer-stopped', render);
+    // Re-render after an anexă is saved so cards + finalize gating update
+    window.addEventListener('scriptica:anexa-saved', render);
   }
 
   /* Swap avatar <img> → initials <span> if Pravatar fails. Image errors
@@ -292,8 +294,8 @@
       return;
     }
 
+    var stepInfo = { name: currentStepName(s), number: s.currentStep };
     var stepKey = 'step' + s.currentStep;
-    var stepInfo = MOCK.standardSteps[stepKey] || { name: '', number: s.currentStep };
 
     // Responsible person
     var resp = MOCK.employees.find(function (u) { return u.id === s.responsibleStepId; });
@@ -329,7 +331,7 @@
     el.innerHTML =
       '<div class="step-banner__row">' +
         '<div class="step-banner__left">' +
-          '<span class="step-banner__pill">Pasul ' + s.currentStep + '/' + s.totalSteps + '</span>' +
+          '<span class="step-banner__pill">Pasul ' + s.currentStep + '/' + totalStepsFor(s) + '</span>' +
           '<span class="step-banner__sep">•</span>' +
           '<span class="step-banner__name">' + esc(stepInfo.name) + '</span>' +
         '</div>' +
@@ -363,6 +365,8 @@
     var readonly = s.status === 'anulata' || s.status === 'inchisa' || role === 'viewer';
     el.classList.toggle('is-readonly', readonly);
 
+    var anexeHtml = '<div class="task-panel__anexe" id="anexe-cards"></div>';
+
     var listHtml = '<div class="task-panel__list">' +
       tasks.map(taskRowHtml).join('') +
     '</div>';
@@ -370,6 +374,13 @@
     var canAct = (role === 'responsible') && !readonly;
 
     var allDone = tasks.every(function (t) { return t.completed; });
+
+    var stepAnexe = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.getStepAnexe(s) : [];
+    var anexeOk = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.allComplete(s) : true;
+    var canFinalize = allDone && anexeOk;
+    var blockMsg = stepAnexe.length
+      ? 'Finalizați toate task-urile și anexele pentru a trece la pasul următor.'
+      : 'Finalizați toate task-urile pentru a trece la pasul următor.';
 
     var actionsHtml =
       '<div class="step-actions">' +
@@ -387,13 +398,20 @@
           '</div>' : '<div class="step-actions__center"></div>') +
         (canAct ?
           '<button type="button" class="btn btn--primary" id="btn-finalizare"' +
-            (allDone ? '' : ' disabled title="Finalizați toate task-urile pentru a trece la pasul următor."') + '>' +
+            (canFinalize ? '' : ' disabled title="' + esc(blockMsg) + '"') + '>' +
             'Finalizează pasul' +
             '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
           '</button>' : '<span></span>') +
       '</div>';
 
-    el.innerHTML = listHtml + (readonly ? '' : actionsHtml);
+    el.innerHTML = anexeHtml + listHtml + (readonly ? '' : actionsHtml);
+
+    // Anexă cards for the current step (hidden in client view).
+    // The panel's readonly decision (status + viewer role) carries over
+    // so the fill modal opens read-only for non-participants too.
+    if (window.SCRIPTICA_ANEXE) {
+      window.SCRIPTICA_ANEXE.renderCards(document.getElementById('anexe-cards'), s, { readonly: readonly });
+    }
 
     // Bind task checkboxes
     el.querySelectorAll('[data-task-toggle]').forEach(function (cb) {
@@ -1221,12 +1239,13 @@
     var stepKey = 'step' + s.currentStep;
     var allDone = s.tasks[stepKey].every(function (t) { return t.completed; });
     if (!allDone) return;
+    if (window.SCRIPTICA_ANEXE && !window.SCRIPTICA_ANEXE.allComplete(s)) return;
 
     var ok = confirm('Finalizați pasul curent și treceți la pasul următor?');
     if (!ok) return;
 
     var completedStep = s.currentStep;
-    var completedStepName = (MOCK.standardSteps[stepKey] || {}).name || '';
+    var completedStepName = currentStepName(s);
 
     MOCK.messages.push({
       id: nextMessageId(),
@@ -1241,9 +1260,11 @@
       read: true
     });
 
-    if (completedStep >= s.totalSteps) {
+    var total = totalStepsFor(s);
+    if (completedStep >= total) {
       s.status = 'inchisa';
-      s.stepsCompleted = s.totalSteps;
+      s.totalSteps = total;
+      s.stepsCompleted = total;
       showToast('success', 'Situația a fost finalizată și închisă.');
     } else {
       s.currentStep = completedStep + 1;
@@ -1316,6 +1337,27 @@
 
   function bindGlobal() {
     // Chat panel toggle already bound in shell.js; no new global bindings here.
+  }
+
+  /* ---------- Step name resolution ----------
+     Phase 10: prefer the situation type's steps[currentStep-1].name,
+     with the legacy standardSteps as fallback. */
+
+  function currentStepName(s) {
+    var type = MOCK.situationTypes.find(function (t) { return t.id === s.typeId; });
+    var typeStep = (type && type.steps) ? type.steps[s.currentStep - 1] : null;
+    if (typeStep && typeStep.name) return typeStep.name;
+    var std = MOCK.standardSteps['step' + s.currentStep];
+    return (std && std.name) || '';
+  }
+
+  /* Numărul de pași preferă definiția curentă a tipului (steps.length),
+     cu s.totalSteps drept fallback pentru tipuri fără steps — astfel
+     editările de pași din admin se reflectă la randare și finalizare. */
+  function totalStepsFor(s) {
+    var type = MOCK.situationTypes.find(function (t) { return t.id === s.typeId; });
+    if (type && type.steps && type.steps.length) return type.steps.length;
+    return s.totalSteps;
   }
 
   /* ---------- Role detection ---------- */

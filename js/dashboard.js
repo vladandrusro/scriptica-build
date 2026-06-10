@@ -392,16 +392,18 @@
     var comboList  = modal.querySelector('.combo__list');
     var comboHidden = modal.querySelector('[name="clientId"]');
 
-    var deadlineRow1 = modal.querySelector('[data-deadline="1"]');
-    var deadlineRow2 = modal.querySelector('[data-deadline="2"]');
-    var deadlineRow3 = modal.querySelector('[data-deadline="3"]');
+    var deadlinesList = modal.querySelector('[data-deadlines-list]');
 
     var lastTrigger = null;
 
     /* Populate selects */
     typeSelect.innerHTML =
       '<option value="">Selectează tipul...</option>' +
-      MOCK.situationTypes.map(function (t) {
+      MOCK.situationTypes.filter(function (t) {
+        /* Doar tipurile active și cu cel puțin un pas definit — tipurile
+           dezactivate din admin nu mai apar la crearea unei situații. */
+        return (t.status || 'activ') === 'activ' && t.steps && t.steps.length;
+      }).map(function (t) {
         return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
       }).join('');
 
@@ -539,18 +541,30 @@
     dateInput.addEventListener('change', recomputeDeadlines);
     dateInput.addEventListener('input', recomputeDeadlines);
 
+    function deadlineRowHtml(stepLabel, dateLabel) {
+      return '<div class="deadlines__row">' +
+        '<span class="deadlines__step">' + stepLabel + '</span>' +
+        '<span class="deadlines__date">' + dateLabel + '</span>' +
+      '</div>';
+    }
+
     function recomputeDeadlines() {
+      if (!deadlinesList) return;
       var t = MOCK.situationTypes.find(function (x) { return x.id === typeSelect.value; });
       var start = dateInput.value;
-      if (!t || !start) {
-        deadlineRow1.textContent = '—';
-        deadlineRow2.textContent = '—';
-        deadlineRow3.textContent = '—';
+      if (!t || !t.steps || !t.steps.length || !start) {
+        // No type selected yet — generic em-dash placeholder rows
+        var ph = '';
+        for (var i = 1; i <= 3; i++) ph += deadlineRowHtml('Pas ' + i, '—');
+        deadlinesList.innerHTML = ph;
         return;
       }
-      deadlineRow1.textContent = formatDateFull(addDaysISO(start, t.offsets.step1));
-      deadlineRow2.textContent = formatDateFull(addDaysISO(start, t.offsets.step2));
-      deadlineRow3.textContent = formatDateFull(addDaysISO(start, t.offsets.step3));
+      deadlinesList.innerHTML = t.steps.map(function (step, idx) {
+        return deadlineRowHtml(
+          'Pas ' + (idx + 1) + ' — ' + esc(step.name),
+          esc(formatDateFull(addDaysISO(start, step.offsetDays)))
+        );
+      }).join('');
     }
 
     /* Submit */

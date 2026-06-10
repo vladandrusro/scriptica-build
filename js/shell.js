@@ -18,6 +18,7 @@
     var p = params.get('view');
     if (p === 'client') return 'client';
     if (p === 'accountant') return 'accountant';
+    if (p === 'admin') return 'admin';
     try { return localStorage.getItem(VIEW_KEY) || 'accountant'; }
     catch (e) { return 'accountant'; }
   };
@@ -72,6 +73,10 @@
   window.scripticaCurrentUser = function () {
     var MOCK = window.SCRIPTICA_MOCK;
     if (!MOCK) return null;
+    if (getCurrentView() === 'admin') {
+      var admins = MOCK.admins || [];
+      if (admins.length) return admins[0];
+    }
     if (getCurrentView() === 'client') {
       var clients = MOCK.clients || [];
       var cid = MOCK.currentClientId || (clients[0] && clients[0].id);
@@ -85,15 +90,33 @@
   document.addEventListener('DOMContentLoaded', function () {
     applyViewBodyClass();
     initSidebar();
+    injectAdminNav();
     initActiveNav();
     initMessagingToggle();
     buildUserMenu();
     initNonFunctionalStubs();
   });
 
+  /* Admin view gets an extra rail item (Phase 9). Injected dynamically so
+     existing pages don't each need a sidebar edit. */
+  function injectAdminNav() {
+    if (getCurrentView() !== 'admin') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="administrare"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'administrare.html';
+    a.setAttribute('data-nav', 'administrare');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">admin_panel_settings</span>' +
+      '<span class="nav-item__label">Administrare</span>';
+    nav.appendChild(a);
+  }
+
   function applyViewBodyClass() {
-    if (getCurrentView() === 'client') document.body.classList.add('body--client');
-    else document.body.classList.remove('body--client');
+    var view = getCurrentView();
+    document.body.classList.toggle('body--client', view === 'client');
+    document.body.classList.toggle('body--admin', view === 'admin');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -224,10 +247,7 @@
           '<div class="header__user-menu-role" data-user-role></div>' +
         '</div>' +
       '</div>' +
-      '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-action="toggle-view">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
-        '<span data-view-toggle-label>Vezi ca și client</span>' +
-      '</button>' +
+      viewSwitchItemsHtml() +
       '<a href="prezentare.html" class="header__user-menu-item header__user-menu-item--primary" role="menuitem">' +
         '<span class="material-symbols-outlined" aria-hidden="true">slideshow</span>' +
         'Vezi prezentarea' +
@@ -252,7 +272,6 @@
     if (legacyBtn) legacyBtn.remove();
 
     updateUserDisplay();
-    refreshToggleLabel();
 
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -268,12 +287,27 @@
       }
     });
 
-    var toggleBtn = menu.querySelector('[data-action="toggle-view"]');
-    toggleBtn.addEventListener('click', function () {
-      var next = getCurrentView() === 'client' ? 'accountant' : 'client';
-      setCurrentView(next);
-      window.location.href = next === 'client' ? 'acasa.html?view=client' : 'acasa.html';
+    menu.querySelectorAll('[data-view-target]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setCurrentView(btn.getAttribute('data-view-target'));
+        window.location.href = btn.getAttribute('data-view-href');
+      });
     });
+  }
+
+  /* The two views OTHER than the current one, as menu items (Phase 9: 3-way). */
+  function viewSwitchItemsHtml() {
+    var view = getCurrentView();
+    var items = [];
+    if (view !== 'accountant') items.push({ view: 'accountant', label: 'Vezi ca și contabil', href: 'acasa.html' });
+    if (view !== 'client') items.push({ view: 'client', label: 'Vezi ca și client', href: 'acasa.html?view=client' });
+    if (view !== 'admin') items.push({ view: 'admin', label: 'Vezi ca administrator', href: 'administrare.html?view=admin' });
+    return items.map(function (it) {
+      return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
+        '<span>' + it.label + '</span>' +
+      '</button>';
+    }).join('');
   }
 
   function updateUserDisplay() {
@@ -301,9 +335,4 @@
     if (largeAvatar) largeAvatar.innerHTML = renderAvatar(normalUser, 48);
   }
 
-  function refreshToggleLabel() {
-    var el = document.querySelector('[data-view-toggle-label]');
-    if (!el) return;
-    el.textContent = getCurrentView() === 'client' ? 'Vezi ca și contabil' : 'Vezi ca și client';
-  }
 })();

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Constructor Anexe — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/constructor.css?v=14">
+</head>
+<body>
+  <div class="shell shell--builder">
+
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Anca</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main" role="main">
+
+      <!-- Builder topbar -->
+      <div class="builder__topbar">
+        <div class="builder__topbar-left">
+          <a class="builder__back" href="administrare.html#tipuri-anexe" aria-label="Înapoi la Tipuri de Anexe">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+          </a>
+          <div class="builder__title-block">
+            <div class="builder__breadcrumb" id="builder-breadcrumb">Administrare · Tipuri de Anexe</div>
+            <label for="builder-name" class="sr-only">Numele anexei</label>
+            <input id="builder-name" class="builder__name-input" type="text" value="" autocomplete="off">
+          </div>
+        </div>
+        <div class="builder__topbar-right">
+          <div class="builder__mode-toggle" role="group" aria-label="Mod de lucru">
+            <button type="button" class="builder__mode-btn is-active" data-mode="design" aria-pressed="true">
+              <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+              Construiește
+            </button>
+            <button type="button" class="builder__mode-btn" data-mode="fill" aria-pressed="false">
+              <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+              Previzualizează
+            </button>
+          </div>
+          <button type="button" class="btn btn--ghost" id="builder-reset">
+            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+            Resetează
+          </button>
+          <button type="button" class="btn btn--primary" id="builder-save">
+            <span class="material-symbols-outlined" aria-hidden="true">save</span>
+            Salvează anexa
+          </button>
+        </div>
+      </div>
+
+      <!-- Workspace: toolbox / canvas / settings -->
+      <div class="builder__workspace" id="builder-workspace">
+
+        <!-- Toolbox -->
+        <aside class="builder__panel builder__toolbox" id="builder-toolbox" aria-label="Componente disponibile">
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Layout</div>
+            <div class="builder__tool" draggable="true" data-type="section_title"><span class="material-symbols-outlined" aria-hidden="true">title</span><span class="builder__tool-label">Titlu secțiune</span></div>
+            <div class="builder__tool" draggable="true" data-type="paragraph"><span class="material-symbols-outlined" aria-hidden="true">notes</span><span class="builder__tool-label">Paragraf instrucțiuni</span></div>
+            <div class="builder__tool" draggable="true" data-type="banner"><span class="material-symbols-outlined" aria-hidden="true">info</span><span class="builder__tool-label">Banner informativ</span></div>
+            <div class="builder__tool" draggable="true" data-type="divider"><span class="material-symbols-outlined" aria-hidden="true">horizontal_rule</span><span class="builder__tool-label">Separator</span></div>
+          </div>
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Text și numere</div>
+            <div class="builder__tool" draggable="true" data-type="text_short"><span class="material-symbols-outlined" aria-hidden="true">short_text</span><span class="builder__tool-label">Text scurt</span></div>
+            <div class="builder__tool" draggable="true" data-type="text_long"><span class="material-symbols-outlined" aria-hidden="true">subject</span><span class="builder__tool-label">Text lung</span></div>
+            <div class="builder__tool" draggable="true" data-type="number"><span class="material-symbols-outlined" aria-hidden="true">numbers</span><span class="builder__tool-label">Număr</span></div>
+            <div class="builder__tool" draggable="true" data-type="currency"><span class="material-symbols-outlined" aria-hidden="true">payments</span><span class="builder__tool-label">Sumă monetară</span></div>
+            <div class="builder__tool" draggable="true" data-type="percent"><span class="material-symbols-outlined" aria-hidden="true">percent</span><span class="builder__tool-label">Procent</span></div>
+            <div class="builder__tool" draggable="true" data-type="cui"><span class="material-symbols-outlined" aria-hidden="true">badge</span><span class="builder__tool-label">Cod fiscal / CUI</span></div>
+          </div>
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Date</div>
+            <div class="builder__tool" draggable="true" data-type="date"><span class="material-symbols-outlined" aria-hidden="true">calendar_today</span><span class="builder__tool-label">Dată</span></div>
+            <div class="builder__tool" draggable="true" data-type="month"><span class="material-symbols-outlined" aria-hidden="true">date_range</span><span class="builder__tool-label">Lună fiscală</span></div>
+          </div>
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Alegere</div>
+            <div class="builder__tool" draggable="true" data-type="dropdown"><span class="material-symbols-outlined" aria-hidden="true">arrow_drop_down_circle</span><span class="builder__tool-label">Dropdown</span></div>
+            <div class="builder__tool" draggable="true" data-type="radio"><span class="material-symbols-outlined" aria-hidden="true">radio_button_checked</span><span class="builder__tool-label">Radio (alege una)</span></div>
+            <div class="builder__tool" draggable="true" data-type="checkboxes"><span class="material-symbols-outlined" aria-hidden="true">check_box</span><span class="builder__tool-label">Bife multiple</span></div>
+            <div class="builder__tool" draggable="true" data-type="boolean"><span class="material-symbols-outlined" aria-hidden="true">toggle_on</span><span class="builder__tool-label">Confirmare Da/Nu</span></div>
+          </div>
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Referințe Scriptica</div>
+            <div class="builder__tool" draggable="true" data-type="client_picker"><span class="material-symbols-outlined" aria-hidden="true">business</span><span class="builder__tool-label">Selector client</span></div>
+            <div class="builder__tool" draggable="true" data-type="document_picker"><span class="material-symbols-outlined" aria-hidden="true">description</span><span class="builder__tool-label">Selector document</span></div>
+          </div>
+          <div class="builder__toolbox-section">
+            <div class="builder__toolbox-title">Avansat</div>
+            <div class="builder__tool" draggable="true" data-type="file_upload"><span class="material-symbols-outlined" aria-hidden="true">attach_file</span><span class="builder__tool-label">Încărcare fișiere</span></div>
+            <div class="builder__tool" draggable="true" data-type="table"><span class="material-symbols-outlined" aria-hidden="true">table_chart</span><span class="builder__tool-label">Tabel editabil</span></div>
+            <div class="builder__tool" draggable="true" data-type="calculated"><span class="material-symbols-outlined" aria-hidden="true">function</span><span class="builder__tool-label">Câmp calculat</span></div>
+          </div>
+        </aside>
+
+        <!-- Canvas -->
+        <section class="builder__panel builder__canvas-panel" id="builder-canvas-panel" aria-label="Previzualizare anexă">
+          <div class="builder__canvas-wrap">
+            <div class="builder__canvas-meta">Așa va arăta anexa pentru utilizator</div>
+            <div class="builder__canvas" id="builder-canvas"></div>
+          </div>
+        </section>
+
+        <!-- Settings -->
+        <aside class="builder__panel builder__settings" id="builder-settings" aria-label="Proprietăți câmp">
+          <div class="builder__settings-empty" id="settings-empty">
+            <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+            <p class="builder__settings-empty-strong">Selectează un câmp</p>
+            <p>Selectează un câmp pentru a-i edita proprietățile.</p>
+          </div>
+          <div id="settings-content" hidden></div>
+        </aside>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- JSON peek -->
+  <button type="button" class="builder__json-peek" id="builder-json-btn">
+    <span class="material-symbols-outlined" aria-hidden="true">code</span>
+    Vezi JSON Schema
+  </button>
+
+  <!-- Modal: JSON Schema -->
+  <div class="modal" id="modal-json" role="dialog" aria-modal="true" aria-labelledby="modal-json-title" aria-hidden="true">
+    <div class="modal__dialog builder__json-dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="modal-json-title">JSON Schema generat</h2>
+        <p class="modal__subtitle">Aceasta este structura pe care o salvează administratorul. Scriptica o citește și randează anexa în pasul situației contabile.</p>
+      </header>
+      <div class="modal__body">
+        <pre class="builder__json-pre" id="json-output"></pre>
+      </div>
+      <footer class="modal__footer">
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Închide</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: confirmare resetare -->
+  <div class="modal" id="modal-reset" role="dialog" aria-modal="true" aria-labelledby="modal-reset-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="modal-reset-title">Resetează anexa</h2>
+        <p class="modal__subtitle">Resetezi anexa la ultima versiune salvată? Modificările nesalvate se pierd.</p>
+      </header>
+      <footer class="modal__footer">
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--critical" id="builder-reset-confirm">Resetează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=17"></script>
+  <script src="js/mock-data.js?v=17"></script>
+  <script src="js/timer.js?v=17"></script>
+  <script src="js/dashboard.js?v=17"></script>
+  <script src="js/constructor-anexe.js?v=17"></script>
+</body>
+</html>

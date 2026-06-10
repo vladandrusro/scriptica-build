@@ -1,0 +1,416 @@
+/* ============================================================
+   Scriptica — Administrare (panou de back-office)
+   Tab strip, tabele generice de administrare, status pill,
+   butoane de acțiune, ajustări de formular în modal.
+   ============================================================ */
+
+/* Shell: pagina folosește .shell--messaging-closed (components.css),
+   ca arhiva.html — fără panou de mesagerie, .main ocupă tot spațiul. */
+
+/* ------------------------------------------------------------
+   Tab strip
+   ------------------------------------------------------------ */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-tab:hover:not(.is-active):not(.admin-tab--disabled) {
+  background: var(--color-surface-1);
+}
+
+.admin-tab.is-active {
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+}
+
+.admin-tab--disabled {
+  color: var(--color-text-muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------
+   Panouri de tab
+   ------------------------------------------------------------ */
+.admin-panel {
+  display: none;
+}
+
+.admin-panel.is-active {
+  display: block;
+}
+
+/* ------------------------------------------------------------
+   Toolbar (filtre + buton Adaugă)
+   ------------------------------------------------------------ */
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-toolbar__spacer {
+  flex: 1;
+}
+
+.admin-helper {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+}
+
+/* ------------------------------------------------------------
+   Tabel generic de administrare (modelat după .sit-table)
+   ------------------------------------------------------------ */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-body);
+}
+
+.admin-table thead th {
+  background: var(--color-surface-1);
+  padding: var(--space-3);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.admin-table tbody td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text-primary);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table__name {
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-table__muted {
+  color: var(--color-text-muted);
+}
+
+.admin-table__desc {
+  color: var(--color-text-secondary);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Celulă utilizator: avatar + nume */
+.admin-user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-user-cell__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.admin-user-cell__name {
+  font-weight: var(--font-weight-bold);
+}
+
+/* ------------------------------------------------------------
+   Status pill (punct colorat + etichetă)
+   ------------------------------------------------------------ */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.status-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+
+.status-pill--activ .status-pill__dot {
+  background: var(--color-success);
+}
+
+.status-pill--inactiv .status-pill__dot {
+  background: var(--color-text-muted);
+}
+
+.status-pill--inactiv {
+  color: var(--color-text-secondary);
+}
+
+/* ------------------------------------------------------------
+   Butoane de acțiune din tabel (plate, fără fundal decorativ)
+   ------------------------------------------------------------ */
+.admin-actions {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.admin-action-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.admin-action-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.admin-action-btn:hover {
+  color: var(--color-default-highlight);
+  background: var(--color-surface-1);
+}
+
+.admin-action-btn--delete:hover {
+  color: var(--color-critical);
+}
+
+/* ------------------------------------------------------------
+   Formulare în modal
+   ------------------------------------------------------------ */
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* .form-field are display:flex — atributul hidden are nevoie de override */
+.form-field[hidden] {
+  display: none;
+}
+
+.modal__dialog--narrow {
+  width: min(440px, 90vw);
+}
+
+/* Modal lat (step builder): header/footer fixe, corpul derulează. */
+.modal__dialog--wide {
+  width: min(880px, 94vw);
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+
+.modal__dialog--wide .modal__body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------
+   Step builder — modalul „Tip de situație contabilă”
+   ------------------------------------------------------------ */
+.admin-steps-builder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.admin-steps-builder__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-steps-builder__list:empty {
+  display: none;
+}
+
+.admin-step-card {
+  background: var(--color-surface-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-step-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-step-card__num {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.admin-step-card__row {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.admin-step-card__sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-step-card__hint {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Buton dashed „Adaugă pas / Adaugă task” (pattern din constructor) */
+.admin-add-btn {
+  background: var(--color-surface-1);
+  border: 1px dashed var(--color-border-strong);
+  color: var(--color-default-highlight);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.admin-add-btn:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-default-highlight);
+}
+
+.admin-add-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Varianta din interiorul cardului de pas (fundalul cardului e surface-1) */
+.admin-step-card .admin-add-btn {
+  background: var(--color-surface-white);
+}
+
+.admin-step-card .admin-add-btn:hover {
+  background: var(--color-surface-2);
+}
+
+/* Lista de task-uri (un input pe rând + ștergere) */
+.admin-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-task-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-task-row .input {
+  flex: 1;
+}
+
+/* Picker de anexe + chip-uri detașabile */
+.admin-anexa-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-anexa-picker .select {
+  flex: 1;
+  width: auto;
+}
+
+.admin-anexa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-anexa-chip {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  gap: var(--space-1);
+  padding-right: var(--space-2);
+  white-space: normal;
+}
+
+.admin-anexa-chip__remove {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.admin-anexa-chip__remove:hover {
+  color: var(--color-critical);
+  background: var(--color-surface-1);
+}
+
+.admin-anexa-chip__remove .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.admin-confirm-text {
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}

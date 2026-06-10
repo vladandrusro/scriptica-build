@@ -10,9 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/tokens.css?v=13">
-  <link rel="stylesheet" href="css/base.css?v=13">
-  <link rel="stylesheet" href="css/components.css?v=13">
+  <link rel="stylesheet" href="css/tokens.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/anexe.css?v=14">
 </head>
 <body>
   <div class="shell">
@@ -333,6 +334,34 @@
     </div>
   </div>
 
+  <!-- Modal: Completare anexă (full-screen) -->
+  <div class="modal modal--anexa" id="modal-anexa-fill" role="dialog" aria-modal="true" aria-labelledby="modal-anexa-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <header class="anexa-modal__header">
+        <div class="anexa-modal__title-block">
+          <div class="anexa-modal__title" id="modal-anexa-title" data-anexa-title></div>
+          <div class="anexa-modal__sub" data-anexa-subtitle></div>
+        </div>
+        <button type="button" class="modal__close" data-modal-close aria-label="Închide" style="position: static;">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </header>
+      <div class="anexa-modal__body">
+        <form class="anexa-form" id="anexa-form" novalidate></form>
+      </div>
+      <footer class="anexa-modal__footer">
+        <div class="anexa-modal__progress">
+          <span class="anexa-modal__progress-text" data-anexa-progress-text>0 din 0 câmpuri obligatorii completate</span>
+          <div class="anexa-modal__progress-track" aria-hidden="true">
+            <div class="anexa-modal__progress-bar" data-anexa-progress-bar></div>
+          </div>
+        </div>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" data-anexa-save>Salvează progresul</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Modal: Timer Picker -->
   <div class="modal" id="modal-timer-picker" role="dialog" aria-modal="true" aria-labelledby="modal-timer-picker-title" aria-hidden="true">
     <div class="modal__dialog" role="document" style="width: min(520px, 90vw);">
@@ -395,11 +424,12 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=16"></script>
-  <script src="js/mock-data.js?v=16"></script>
-  <script src="js/timer.js?v=16"></script>
-  <script src="js/dashboard.js?v=16"></script>
-  <script src="js/situatie-detaliu.js?v=16"></script>
-  <script src="js/documents.js?v=16"></script>
+  <script src="js/shell.js?v=17"></script>
+  <script src="js/mock-data.js?v=17"></script>
+  <script src="js/timer.js?v=17"></script>
+  <script src="js/dashboard.js?v=17"></script>
+  <script src="js/anexa-fill.js?v=17"></script>
+  <script src="js/situatie-detaliu.js?v=17"></script>
+  <script src="js/documents.js?v=17"></script>
 </body>
 </html>

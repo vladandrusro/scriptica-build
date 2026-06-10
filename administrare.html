@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administrare — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/administrare.css?v=14">
+</head>
+<body>
+  <div class="shell shell--messaging-closed">
+
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <div class="header__timer" id="header-timer" hidden>
+          <a class="timer-pill" href="#">
+            <span class="timer-pill__dot" aria-hidden="true"></span>
+            <span class="timer-pill__time">00:00:00</span>
+            <span class="timer-pill__meta">
+              <span class="timer-pill__task"></span>
+              <span class="timer-pill__client"></span>
+            </span>
+          </a>
+          <button class="timer-pill__stop" type="button" aria-label="Oprește cronometrul">
+            <span class="material-symbols-outlined" aria-hidden="true">stop_circle</span>
+          </button>
+        </div>
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Anca</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigație principală">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="acasa.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">home</span>
+          <span class="nav-item__label">Acasă</span>
+        </a>
+        <a class="nav-item" href="situatii.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">fact_check</span>
+          <span class="nav-item__label">Situații Contabile</span>
+        </a>
+        <a class="nav-item" href="time-tracking.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">timer</span>
+          <span class="nav-item__label">Time Tracking</span>
+        </a>
+        <a class="nav-item" href="arhiva.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">archive</span>
+          <span class="nav-item__label">Arhivă</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main" role="main">
+
+      <!-- Page header -->
+      <header class="page-header">
+        <h1 class="page-header__title">Administrare</h1>
+      </header>
+
+      <!-- Tab strip -->
+      <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Secțiuni de administrare">
+        <button type="button" class="admin-tab" id="tab-utilizatori-interni" role="tab" data-tab="utilizatori-interni" aria-selected="false" aria-controls="panel-utilizatori-interni">Utilizatori interni</button>
+        <button type="button" class="admin-tab" id="tab-utilizatori-externi" role="tab" data-tab="utilizatori-externi" aria-selected="false" aria-controls="panel-utilizatori-externi">Utilizatori externi</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Tipuri de Situații Contabile</button>
+        <button type="button" class="admin-tab admin-tab--disabled" id="tab-solicitari-interne" role="tab" data-tab="solicitari-interne" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Tipuri de solicitări interne</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-anexe" role="tab" data-tab="tipuri-anexe" aria-selected="false" aria-controls="panel-tipuri-anexe">Tipuri de Anexe</button>
+        <button type="button" class="admin-tab" id="tab-taguri" role="tab" data-tab="taguri" aria-selected="false" aria-controls="panel-taguri">Taguri</button>
+        <button type="button" class="admin-tab admin-tab--disabled" id="tab-configurare-arhiva" role="tab" data-tab="configurare-arhiva" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Configurare Arhivă</button>
+        <button type="button" class="admin-tab admin-tab--disabled" id="tab-continut-acasa" role="tab" data-tab="continut-acasa" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Conținut Acasă</button>
+      </div>
+
+      <!-- TAB 1: Utilizatori interni -->
+      <section class="admin-panel" id="panel-utilizatori-interni" role="tabpanel" aria-labelledby="tab-utilizatori-interni">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="ui-search" class="sr-only">Caută utilizator</label>
+            <input id="ui-search" class="input" type="search" placeholder="Caută după nume sau email" autocomplete="off">
+          </div>
+          <label for="ui-tip" class="sr-only">Tip utilizator</label>
+          <select id="ui-tip" class="select" style="width:180px;">
+            <option value="">Toți</option>
+            <option value="Administrator">Administrator</option>
+            <option value="Angajat">Angajat</option>
+          </select>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="ui-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="ui-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="min-width:220px;">Utilizator</th>
+                <th>Email</th>
+                <th style="width:160px;">Rol</th>
+                <th style="width:150px;">Tip utilizator</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:100px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="ui-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="ui-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun utilizator nu corespunde filtrelor selectate.</p>
+        </div>
+      </section>
+
+      <!-- TAB 2: Utilizatori externi -->
+      <section class="admin-panel" id="panel-utilizatori-externi" role="tabpanel" aria-labelledby="tab-utilizatori-externi">
+        <div class="admin-toolbar">
+          <div class="filter-input-search" style="width:360px;">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="ue-search" class="sr-only">Caută client</label>
+            <input id="ue-search" class="input" type="search" placeholder="Caută după nume, CUI, email sau telefon" autocomplete="off">
+          </div>
+        </div>
+        <p class="admin-helper">Clienții sunt adăugați prin fluxul de colaborare, nu din panoul de administrare.</p>
+        <div class="table-wrap" id="ue-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="min-width:220px;">Client</th>
+                <th style="width:180px;">Contact</th>
+                <th style="width:130px;">CNP/CUI</th>
+                <th style="width:150px;">Telefon</th>
+                <th>Email</th>
+                <th style="width:160px;">Tip</th>
+                <th style="width:110px;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="ue-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="ue-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun client nu corespunde căutării.</p>
+        </div>
+      </section>
+
+      <!-- TAB 3: Tipuri de Situații Contabile -->
+      <section class="admin-panel" id="panel-tipuri-situatii" role="tabpanel" aria-labelledby="tab-tipuri-situatii">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="ts-search" class="sr-only">Caută tip de situație</label>
+            <input id="ts-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
+          </div>
+          <label for="ts-status" class="sr-only">Status</label>
+          <select id="ts-status" class="select" style="width:140px;">
+            <option value="">Toate</option>
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+          <label for="ts-freq" class="sr-only">Frecvență</label>
+          <select id="ts-freq" class="select" style="width:160px;">
+            <option value="">Toate</option>
+            <option value="lunar">Lunar</option>
+            <option value="trimestrial">Trimestrial</option>
+            <option value="semestrial">Semestrial</option>
+            <option value="anual">Anual</option>
+          </select>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="ts-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="ts-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width:200px;">Nume</th>
+                <th>Descriere</th>
+                <th style="width:130px;">Frecvență</th>
+                <th style="width:190px;">Pași</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:100px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="ts-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="ts-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun tip de situație nu corespunde filtrelor selectate.</p>
+        </div>
+      </section>
+
+      <!-- TAB 5: Tipuri de anexe -->
+      <section class="admin-panel" id="panel-tipuri-anexe" role="tabpanel" aria-labelledby="tab-tipuri-anexe">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="ta-search" class="sr-only">Caută anexă</label>
+            <input id="ta-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
+          </div>
+          <label for="ta-status" class="sr-only">Status</label>
+          <select id="ta-status" class="select" style="width:140px;">
+            <option value="">Toate</option>
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="ta-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="ta-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="min-width:240px;">Nume anexă</th>
+                <th style="width:90px;">Câmpuri</th>
+                <th style="min-width:220px;">Folosită în</th>
+                <th style="width:150px;">Ultima modificare</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:130px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="ta-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="ta-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">post_add</span>
+          <p id="ta-empty-msg">Nicio anexă nu corespunde filtrelor selectate.</p>
+        </div>
+      </section>
+
+      <!-- TAB 6: Taguri -->
+      <section class="admin-panel" id="panel-taguri" role="tabpanel" aria-labelledby="tab-taguri">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="tg-search" class="sr-only">Caută tag</label>
+            <input id="tg-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
+          </div>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="tg-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="tg-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Denumire</th>
+                <th style="width:180px;">Utilizări</th>
+                <th style="width:100px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="tg-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="tg-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun tag nu corespunde căutării.</p>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Modal: Utilizator intern (adăugare/editare) -->
+  <div class="modal" id="modal-user" role="dialog" aria-modal="true" aria-labelledby="mu-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="mu-title">Utilizator intern</h2>
+      </header>
+
+      <form class="modal__body" novalidate>
+        <div class="admin-form-row">
+          <div class="form-field" data-field="nume">
+            <label class="form-label" for="mu-nume">Nume*</label>
+            <input id="mu-nume" type="text" class="input" autocomplete="off">
+            <span class="form-error" role="alert"></span>
+          </div>
+          <div class="form-field" data-field="prenume">
+            <label class="form-label" for="mu-prenume">Prenume*</label>
+            <input id="mu-prenume" type="text" class="input" autocomplete="off">
+            <span class="form-error" role="alert"></span>
+          </div>
+        </div>
+
+        <div class="form-field" data-field="email">
+          <label class="form-label" for="mu-email">Email*</label>
+          <input id="mu-email" type="email" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <div class="form-field" data-field="username">
+          <label class="form-label" for="mu-username">Username*</label>
+          <input id="mu-username" type="text" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <div class="form-field" data-field="tip">
+          <label class="form-label" for="mu-tip">Tip utilizator*</label>
+          <select id="mu-tip" class="select">
+            <option value="Administrator">Administrator</option>
+            <option value="Angajat">Angajat</option>
+          </select>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <div class="form-field" data-field="rol" id="mu-rol-field">
+          <label class="form-label" for="mu-rol">Rol</label>
+          <select id="mu-rol" class="select">
+            <option value="Contabil">Contabil</option>
+            <option value="Contabil senior">Contabil senior</option>
+            <option value="Salarizare">Salarizare</option>
+            <option value="Consultant fiscal">Consultant fiscal</option>
+          </select>
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <div class="form-field" data-field="status">
+          <label class="form-label" for="mu-status">Status</label>
+          <select id="mu-status" class="select">
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+        </div>
+
+        <div class="admin-form-row">
+          <div class="form-field" data-field="validFrom">
+            <label class="form-label" for="mu-valid-from">Valabil de la</label>
+            <input id="mu-valid-from" type="date" class="input">
+          </div>
+          <div class="form-field" data-field="validTo">
+            <label class="form-label" for="mu-valid-to">Până la</label>
+            <input id="mu-valid-to" type="date" class="input">
+            <span class="form-error" role="alert"></span>
+          </div>
+        </div>
+      </form>
+
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mu-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Tip de situație contabilă (adăugare/editare) -->
+  <div class="modal" id="modal-type" role="dialog" aria-modal="true" aria-labelledby="mt-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="mt-title">Tip de situație contabilă</h2>
+      </header>
+
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="nume">
+          <label class="form-label" for="mt-nume">Nume*</label>
+          <input id="mt-nume" type="text" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+
+        <div class="form-field" data-field="descriere">
+          <label class="form-label" for="mt-descriere">Descriere</label>
+          <textarea id="mt-descriere" class="textarea" rows="2"></textarea>
+        </div>
+
+        <div class="admin-form-row">
+          <div class="form-field" data-field="frecventa">
+            <label class="form-label" for="mt-frecventa">Frecvență*</label>
+            <select id="mt-frecventa" class="select">
+              <option value="">Selectează frecvența...</option>
+              <option value="lunar">Lunar</option>
+              <option value="trimestrial">Trimestrial</option>
+              <option value="semestrial">Semestrial</option>
+              <option value="anual">Anual</option>
+            </select>
+            <span class="form-error" role="alert"></span>
+          </div>
+          <div class="form-field" data-field="status">
+            <label class="form-label" for="mt-status">Status</label>
+            <select id="mt-status" class="select">
+              <option value="activ">Activ</option>
+              <option value="inactiv">Inactiv</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field" data-field="pasi">
+          <span class="form-label">Pași*</span>
+          <span class="form-helper">Termenele sunt calculate în zile de la data de început a situației și trebuie să fie strict crescătoare.</span>
+          <div class="admin-steps-builder">
+            <div class="admin-steps-builder__list" id="mt-steps"></div>
+            <button type="button" class="admin-add-btn" id="mt-add-step">
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              Adaugă pas
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mt-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Anexă nouă -->
+  <div class="modal" id="modal-anexa" role="dialog" aria-modal="true" aria-labelledby="ma-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="ma-title">Anexă nouă</h2>
+        <p class="modal__subtitle">Configurarea câmpurilor continuă în constructorul de anexe.</p>
+      </header>
+
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="nume">
+          <label class="form-label" for="ma-nume">Nume*</label>
+          <input id="ma-nume" type="text" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+      </form>
+
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmp obligatoriu</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="ma-save">
+          Continuă în constructor
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Tag (adăugare/editare) -->
+  <div class="modal" id="modal-tag" role="dialog" aria-modal="true" aria-labelledby="mtag-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--narrow" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="mtag-title">Tag nou</h2>
+      </header>
+
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="nume">
+          <label class="form-label" for="mtag-nume">Denumire*</label>
+          <input id="mtag-nume" type="text" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+      </form>
+
+      <footer class="modal__footer">
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mtag-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: confirmare acțiune critică -->
+  <div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="mc-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--narrow" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header">
+        <h2 class="modal__title" id="mc-title">Confirmare</h2>
+      </header>
+
+      <div class="modal__body">
+        <p class="admin-confirm-text" id="mc-body"></p>
+      </div>
+
+      <footer class="modal__footer">
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--critical" id="mc-confirm">Confirmă</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=17"></script>
+  <script src="js/mock-data.js?v=17"></script>
+  <script src="js/timer.js?v=17"></script>
+  <script src="js/dashboard.js?v=17"></script>
+  <script src="js/administrare.js?v=17"></script>
+</body>
+</html>
