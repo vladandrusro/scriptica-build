@@ -113,8 +113,147 @@ window.SCRIPTICA_MOCK = {
           tasks: ["Verificare finală de contabil senior", "Închidere situație"],
           anexeIds: [] }
       ]
+    },
+    /* Tip de misiune de audit (domain: 'audit'). Tipurile contabile de mai sus
+       nu au `domain` — absența este tratată ca 'contabil' (zero migrare). */
+    {
+      id: "misiune_audit_regularitate", name: "Misiune de audit de regularitate",
+      domain: "audit", frequency: "anual", status: "activ",
+      description: "Misiune de audit public intern de regularitate, structurată pe etapele legale ale misiunii.",
+      // Termene orientative — adminul le ajustează per firmă.
+      // mapare orientativă pe etape
+      steps: [
+        { name: "Pregătirea misiunii", offsetDays: 15,
+          tasks: [],
+          anexeIds: ["anx_audit_ordin_serviciu", "anx_audit_declaratie_independenta", "anx_audit_notificare", "anx_audit_minuta_deschidere", "anx_audit_chestionar_cunostinta", "anx_audit_studiu_preliminar", "anx_audit_punctaj_riscuri", "anx_audit_program_misiune"] },
+        { name: "Intervenția la fața locului", offsetDays: 45,
+          tasks: [],
+          anexeIds: ["anx_audit_chestionar_ci", "anx_audit_evaluare_ci", "anx_audit_lista_verificare", "anx_audit_test", "anx_obiective_audit", "anx_audit_fiap", "anx_audit_fcri"] },
+        { name: "Raportarea rezultatelor", offsetDays: 90,
+          tasks: [],
+          anexeIds: [] },
+        { name: "Urmărirea recomandărilor", offsetDays: 180,
+          tasks: [],
+          anexeIds: ["anx_audit_urmarire_recomandari"] }
+      ]
     }
   ],
+
+  /* Entități auditate (parte externă a misiunilor de audit) — analog clienților
+     pentru contabilitate. Folosite de combobox-ul „Entitate auditată". */
+  auditEntities: [
+    { id: 1, name: "Primăria Sectorului 1", contactName: "Direcția Economică" },
+    { id: 2, name: "Spitalul Clinic Județean Cluj", contactName: "Direcția Financiar-Contabilă" },
+    { id: 3, name: "Consiliul Județean Ilfov", contactName: "Compartiment Buget" },
+    { id: 4, name: "Regia Autonomă de Transport", contactName: "Serviciul Audit Intern" }
+  ],
+
+  /* Autoritate decidentă — rol de aprobare EXTERN (conducătorul entității
+     auditate), NU nivel de senioritate. Avizează raportul misiunii. */
+  auditAuthorities: [
+    { id: 901, name: "Mihai Constantinescu", role: "Autoritate decidentă", entityId: 1, entityName: "Primăria Sectorului 1", avatarId: 68 }
+  ],
+
+  /* Misiuni de audit (domain:'audit'). Stocate separat de `situations`
+     (contabile) ca să nu treacă prin pipeline-ul de îmbogățire contabil și
+     să garanteze zero regresie pe Situații Contabile. Instanțe ale tipului
+     'misiune_audit_regularitate'. Termene = start + offset-urile pașilor. */
+  auditMissions: [
+    {
+      id: "audit_0001", domain: "audit",
+      name: "Audit de regularitate — achiziții publice 2025",
+      entityId: 1, entityName: "Primăria Sectorului 1",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2026-03-20",
+      deadlineStep1: "2026-04-04", deadlineStep2: "2026-05-04", deadlineStep3: "2026-06-18", deadlineStep4: "2026-09-16",
+      currentStep: 2, totalSteps: 4, stepsCompleted: 1,
+      status: "in_verificare",
+      responsibleIds: [2, 1, 3],
+      perioadaAuditata: { from: "2025-01-01", to: "2025-12-31" },
+      planAnualId: "pa_2026"
+    },
+    {
+      id: "audit_0002", domain: "audit",
+      name: "Audit de regularitate — execuție bugetară 2024",
+      entityId: 2, entityName: "Spitalul Clinic Județean Cluj",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2026-01-10",
+      deadlineStep1: "2026-01-25", deadlineStep2: "2026-02-24", deadlineStep3: "2026-04-10", deadlineStep4: "2026-07-09",
+      currentStep: 3, totalSteps: 4, stepsCompleted: 3,
+      status: "spre_aprobare",
+      responsibleIds: [2, 4],
+      perioadaAuditata: { from: "2024-01-01", to: "2024-12-31" }
+    },
+    {
+      id: "audit_0003", domain: "audit",
+      name: "Audit de regularitate — fonduri europene 2025",
+      entityId: 3, entityName: "Consiliul Județean Ilfov",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2026-04-05",
+      deadlineStep1: "2026-04-20", deadlineStep2: "2026-05-20", deadlineStep3: "2026-07-04", deadlineStep4: "2026-10-02",
+      currentStep: 1, totalSteps: 4, stepsCompleted: 0,
+      status: "analiza",
+      responsibleIds: [1, 5, 2, 3],
+      perioadaAuditata: { from: "2025-01-01", to: "2025-12-31" }
+    },
+    {
+      id: "audit_0004", domain: "audit",
+      name: "Audit de regularitate — salarizare 2024",
+      entityId: 1, entityName: "Primăria Sectorului 1",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2026-02-01",
+      deadlineStep1: "2026-02-16", deadlineStep2: "2026-03-18", deadlineStep3: "2026-05-02", deadlineStep4: "2026-07-31",
+      currentStep: 3, totalSteps: 4, stepsCompleted: 3,
+      status: "spre_aprobare",
+      responsibleIds: [2, 1],
+      perioadaAuditata: { from: "2024-01-01", to: "2024-12-31" },
+      planAnualId: "pa_2026"
+    },
+    {
+      id: "audit_0005", domain: "audit",
+      name: "Audit de regularitate — investiții 2023",
+      entityId: 1, entityName: "Primăria Sectorului 1",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2025-09-01",
+      deadlineStep1: "2025-09-16", deadlineStep2: "2025-10-16", deadlineStep3: "2025-11-30", deadlineStep4: "2026-02-28",
+      currentStep: 4, totalSteps: 4, stepsCompleted: 4,
+      status: "aprobata",
+      responsibleIds: [2, 1, 3],
+      perioadaAuditata: { from: "2023-01-01", to: "2023-12-31" }
+    }
+  ],
+
+  /* Planificarea auditului (Brief #7). Planul multianual așază misiunile
+     orientativ pe ~3-5 ani; planul anual derivă din el și, la demarare,
+     fiecare intrare devine o misiune reală (auditMissions). */
+  auditPlansMultiannual: [
+    {
+      id: "pma_2026_2029", name: "Plan multianual de audit public intern 2026–2029",
+      fromYear: 2026, toYear: 2029, status: "aprobat",
+      // Misiuni orientative — denumiri în linii mari, se rafinează în planul anual.
+      missions: [
+        "Audit de regularitate — achiziții publice",
+        "Audit de regularitate — salarizare și resurse umane",
+        "Audit de performanță — investiții publice",
+        "Audit de sistem — securitatea sistemelor informatice",
+        "Audit de regularitate — fonduri europene",
+        "Audit de regularitate — patrimoniu și inventariere"
+      ]
+    }
+  ],
+  auditPlansAnnual: [
+    {
+      id: "pa_2026", multiannualId: "pma_2026_2029", year: 2026, status: "aprobat",
+      entries: [
+        { id: "pae_1", name: "Audit de regularitate — achiziții publice 2025", entityId: 1, perioadaAuditata: { from: "2025-01-01", to: "2025-12-31" }, responsibleIds: [2, 1, 3], riskNote: "Risc ridicat — volum mare de achiziții directe, procedură neactualizată.", missionId: "audit_0001" },
+        { id: "pae_2", name: "Audit de regularitate — salarizare 2024", entityId: 1, perioadaAuditata: { from: "2024-01-01", to: "2024-12-31" }, responsibleIds: [2, 1], riskNote: "Risc mediu — modificări legislative salariale frecvente.", missionId: "audit_0004" },
+        { id: "pae_3", name: "Audit de performanță — investiții publice", entityId: 1, perioadaAuditata: { from: "2024-01-01", to: "2025-12-31" }, responsibleIds: [3], riskNote: "Risc ridicat — proiecte de infrastructură cu întârzieri repetate.", missionId: null },
+        { id: "pae_4", name: "Audit de sistem — securitatea sistemelor IT", entityId: 1, perioadaAuditata: { from: "2026-01-01", to: "2026-12-31" }, responsibleIds: [2], riskNote: "Risc mediu — sisteme critice neauditate în ultimii 3 ani.", missionId: null }
+      ]
+    }
+  ],
+
+  // Plan anual aprobat până la 20 dec. anul precedent; referat de justificare per misiune; planuri păstrate 10 ani. Fază ulterioară.
 
   /* Phase 9 — taguri administrabile (admin panel) */
   adminTags: [
@@ -213,6 +352,250 @@ window.SCRIPTICA_MOCK = {
         { type: "radio", label: "Soldurile corespund?", required: true, help: "", options: ["Da, perfect", "Diferență justificată", "Nu, necesită investigare"] },
         { type: "text_long", label: "Explicația diferențelor", rows: 3, placeholder: "Comisioane neînregistrate, încasări în tranzit...", required: false, help: "" },
         { type: "file_upload", label: "Extras de cont atașat", required: true, help: "", multi: true, maxSizeMB: 10, allowedTypes: "PDF, JPG, PNG" }
+      ] }
+    },
+
+    /* ============================================================
+       Anexe Misiune de Audit (Phase audit — seed)
+       ============================================================ */
+
+    /* Part B — anexă completă cu repeater_block */
+    {
+      id: "anx_obiective_audit",
+      name: "Obiectivele Misiunii",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      schema: { fields: [
+        { type: "paragraph", text: "Definește obiectivele misiunii de audit. Pentru fiecare obiectiv, completează titlul, constatarea și eventualele iregularități identificate." },
+        { type: "repeater_block",
+          label: "Obiectiv",
+          addLabel: "Adaugă obiectiv",
+          minBlocks: 1,
+          maxBlocks: null,
+          blockFields: [
+            { type: "text_long", label: "Titlul obiectivului", rows: 1, required: true, help: "" },
+            { type: "text_long", label: "Constatare", rows: 3, required: false, help: "" },
+            { type: "text_long", label: "Iregularitate", rows: 3, required: false, help: "" },
+            { type: "text_long", label: "Recomandare", rows: 3, required: false, help: "Recomandarea generează un rând în Etapa IV — Urmărirea recomandărilor." }
+          ]
+        }
+      ] }
+    },
+
+    /* Part C — instrumente standard (HG 1086/2013). Seed-uri minimal-plauzibile. */
+    {
+      id: "anx_audit_ordin_serviciu",
+      name: "Ordin de serviciu",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Ordin de serviciu" },
+        { type: "text_short", label: "Număr ordin", required: true, help: "", maxLength: 50 },
+        { type: "date", label: "Data emiterii", required: true, help: "" },
+        { type: "text_short", label: "Structura/entitatea auditată", required: true, help: "", maxLength: 120 },
+        { type: "text_long", label: "Scopul și obiectivele misiunii", rows: 3, required: true, help: "" },
+        { type: "text_long", label: "Echipa de audit desemnată", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_declaratie_independenta",
+      name: "Declarație de independență",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Declarație de independență" },
+        { type: "text_short", label: "Numele auditorului", required: true, help: "", maxLength: 120 },
+        { type: "checkboxes", label: "Incompatibilități identificate", required: false, help: "", options: ["Relații de rudenie", "Interese financiare", "Implicare anterioară în activitatea auditată", "Niciuna"] },
+        { type: "boolean", label: "Confirm independența față de structura auditată", required: true, help: "" },
+        { type: "text_long", label: "Observații", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_notificare",
+      name: "Notificare privind declanșarea misiunii",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Notificare privind declanșarea misiunii de audit" },
+        { type: "text_short", label: "Structura auditată", required: true, help: "", maxLength: 120 },
+        { type: "date", label: "Data notificării", required: true, help: "" },
+        { type: "text_long", label: "Conținutul notificării", rows: 4, required: true, help: "" },
+        { type: "document_picker", label: "Documente anexate", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_audit_minuta_deschidere",
+      name: "Minuta ședinței de deschidere",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Minuta ședinței de deschidere" },
+        { type: "date", label: "Data ședinței", required: true, help: "" },
+        { type: "text_long", label: "Participanți", rows: 3, required: true, help: "" },
+        { type: "text_long", label: "Aspecte discutate", rows: 4, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_chestionar_cunostinta",
+      name: "Chestionar de luare la cunoștință",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Chestionar de luare la cunoștință (CLC)" },
+        { type: "text_long", label: "Descrierea activității structurii auditate", rows: 4, required: true, help: "" },
+        { type: "text_long", label: "Cadrul legal aplicabil", rows: 3, required: false, help: "" },
+        { type: "text_long", label: "Observații", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_studiu_preliminar",
+      name: "Studiu preliminar",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Studiu preliminar" },
+        { type: "text_long", label: "Obiective și domenii analizate", rows: 4, required: true, help: "" },
+        { type: "text_long", label: "Riscuri preliminare identificate", rows: 3, required: false, help: "" },
+        { type: "document_picker", label: "Documente consultate", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_audit_punctaj_riscuri",
+      name: "Stabilirea punctajului riscurilor și ierarhizarea",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Stabilirea punctajului riscurilor și ierarhizarea" },
+        { type: "table", label: "Evaluarea riscurilor", required: true, help: "Un rând per risc identificat.", columns: [
+          { name: "Risc identificat", type: "text" },
+          { name: "Probabilitate", type: "number" },
+          { name: "Impact", type: "number" },
+          { name: "Punctaj total", type: "number" }
+        ], minRows: 1 },
+        { type: "text_long", label: "Observații privind ierarhizarea", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_chestionar_ci",
+      name: "Chestionar de control intern",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Chestionar de control intern (CCI)" },
+        { type: "text_long", label: "Întrebări privind controlul intern", rows: 4, required: true, help: "" },
+        { type: "radio", label: "Există controale formalizate?", required: true, help: "", options: ["Da", "Parțial", "Nu"] },
+        { type: "text_long", label: "Observații", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_evaluare_ci",
+      name: "Evaluarea inițială a controlului intern",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Evaluarea inițială a controlului intern" },
+        { type: "radio", label: "Nivelul controlului intern", required: true, help: "", options: ["Ridicat", "Mediu", "Scăzut"] },
+        { type: "text_long", label: "Justificare și concluzii", rows: 4, required: true, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_program_misiune",
+      name: "Programul misiunii",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Programul misiunii de audit" },
+        { type: "table", label: "Activități planificate", required: true, help: "", columns: [
+          { name: "Activitate", type: "text" },
+          { name: "Responsabil", type: "text" },
+          { name: "Termen", type: "date" }
+        ], minRows: 1 },
+        { type: "text_long", label: "Note", rows: 2, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_lista_verificare",
+      name: "Chestionar – listă de verificare",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Chestionar – listă de verificare (CLV)" },
+        { type: "checkboxes", label: "Elemente verificate", required: true, help: "", options: ["Documente justificative complete", "Aprobări conforme", "Înregistrări corecte", "Respectarea termenelor"] },
+        { type: "text_long", label: "Observații per element", rows: 3, required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_audit_test",
+      name: "Test",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Test" },
+        { type: "text_long", label: "Obiectivul testului", rows: 2, required: true, help: "" },
+        { type: "text_long", label: "Eșantionul testat", rows: 2, required: false, help: "" },
+        { type: "text_long", label: "Rezultatele testării", rows: 3, required: true, help: "" },
+        { type: "document_picker", label: "Probe de audit", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_audit_fiap",
+      name: "FIAP — Fișă de identificare și analiză a problemei",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      // NOTĂ: FIAP are flux de confirmare/semnătură externă; FCRI are escaladare 3 zile — de tratat în faza relevantă, nu acum.
+      schema: { fields: [
+        { type: "section_title", text: "FIAP — Fișă de identificare și analiză a problemei" },
+        { type: "text_long", label: "Problema identificată", rows: 2, required: true, help: "" },
+        { type: "text_long", label: "Constatare", rows: 3, required: true, help: "" },
+        { type: "text_long", label: "Cauze", rows: 2, required: false, help: "" },
+        { type: "text_long", label: "Consecințe", rows: 2, required: false, help: "" },
+        { type: "text_long", label: "Recomandări", rows: 3, required: true, help: "" },
+        { type: "document_picker", label: "Probe atașate", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_audit_fcri",
+      name: "FCRI — Formular de constatare și raportare a iregularităților",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      // NOTĂ: FIAP are flux de confirmare/semnătură externă; FCRI are escaladare 3 zile — de tratat în faza relevantă, nu acum.
+      schema: { fields: [
+        { type: "section_title", text: "FCRI — Formular de constatare și raportare a iregularităților" },
+        { type: "text_long", label: "Iregularitatea constatată", rows: 3, required: true, help: "" },
+        { type: "text_long", label: "Actul normativ încălcat", rows: 2, required: true, help: "" },
+        { type: "date", label: "Data constatării", required: true, help: "" },
+        { type: "text_long", label: "Măsuri propuse", rows: 3, required: false, help: "" },
+        { type: "document_picker", label: "Documente justificative", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_audit_urmarire_recomandari",
+      name: "Fișa de urmărire a implementării recomandărilor",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      // STUB: câmpuri de validat vs HG 1086/2013
+      schema: { fields: [
+        { type: "section_title", text: "Fișa de urmărire a implementării recomandărilor" },
+        { type: "table", label: "Stadiul recomandărilor", required: true, help: "", columns: [
+          { name: "Recomandare", type: "text" },
+          { name: "Termen", type: "date" },
+          { name: "Stadiu", type: "text" }
+        ], minRows: 1 },
+        { type: "text_long", label: "Observații", rows: 2, required: false, help: "" }
       ] }
     }
   ],

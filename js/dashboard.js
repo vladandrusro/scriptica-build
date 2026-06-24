@@ -400,9 +400,11 @@
     typeSelect.innerHTML =
       '<option value="">Selectează tipul...</option>' +
       MOCK.situationTypes.filter(function (t) {
-        /* Doar tipurile active și cu cel puțin un pas definit — tipurile
-           dezactivate din admin nu mai apar la crearea unei situații. */
-        return (t.status || 'activ') === 'activ' && t.steps && t.steps.length;
+        /* Doar tipurile contabile, active și cu cel puțin un pas definit —
+           misiunile de audit (domain 'audit') nu se creează din acest flux,
+           iar tipurile dezactivate din admin nu mai apar la creare. */
+        return (t.domain || 'contabil') === 'contabil' &&
+          (t.status || 'activ') === 'activ' && t.steps && t.steps.length;
       }).map(function (t) {
         return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
       }).join('');

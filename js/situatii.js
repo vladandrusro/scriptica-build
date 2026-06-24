@@ -87,7 +87,10 @@
     var tip = $('#f-tip');
     if (tip) {
       tip.innerHTML = '<option value="">Toate tipurile</option>' +
-        MOCK.situationTypes.map(function (t) {
+        MOCK.situationTypes.filter(function (t) {
+          /* Doar tipuri contabile — misiunile de audit au tabul lor. */
+          return (t.domain || 'contabil') === 'contabil';
+        }).map(function (t) {
           return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
         }).join('');
     }

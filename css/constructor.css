@@ -689,6 +689,168 @@ textarea.bfield__input {
   color: var(--color-default-highlight);
 }
 
+/* ------------------------------------------------------------
+   Bloc repetabil (repeater_block)
+   ------------------------------------------------------------ */
+.bfield__repeater {
+  border: 1px solid var(--color-border-strong);
+  border-left: 3px solid var(--color-default-highlight);
+  border-radius: var(--radius-md);
+  background: var(--color-chat-right);
+  padding: var(--space-3);
+}
+
+.bfield__repeater-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.bfield__repeater-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.bfield__repeater-title .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--color-default-highlight);
+}
+
+.bfield__repeater-badge {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-default-highlight);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  padding: 2px var(--space-2);
+}
+
+/* Zona de construire a șablonului (drop target, mod Construiește) */
+.bfield__rzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 64px;
+  padding: var(--space-2);
+  background: var(--color-surface-white);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.bfield__rzone-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+
+.bfield__rzone-empty .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bfield__repeater-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.bfield__repeater-foot .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Mod Previzualizează — instanțe repetabile */
+.bfield__rinstance {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.bfield__rinstance-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.bfield__rinstance-title {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bfield__rinstance-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.bfield__rinstance-del:hover {
+  background: var(--color-surface-1);
+  color: var(--color-critical);
+}
+
+.bfield__rinstance-del .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.bfield__rinstance-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bfield__radd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-default-highlight);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-white);
+  color: var(--color-default-highlight);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-small);
+  transition: background var(--transition-fast);
+}
+
+.bfield__radd:hover:not(:disabled) {
+  background: var(--color-chat-right);
+}
+
+.bfield__radd:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bfield__radd .material-symbols-outlined {
+  font-size: 18px;
+}
+
 /* Fill (preview) mode — fields lose builder affordances */
 .builder__canvas--fill .bfield {
   cursor: default;

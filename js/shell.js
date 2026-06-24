@@ -19,6 +19,7 @@
     if (p === 'client') return 'client';
     if (p === 'accountant') return 'accountant';
     if (p === 'admin') return 'admin';
+    if (p === 'autoritate') return 'autoritate';
     try { return localStorage.getItem(VIEW_KEY) || 'accountant'; }
     catch (e) { return 'accountant'; }
   };
@@ -73,6 +74,10 @@
   window.scripticaCurrentUser = function () {
     var MOCK = window.SCRIPTICA_MOCK;
     if (!MOCK) return null;
+    if (getCurrentView() === 'autoritate') {
+      var auths = MOCK.auditAuthorities || [];
+      if (auths.length) return auths[0];
+    }
     if (getCurrentView() === 'admin') {
       var admins = MOCK.admins || [];
       if (admins.length) return admins[0];
@@ -90,12 +95,54 @@
   document.addEventListener('DOMContentLoaded', function () {
     applyViewBodyClass();
     initSidebar();
+    injectAuditNav();
+    injectPlanificareNav();
     injectAdminNav();
     initActiveNav();
     initMessagingToggle();
     buildUserMenu();
     initNonFunctionalStubs();
   });
+
+  /* „Misiuni Audit" — item de navigație injectat dinamic lângă „Situații
+     Contabile", ca paginile existente să nu necesite fiecare o editare de
+     sidebar (același pattern ca injectAdminNav). Ascuns în vederea client. */
+  function injectAuditNav() {
+    if (getCurrentView() === 'client') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="misiuni-audit"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'misiuni-audit.html';
+    a.setAttribute('data-nav', 'misiuni-audit');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">verified_user</span>' +
+      '<span class="nav-item__label">Misiuni Audit</span>';
+    var anchor = nav.querySelector('[href="situatii.html"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else if (anchor) nav.appendChild(a);
+    else nav.appendChild(a);
+  }
+
+  /* „Planificare Audit" — planificarea multianuală/anuală. Vizibilă doar
+     pentru admin local + autoritate decidentă (read-only la aceasta din urmă).
+     Injectat lângă „Misiuni Audit". */
+  function injectPlanificareNav() {
+    var view = getCurrentView();
+    if (view !== 'admin' && view !== 'autoritate') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="planificare-audit"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'planificare-audit.html' + (view === 'autoritate' ? '?view=autoritate' : '?view=admin');
+    a.setAttribute('data-nav', 'planificare-audit');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">event_note</span>' +
+      '<span class="nav-item__label">Planificare Audit</span>';
+    var anchor = nav.querySelector('[data-nav="misiuni-audit"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else nav.appendChild(a);
+  }
 
   /* Admin view gets an extra rail item (Phase 9). Injected dynamically so
      existing pages don't each need a sidebar edit. */
@@ -117,6 +164,7 @@
     var view = getCurrentView();
     document.body.classList.toggle('body--client', view === 'client');
     document.body.classList.toggle('body--admin', view === 'admin');
+    document.body.classList.toggle('body--autoritate', view === 'autoritate');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -302,6 +350,7 @@
     if (view !== 'accountant') items.push({ view: 'accountant', label: 'Vezi ca și contabil', href: 'acasa.html' });
     if (view !== 'client') items.push({ view: 'client', label: 'Vezi ca și client', href: 'acasa.html?view=client' });
     if (view !== 'admin') items.push({ view: 'admin', label: 'Vezi ca administrator', href: 'administrare.html?view=admin' });
+    if (view !== 'autoritate') items.push({ view: 'autoritate', label: 'Vezi ca autoritate decidentă', href: 'misiuni-audit.html?view=autoritate' });
     return items.map(function (it) {
       return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
@@ -313,12 +362,18 @@
   function updateUserDisplay() {
     var user = scripticaCurrentUser();
     if (!user) return;
-    var isClient = getCurrentView() === 'client';
+    var view = getCurrentView();
+    var isClient = view === 'client';
     var fullName = user.fullName || user.name || user.contactName || '';
     var firstName = fullName.split(/\s+/)[0] || fullName;
-    var role = isClient
-      ? ('Client · ' + (user.companyName || ''))
-      : ((user.role || 'Contabil') + ' · Scriptica');
+    var role;
+    if (isClient) {
+      role = 'Client · ' + (user.companyName || '');
+    } else if (view === 'autoritate') {
+      role = (user.role || 'Autoritate decidentă') + ' · ' + (user.entityName || '');
+    } else {
+      role = (user.role || 'Contabil') + ' · Scriptica';
+    }
 
     document.querySelectorAll('[data-user-name]').forEach(function (el) {
       if (el.tagName === 'B') el.textContent = firstName;

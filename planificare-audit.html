@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arhivă — Scriptica</title>
+  <title>Planificare Audit — Scriptica</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,8 +13,10 @@
   <link rel="stylesheet" href="css/tokens.css?v=14">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/administrare.css?v=14">
+  <link rel="stylesheet" href="css/planificare-audit.css?v=1">
 </head>
-<body>
+<body data-page="planificare-audit">
   <div class="shell shell--messaging-closed">
 
     <header class="header" role="banner">
@@ -79,67 +81,67 @@
       </nav>
     </aside>
 
-    <main class="main" id="arhiva-main" role="main"></main>
+    <main class="main" id="main" role="main">
 
-  </div>
-
-  <!-- Modal: AI Extraction (reused from Phase 4b in read-only mode) -->
-  <div class="modal modal--doc-ai" id="modal-ai" role="dialog" aria-modal="true" aria-labelledby="modal-ai-title" aria-hidden="true">
-    <div class="doc-modal__layout">
-      <aside class="doc-preview-card" data-ai-preview-card role="button" tabindex="0" aria-label="Deschide previzualizarea documentului în ecran complet">
-        <div class="doc-preview-card__page" data-ai-preview-svg></div>
-        <div class="doc-preview-card__footer">
-          <span class="doc-preview-card__filename" data-ai-preview-filename></span>
-          <span class="doc-preview-card__hint">
-            <span class="material-symbols-outlined" aria-hidden="true">open_in_full</span>
-            Click pentru ecran complet
-          </span>
-        </div>
-      </aside>
-
-      <div class="modal__dialog doc-modal doc-modal__panel" role="document">
-        <header class="doc-modal__header">
-          <button type="button" class="doc-modal__close" data-modal-close aria-label="Închide">
-            <span class="material-symbols-outlined" aria-hidden="true">close</span>
-          </button>
-          <h2 class="doc-modal__title" id="modal-ai-title">Detalii document</h2>
-          <p class="doc-modal__meta" data-ai-meta></p>
-        </header>
-
-        <div class="doc-modal__body">
-          <div class="doc-modal__status-strip" data-ai-status></div>
-          <div class="doc-modal__observation" data-ai-observation></div>
-          <section class="doc-modal__fields" data-ai-fields></section>
-        </div>
-
-        <footer class="doc-modal__footer">
-          <button type="button" class="btn btn--ghost doc-modal__footer-download" data-ai-download>
-            <span class="material-symbols-outlined" aria-hidden="true">download</span>
-            Descarcă
-          </button>
-          <div class="doc-modal__footer-spacer"></div>
-          <button type="button" class="btn btn--ghost" data-ai-edit>Editează detalii</button>
-          <button type="button" class="btn btn--ghost" data-ai-reclass>Reclasifică</button>
-          <button type="button" class="btn btn--primary" data-ai-close>Închide</button>
-        </footer>
-      </div>
-    </div>
-  </div>
-
-  <!-- Fullscreen preview overlay -->
-  <div class="doc-preview-fullscreen" id="doc-preview-fullscreen" role="dialog" aria-modal="true" aria-hidden="true" hidden>
-    <div class="doc-preview-fullscreen__backdrop" data-preview-backdrop></div>
-    <div class="doc-preview-fullscreen__panel" role="document">
-      <header class="doc-preview-fullscreen__header">
-        <span class="doc-preview-fullscreen__filename" data-preview-filename></span>
-        <span class="doc-preview-fullscreen__pagenum" data-preview-pagenum></span>
-        <button type="button" class="doc-preview-fullscreen__close" data-preview-close aria-label="Închide previzualizarea">
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
-        </button>
+      <header class="page-header">
+        <h1 class="page-header__title">Planificare Audit</h1>
       </header>
-      <div class="doc-preview-fullscreen__body">
-        <div class="doc-preview-fullscreen__page" data-preview-svg></div>
-      </div>
+
+      <div class="plan-section-title">Plan multianual</div>
+      <div id="plan-multianual"></div>
+
+      <div class="plan-section-title">Plan anual</div>
+      <section class="docs-section" id="plan-anual" aria-label="Plan anual"></section>
+
+    </main>
+
+  </div>
+
+  <!-- Modal: editare plan multianual (admin) -->
+  <div class="modal" id="modal-plan-edit" role="dialog" aria-modal="true" aria-labelledby="mpe-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="mpe-title">Editează planul multianual</h2>
+      </header>
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="nume">
+          <label class="form-label" for="mpe-nume">Denumire plan*</label>
+          <input id="mpe-nume" type="text" class="input" autocomplete="off">
+          <span class="form-error" role="alert"></span>
+        </div>
+        <div class="admin-form-row">
+          <div class="form-field" data-field="from">
+            <label class="form-label" for="mpe-from">An început*</label>
+            <input id="mpe-from" type="number" class="input" min="2020" max="2100" step="1">
+            <span class="form-error" role="alert"></span>
+          </div>
+          <div class="form-field" data-field="to">
+            <label class="form-label" for="mpe-to">An sfârșit*</label>
+            <input id="mpe-to" type="number" class="input" min="2020" max="2100" step="1">
+            <span class="form-error" role="alert"></span>
+          </div>
+          <div class="form-field" data-field="status">
+            <label class="form-label" for="mpe-status">Status</label>
+            <select id="mpe-status" class="select">
+              <option value="aprobat">Aprobat</option>
+              <option value="ciorna">Ciornă</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field" data-field="missions">
+          <label class="form-label" for="mpe-missions">Misiuni orientative</label>
+          <span class="form-helper">Câte o misiune pe linie. Se rafinează ulterior în planul anual.</span>
+          <textarea id="mpe-missions" class="textarea plan-edit-missions"></textarea>
+        </div>
+      </form>
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mpe-save">Salvează</button>
+      </footer>
     </div>
   </div>
 
@@ -150,7 +152,6 @@
   <script src="js/mock-data.js?v=22"></script>
   <script src="js/timer.js?v=22"></script>
   <script src="js/dashboard.js?v=22"></script>
-  <script src="js/documents.js?v=22"></script>
-  <script src="js/arhiva.js?v=22"></script>
+  <script src="js/planificare-audit.js?v=1"></script>
 </body>
 </html>

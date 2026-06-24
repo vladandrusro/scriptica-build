@@ -92,6 +92,7 @@
         <button type="button" class="admin-tab" id="tab-utilizatori-interni" role="tab" data-tab="utilizatori-interni" aria-selected="false" aria-controls="panel-utilizatori-interni">Utilizatori interni</button>
         <button type="button" class="admin-tab" id="tab-utilizatori-externi" role="tab" data-tab="utilizatori-externi" aria-selected="false" aria-controls="panel-utilizatori-externi">Utilizatori externi</button>
         <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Tipuri de Situații Contabile</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-audit" role="tab" data-tab="tipuri-audit" aria-selected="false" aria-controls="panel-tipuri-audit">Tipuri de Misiuni de Audit</button>
         <button type="button" class="admin-tab admin-tab--disabled" id="tab-solicitari-interne" role="tab" data-tab="solicitari-interne" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Tipuri de solicitări interne</button>
         <button type="button" class="admin-tab" id="tab-tipuri-anexe" role="tab" data-tab="tipuri-anexe" aria-selected="false" aria-controls="panel-tipuri-anexe">Tipuri de Anexe</button>
         <button type="button" class="admin-tab" id="tab-taguri" role="tab" data-tab="taguri" aria-selected="false" aria-controls="panel-taguri">Taguri</button>
@@ -218,6 +219,57 @@
         <div class="table-empty table-wrap" id="ts-empty" role="status">
           <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
           <p>Niciun tip de situație nu corespunde filtrelor selectate.</p>
+        </div>
+      </section>
+
+      <!-- TAB 3b: Tipuri de Misiuni de Audit (același component, domain='audit') -->
+      <section class="admin-panel" id="panel-tipuri-audit" role="tabpanel" aria-labelledby="tab-tipuri-audit">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="tma-search" class="sr-only">Caută tip de misiune de audit</label>
+            <input id="tma-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
+          </div>
+          <label for="tma-status" class="sr-only">Status</label>
+          <select id="tma-status" class="select" style="width:140px;">
+            <option value="">Toate</option>
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+          <label for="tma-freq" class="sr-only">Periodicitate</label>
+          <select id="tma-freq" class="select" style="width:160px;">
+            <option value="">Toate</option>
+            <option value="anual">Anual</option>
+            <option value="semestrial">Semestrial</option>
+            <option value="trimestrial">Trimestrial</option>
+            <option value="treime">Pe treimi</option>
+            <option value="lunar">Lunar</option>
+            <option value="la_cerere">La cerere (neperiodică)</option>
+          </select>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="tma-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="tma-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width:200px;">Nume</th>
+                <th>Descriere</th>
+                <th style="width:130px;">Periodicitate</th>
+                <th style="width:190px;">Pași</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:100px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="tma-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="tma-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun tip de misiune de audit nu corespunde filtrelor selectate.</p>
         </div>
       </section>
 
@@ -409,7 +461,7 @@
 
         <div class="admin-form-row">
           <div class="form-field" data-field="frecventa">
-            <label class="form-label" for="mt-frecventa">Frecvență*</label>
+            <label class="form-label" for="mt-frecventa" id="mt-frecventa-label">Frecvență*</label>
             <select id="mt-frecventa" class="select">
               <option value="">Selectează frecvența...</option>
               <option value="lunar">Lunar</option>
@@ -531,10 +583,10 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=17"></script>
-  <script src="js/mock-data.js?v=17"></script>
-  <script src="js/timer.js?v=17"></script>
-  <script src="js/dashboard.js?v=17"></script>
-  <script src="js/administrare.js?v=17"></script>
+  <script src="js/shell.js?v=22"></script>
+  <script src="js/mock-data.js?v=22"></script>
+  <script src="js/timer.js?v=22"></script>
+  <script src="js/dashboard.js?v=22"></script>
+  <script src="js/administrare.js?v=22"></script>
 </body>
 </html>

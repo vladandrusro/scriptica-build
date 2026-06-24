@@ -1,0 +1,172 @@
+/* ============================================================
+   Scriptica — Misiuni Audit (Brief #3)
+   Page-scoped: extinde tabelul Situații + modalul „Situație Nouă"
+   pentru domeniul audit. Reutilizează componentele din components.css;
+   adaugă doar ce e specific audit-ului. Tokens only.
+   ============================================================ */
+
+/* --- Statusuri noi de audit (extind status-dot + sit-status) --- */
+.status-dot--spre_aprobare { background: var(--color-pending); }
+.status-dot--aprobata      { background: var(--color-success); }
+
+.sit-status--spre_aprobare { color: var(--color-pending); }
+.sit-status--aprobata      { color: var(--color-success); }
+
+/* --- Celula Misiune: nume + entitate auditată dedesubt --- */
+.am-mission__name {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.am-mission__entity {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* --- Cluster de responsabili în celulă (echipă) --- */
+.am-resp {
+  display: inline-flex;
+  align-items: center;
+}
+
+.am-resp .avatars-cluster {
+  display: inline-flex;
+}
+
+.am-resp__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-1);
+  margin-left: -8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  border: 2px solid var(--color-surface-white);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+/* --- Etapele misiunii (rândul expandat) --- */
+.am-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.am-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.am-step.is-current {
+  background: var(--color-surface-white);
+}
+
+.am-step__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 76px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.am-step.is-current .am-step__badge {
+  background: var(--color-important);
+  color: var(--color-default-highlight);
+}
+
+.am-step.is-done .am-step__badge {
+  background: var(--color-success);
+  color: var(--color-surface-white);
+}
+
+.am-step__name {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+
+.am-step.is-current .am-step__name {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.am-step__check {
+  color: var(--color-success);
+  font-size: 18px;
+}
+
+.am-step__now {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-default-highlight);
+}
+
+/* --- Multi-select responsabili în modal (reia pattern-ul chip-urilor de
+       anexe din administrare.css; copiat page-scoped ca să nu încărcăm tot
+       admin-ul). --- */
+.admin-anexa-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-anexa-picker .select {
+  flex: 1;
+  width: auto;
+}
+
+.admin-anexa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.admin-anexa-chips:empty {
+  display: none;
+}
+
+.admin-anexa-chip {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  gap: var(--space-1);
+  padding-right: var(--space-2);
+  white-space: normal;
+}
+
+.admin-anexa-chip__remove {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.admin-anexa-chip__remove:hover {
+  color: var(--color-critical);
+  background: var(--color-surface-1);
+}
+
+.admin-anexa-chip__remove .material-symbols-outlined {
+  font-size: 14px;
+}

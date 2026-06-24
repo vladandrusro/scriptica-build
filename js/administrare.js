@@ -22,14 +22,41 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   var ANEXE_KEY = 'scriptica.anexe';
   var TYPES_KEY = 'scriptica.situationTypes';
   var DEFAULT_TAB = 'utilizatori-interni';
-  var ENABLED_TABS = ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-anexe', 'taguri'];
+  var ENABLED_TABS = ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-audit', 'tipuri-anexe', 'taguri'];
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   var FREQUENCY_LABELS = {
     lunar:        'Lunar',
     trimestrial:  'Trimestrial',
     semestrial:   'Semestrial',
-    anual:        'Anual'
+    anual:        'Anual',
+    /* Periodicități suplimentare pentru misiunile de audit. */
+    treime:       'Pe treimi',
+    la_cerere:    'La cerere (neperiodică)'
+  };
+
+  /* Etichete condiționate pe domeniu pentru modalul de tip (reutilizat). */
+  var DOMAIN_LABELS = {
+    contabil: {
+      modalTitle: 'Tip de situație contabilă',
+      freqLabel: 'Frecvență*',
+      freqPlaceholder: 'Selectează frecvența...',
+      freqError: 'Selectează frecvența.',
+      saveToast: 'Tipul de situație a fost salvat.'
+    },
+    audit: {
+      modalTitle: 'Tip de misiune de audit',
+      freqLabel: 'Periodicitate planificare*',
+      freqPlaceholder: 'Selectează periodicitatea...',
+      freqError: 'Selectează periodicitatea.',
+      saveToast: 'Tipul de misiune de audit a fost salvat.'
+    }
+  };
+
+  /* Opțiunile dropdown-ului de frecvență/periodicitate din modal, per domeniu. */
+  var FREQUENCY_OPTIONS = {
+    contabil: [['lunar', 'Lunar'], ['trimestrial', 'Trimestrial'], ['semestrial', 'Semestrial'], ['anual', 'Anual']],
+    audit: [['anual', 'Anual'], ['semestrial', 'Semestrial'], ['trimestrial', 'Trimestrial'], ['treime', 'Pe treimi'], ['lunar', 'Lunar'], ['la_cerere', 'La cerere (neperiodică)']]
   };
 
   var PERSON_TYPE_LABELS = {
@@ -51,6 +78,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     userSearch: '', userTip: '',
     clientSearch: '',
     typeSearch: '', typeStatus: '', typeFreq: '',
+    auditSearch: '', auditStatus: '', auditFreq: '',
     anexaSearch: '', anexaStatus: '',
     tagSearch: ''
   };
@@ -59,6 +87,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   var userModal, typeModal, anexaModal, tagModal, confirmModal;
   var editingUserId = null;
   var editingTypeId = null;
+  var editingTypeDomain = 'contabil';
   var editingTagId = null;
   var confirmAction = null;
 
@@ -183,7 +212,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function renderActive(slug) {
     if (slug === 'utilizatori-interni')       renderUsers();
     else if (slug === 'utilizatori-externi')  renderClients();
-    else if (slug === 'tipuri-situatii')      renderTypes();
+    else if (slug === 'tipuri-situatii')      renderTypes('contabil');
+    else if (slug === 'tipuri-audit')         renderTypes('audit');
     else if (slug === 'tipuri-anexe')         renderAnexe();
     else if (slug === 'taguri')               renderTags();
   }
@@ -231,9 +261,12 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     bindInput('ui-search', 'input',  function (v) { filters.userSearch = v; renderUsers(); });
     bindInput('ui-tip',    'change', function (v) { filters.userTip = v; renderUsers(); });
     bindInput('ue-search', 'input',  function (v) { filters.clientSearch = v; renderClients(); });
-    bindInput('ts-search', 'input',  function (v) { filters.typeSearch = v; renderTypes(); });
-    bindInput('ts-status', 'change', function (v) { filters.typeStatus = v; renderTypes(); });
-    bindInput('ts-freq',   'change', function (v) { filters.typeFreq = v; renderTypes(); });
+    bindInput('ts-search', 'input',  function (v) { filters.typeSearch = v; renderTypes('contabil'); });
+    bindInput('ts-status', 'change', function (v) { filters.typeStatus = v; renderTypes('contabil'); });
+    bindInput('ts-freq',   'change', function (v) { filters.typeFreq = v; renderTypes('contabil'); });
+    bindInput('tma-search', 'input',  function (v) { filters.auditSearch = v; renderTypes('audit'); });
+    bindInput('tma-status', 'change', function (v) { filters.auditStatus = v; renderTypes('audit'); });
+    bindInput('tma-freq',   'change', function (v) { filters.auditFreq = v; renderTypes('audit'); });
     bindInput('ta-search', 'input',  function (v) { filters.anexaSearch = v; renderAnexe(); });
     bindInput('ta-status', 'change', function (v) { filters.anexaStatus = v; renderAnexe(); });
     bindInput('tg-search', 'input',  function (v) { filters.tagSearch = v; renderTags(); });
@@ -256,6 +289,13 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     });
 
     bindAction('ts-tbody', function (action, id) {
+      var type = MOCK.situationTypes.find(function (t) { return t.id === id; });
+      if (!type) return;
+      if (action === 'edit') openTypeModal(type);
+      else if (action === 'delete') confirmDeleteType(type);
+    });
+
+    bindAction('tma-tbody', function (action, id) {
       var type = MOCK.situationTypes.find(function (t) { return t.id === id; });
       if (!type) return;
       if (action === 'edit') openTypeModal(type);
@@ -476,17 +516,24 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return 'de zile';
   }
 
-  function renderTypes() {
-    var tbody = $('ts-tbody');
+  /* Reutilizat pentru ambele tab-uri de tipuri. domain ∈ 'contabil' | 'audit';
+     tipurile fără `domain` sunt tratate ca 'contabil' (zero migrare). */
+  function renderTypes(domain) {
+    domain = domain || 'contabil';
+    var cfg = domain === 'audit'
+      ? { prefix: 'tma', search: filters.auditSearch, status: filters.auditStatus, freq: filters.auditFreq }
+      : { prefix: 'ts',  search: filters.typeSearch,  status: filters.typeStatus,  freq: filters.typeFreq };
+    var tbody = $(cfg.prefix + '-tbody');
     if (!tbody) return;
-    var q = normalize(filters.typeSearch);
+    var q = normalize(cfg.search);
     var list = MOCK.situationTypes.filter(function (t) {
+      if ((t.domain || 'contabil') !== domain) return false;
       if (q && normalize(t.name).indexOf(q) === -1) return false;
-      if (filters.typeStatus && (t.status || 'activ') !== filters.typeStatus) return false;
-      if (filters.typeFreq && t.frequency !== filters.typeFreq) return false;
+      if (cfg.status && (t.status || 'activ') !== cfg.status) return false;
+      if (cfg.freq && t.frequency !== cfg.freq) return false;
       return true;
     });
-    toggleEmpty('ts', list.length);
+    toggleEmpty(cfg.prefix, list.length);
     tbody.innerHTML = list.map(function (t) {
       var steps = t.steps || [];
       var stepsCell;
@@ -523,7 +570,9 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function initTypeModal() {
     typeModal = createModal('modal-type');
     var addBtn = $('ts-add');
-    if (addBtn) addBtn.addEventListener('click', function () { openTypeModal(null); });
+    if (addBtn) addBtn.addEventListener('click', function () { openTypeModal(null, 'contabil'); });
+    var addAuditBtn = $('tma-add');
+    if (addAuditBtn) addAuditBtn.addEventListener('click', function () { openTypeModal(null, 'audit'); });
     var saveBtn = $('mt-save');
     if (saveBtn) saveBtn.addEventListener('click', saveType);
 
@@ -704,12 +753,35 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     '</div>';
   }
 
-  function openTypeModal(type) {
+  /* Opțiunile dropdown-ului de periodicitate, populate per domeniu. */
+  function populateFreqOptions(domain) {
+    var sel = $('mt-frecventa');
+    if (!sel) return;
+    var dl = DOMAIN_LABELS[domain] || DOMAIN_LABELS.contabil;
+    var opts = FREQUENCY_OPTIONS[domain] || FREQUENCY_OPTIONS.contabil;
+    sel.innerHTML = '<option value="">' + esc(dl.freqPlaceholder) + '</option>' +
+      opts.map(function (o) {
+        return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>';
+      }).join('');
+  }
+
+  function openTypeModal(type, domain) {
     editingTypeId = type ? type.id : null;
+    editingTypeDomain = type ? (type.domain || 'contabil') : (domain || 'contabil');
+    var dl = DOMAIN_LABELS[editingTypeDomain] || DOMAIN_LABELS.contabil;
     clearErrors(typeModal.el);
+
+    /* Același modal, etichete condiționate pe domeniu (titlu + câmp periodicitate). */
+    var titleEl = $('mt-title');
+    if (titleEl) titleEl.textContent = dl.modalTitle;
+    var freqLabelEl = $('mt-frecventa-label');
+    if (freqLabelEl) freqLabelEl.textContent = dl.freqLabel;
+    populateFreqOptions(editingTypeDomain);
+
     $('mt-nume').value = type ? type.name : '';
     $('mt-descriere').value = type ? (type.description || '') : '';
-    $('mt-frecventa').value = type ? type.frequency : '';
+    /* Tip nou de audit → „Anual" implicit; tip contabil nou rămâne gol (placeholder). */
+    $('mt-frecventa').value = type ? type.frequency : (editingTypeDomain === 'audit' ? 'anual' : '');
     $('mt-status').value = type ? (type.status || 'activ') : 'activ';
 
     if (type && type.steps && type.steps.length) {
@@ -745,10 +817,11 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var nume = $('mt-nume').value.trim();
     var freq = $('mt-frecventa').value;
 
+    var dl = DOMAIN_LABELS[editingTypeDomain] || DOMAIN_LABELS.contabil;
     var ok = true;
     setErr(modal, 'nume', !nume, 'Introdu numele tipului.');
     if (!nume) ok = false;
-    setErr(modal, 'frecventa', !freq, 'Selectează frecvența.');
+    setErr(modal, 'frecventa', !freq, dl.freqError);
     if (!freq) ok = false;
 
     if (!draftSteps.length) {
@@ -786,6 +859,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var record = {
       id: editingTypeId || uniqueTypeId(nume),
       name: nume,
+      domain: editingTypeDomain,
       description: $('mt-descriere').value.trim(),
       frequency: freq,
       status: $('mt-status').value,
@@ -805,8 +879,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     writeMapEntry(TYPES_KEY, record.id, record);
 
     typeModal.close();
-    renderTypes();
-    toast('success', 'Tipul de situație a fost salvat.');
+    renderTypes(editingTypeDomain);
+    toast('success', dl.saveToast);
   }
 
   function uniqueTypeId(name) {
@@ -834,7 +908,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         var idx = MOCK.situationTypes.indexOf(type);
         if (idx !== -1) MOCK.situationTypes.splice(idx, 1);
         writeMapEntry(TYPES_KEY, type.id, { id: type.id, deleted: true });
-        renderTypes();
+        renderTypes(type.domain || 'contabil');
         toast('success', 'Tipul de situație a fost șters.');
       }
     });

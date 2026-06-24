@@ -1,0 +1,103 @@
+/* ============================================================
+   Scriptica — Planificare Audit (Brief #7)
+   Plan multianual (card) + plan anual (tabel admin). Reutilizează
+   componentele reale (card, admin-table, pill, avatare, modal).
+   Page-scoped: doar ce e specific planificării. Tokens only.
+   ============================================================ */
+
+.plan-section-title {
+  font-size: var(--font-size-headline-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: var(--space-6) 0 var(--space-3);
+}
+.plan-section-title:first-of-type { margin-top: 0; }
+
+/* --- Plan multianual (card) --- */
+.plan-card {
+  background: var(--color-surface-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+}
+.plan-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+.plan-card__title {
+  font-size: var(--font-size-headline-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.plan-card__meta {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+.plan-card__head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.plan-missions__label {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+.plan-missions__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.plan-mission-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-surface-1);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-small);
+}
+.plan-mission-chip .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--color-default-highlight);
+}
+
+/* --- Tabel plan anual (responsabili + risc + acțiune) --- */
+.plan-annual-table .am-resp .avatars-cluster { display: inline-flex; }
+.plan-risk {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-normal);
+}
+.plan-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+.plan-status--demarata { color: var(--color-success); }
+.plan-status--planificata { color: var(--color-text-secondary); }
+.plan-status .material-symbols-outlined { font-size: 16px; }
+.plan-link {
+  color: var(--color-default-highlight);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+.plan-link:hover { text-decoration: underline; }
+
+/* Avatar mic în clusterul de responsabili din tabel */
+.plan-annual-table .avatar { width: 28px; height: 28px; }
+.plan-annual-table .avatar + .avatar { margin-left: -8px; }
+
+/* Textarea pentru misiuni orientative în modalul de editare */
+.plan-edit-missions { min-height: 120px; }
