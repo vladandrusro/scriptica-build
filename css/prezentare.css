@@ -152,7 +152,180 @@ body.prez-body {
   user-select: none;
 }
 
-/* ----- Slide-3 "press again" hint --------------------------- */
+/* ============================================================
+   Slide 4 — "Ce poate fiecare utilizator" (HTML content, not image)
+   ============================================================ */
+.prez-slide--content {
+  /* Conținut, nu imagine: aliniere sus + scroll dacă depășește ecranul. */
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.prez-content {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  text-align: left;
+}
+
+.prez-content__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.prez-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 56px;
+  height: 56px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+  font-weight: var(--font-weight-black);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.prez-title {
+  margin: 0;
+  font-weight: var(--font-weight-black);
+  font-size: 30px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-default-highlight);
+  line-height: 1.1;
+}
+
+.prez-subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-subtitle);
+  color: var(--color-text-secondary);
+}
+
+.prez-roles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.prez-role-card {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-role-card__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-headline-3);
+  color: var(--color-default-highlight);
+}
+
+.prez-role-card__sub {
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.prez-role-card__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin: 2px 0 var(--space-3);
+}
+
+.prez-caps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prez-caps--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.prez-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.prez-caps--row .prez-cap {
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.prez-cap__text { flex: 1; }
+.prez-caps--row .prez-cap__text { flex: 0 0 auto; }
+
+.prez-badge {
+  flex-shrink: 0;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.prez-badge--tier {
+  background: var(--color-important);
+  color: var(--color-default-highlight);
+}
+.prez-badge--standard {
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.prez-role-card--authority {
+  grid-column: 1 / -1;
+  background: var(--color-chat-right);
+  border-color: var(--color-default-highlight);
+  border-left-width: 4px;
+}
+
+.prez-role-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-default-highlight);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.prez-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+.prez-summary__item b { color: var(--color-default-highlight); }
+
+/* ----- Slide-4 "press again" hint --------------------------- */
 .prez-hint {
   position: absolute;
   bottom: calc(var(--space-6) + 64px);

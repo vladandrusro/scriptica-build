@@ -18,7 +18,7 @@
 
   <div class="prez-deck" role="region" aria-label="Prezentare Scriptica">
 
-    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 3">
+    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 4">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-1.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -28,7 +28,7 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 3">
+    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 4">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-2.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -38,12 +38,90 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 3">
+    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 4">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-3.png" alt="" class="prez-image">
         <div class="prez-fallback">
           <span class="material-symbols-outlined" aria-hidden="true">image</span>
           <span class="prez-fallback-text">Imaginea slide-3.png lipsește din assets/prezentare/</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content" data-slide="4" aria-label="Slide 4 din 4">
+      <div class="prez-content">
+        <div class="prez-content__head">
+          <span class="prez-num">04</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Ce poate fiecare utilizator</h2>
+            <p class="prez-subtitle">Patru tipuri de cont. Două axe separate: senioritate și permisiuni.</p>
+          </div>
+        </div>
+
+        <div class="prez-roles">
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Scriptica Super Admin</div>
+            <div class="prez-role-card__desc">Administrează platforma.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Creează conturi business</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Configurează pachete / tier-uri</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Pauză / anulare contracte</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Denumire instanță ↔ client</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Bootstrap anexe / tipuri pentru clienți noi</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Business Admin <span class="prez-role-card__sub">(admin local)</span></div>
+            <div class="prez-role-card__desc">Constructorul principal de fluxuri.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Utilizatori interni / externi</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Funcție + nivel de senioritate</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Construiește anexe</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Tipuri de fluxuri (contabil / audit)</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Setează permisiuni</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Backup local</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Angajat</div>
+            <div class="prez-role-card__desc">Execută munca.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Lucrează situații / misiuni</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Time tracking</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Chat</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Documente cu sortare AI</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Echipă pe misiuni de audit</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Customer</div>
+            <div class="prez-role-card__desc">Parte externă.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Încarcă / vede documentele proprii</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Vede stadiul situației / misiunii</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Chat</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">La audit = entitate auditată</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            </ul>
+          </article>
+        </div>
+
+        <article class="prez-role-card prez-role-card--authority">
+          <div class="prez-role-card__name">Autoritate Decidentă <span class="prez-role-tag">rol extern de aprobare · NU senioritate</span></div>
+          <div class="prez-role-card__desc">Conducătorul entității auditate avizează raportul — axă separată de echipă.</div>
+          <ul class="prez-caps prez-caps--row">
+            <li class="prez-cap"><span class="prez-cap__text">Vede misiunile read-only</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            <li class="prez-cap"><span class="prez-cap__text">Coadă „Spre Aprobare"</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            <li class="prez-cap"><span class="prez-cap__text">Aprobă / Cere modificări / Respinge</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+          </ul>
+        </article>
+
+        <div class="prez-summary">
+          <span class="prez-summary__item"><b>Senioritate</b> = experiență (etichetă).</span>
+          <span class="prez-summary__item"><b>Permisiune</b> = ce ai voie (separat).</span>
+          <span class="prez-summary__item"><b>Gating comercial</b> = Super Admin alege ce primește fiecare client.</span>
         </div>
       </div>
     </section>
@@ -54,7 +132,7 @@
       <button type="button" class="prez-nav-arrow prez-nav-arrow--disabled" data-prez-prev aria-label="Slide-ul anterior">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
       </button>
-      <span class="prez-nav-indicator" data-prez-indicator>1 / 3</span>
+      <span class="prez-nav-indicator" data-prez-indicator>1 / 4</span>
       <button type="button" class="prez-nav-arrow" data-prez-next aria-label="Slide-ul următor">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
       </button>
