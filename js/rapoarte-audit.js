@@ -118,18 +118,23 @@
     function opts(label, list) {
       return '<option value="">' + label + '</option>' + list.map(function (v) { return '<option>' + esc(v) + '</option>'; }).join('');
     }
+    function field(label, control) {
+      return '<div class="filter-field"><span class="filter-field__label">' + label + '</span>' + control + '</div>';
+    }
     return '<div class="filters rap-filters">' +
-      '<div class="filter-search rap-search">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">search</span>' +
-        '<input class="input" type="search" data-rap="search" placeholder="Caută misiune sau entitate..." autocomplete="off">' +
+      '<div class="filters__primary rap-filters__row">' +
+        '<div class="filter-input-search">' +
+          '<span class="material-symbols-outlined" aria-hidden="true">search</span>' +
+          '<label class="sr-only" for="rap-search">Caută misiune sau entitate</label>' +
+          '<input id="rap-search" class="input" type="search" data-rap="search" placeholder="Caută misiune sau entitate..." autocomplete="off">' +
+        '</div>' +
+        field('Domeniu auditabil', '<select class="select" style="width:210px" data-rap="domain">' + opts('Toate domeniile', domains) + '</select>') +
+        field('Auditor', '<select class="select" style="width:180px" data-rap="auditor">' + opts('Toți auditorii', auditors) + '</select>') +
+        field('Entitate publică', '<select class="select" style="width:200px" data-rap="entity">' + opts('Toate entitățile', entities) + '</select>') +
+        field('Criticitate', '<select class="select" style="width:180px" data-rap="crit"><option value="">Toate</option><option value="irr">Are iregularități</option></select>') +
+        '<div class="filters__spacer"></div>' +
+        '<button type="button" class="btn btn--ghost rap-clear" data-rap="clear"><span class="material-symbols-outlined" aria-hidden="true">close</span>Șterge filtre</button>' +
       '</div>' +
-      '<div class="filter-field"><label class="filter-field__label">Data finalizare</label><select class="select" disabled><option>Oricând</option></select></div>' +
-      '<div class="filter-field"><label class="filter-field__label">Domeniu auditabil</label><select class="select" data-rap="domain">' + opts('Toate domeniile', domains) + '</select></div>' +
-      '<div class="filter-field"><label class="filter-field__label">Auditor</label><select class="select" data-rap="auditor">' + opts('Toți auditorii', auditors) + '</select></div>' +
-      '<div class="filter-field"><label class="filter-field__label">Entitate publică</label><select class="select" data-rap="entity">' + opts('Toate entitățile', entities) + '</select></div>' +
-      '<div class="filter-field"><label class="filter-field__label">Criticitate</label><select class="select" data-rap="crit"><option value="">Toate</option><option value="irr">Are iregularități</option></select></div>' +
-      '<div class="filters__spacer"></div>' +
-      '<button type="button" class="filter-clear" data-rap="clear"><span class="material-symbols-outlined" aria-hidden="true">close</span>Șterge filtre</button>' +
     '</div>';
   }
 
