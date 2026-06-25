@@ -148,10 +148,10 @@ window.SCRIPTICA_MOCK = {
     { id: 4, name: "Regia Autonomă de Transport", contactName: "Serviciul Audit Intern" }
   ],
 
-  /* Autoritate decidentă — rol de aprobare EXTERN (conducătorul entității
-     auditate), NU nivel de senioritate. Avizează raportul misiunii. */
+  /* Autoritate decidentă — utilizator INTERN de senioritate maximă care vede
+     tot (inclusiv rapoartele) și avizează misiunile de audit. */
   auditAuthorities: [
-    { id: 901, name: "Mihai Constantinescu", role: "Autoritate decidentă", entityId: 1, entityName: "Primăria Sectorului 1", avatarId: 68 }
+    { id: 901, name: "Mihai Constantinescu", role: "Autoritate decidentă", seniority: "Senioritate maximă", avatarId: 68 }
   ],
 
   /* Misiuni de audit (domain:'audit'). Stocate separat de `situations`

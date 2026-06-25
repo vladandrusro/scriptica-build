@@ -135,16 +135,12 @@
   }
 
   function missions() {
+    /* Autoritatea decidentă = utilizator intern de senioritate maximă →
+       vede TOATE misiunile de audit (vizibilitate completă), nu doar ale unei entități. */
     var ov = statusOverrides();
-    var list = (MOCK.auditMissions || []).map(function (m) {
+    return (MOCK.auditMissions || []).map(function (m) {
       return ov[m.id] ? Object.assign({}, m, { status: ov[m.id] }) : m;
     });
-    /* Autoritatea vede DOAR misiunile entității ei (vizibilitate supraveghere). */
-    if (isAuthority()) {
-      var a = authority();
-      if (a) list = list.filter(function (m) { return m.entityId === a.entityId; });
-    }
-    return list;
   }
 
   function employeeById(id) {

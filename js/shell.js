@@ -370,7 +370,7 @@
     if (isClient) {
       role = 'Client · ' + (user.companyName || '');
     } else if (view === 'autoritate') {
-      role = (user.role || 'Autoritate decidentă') + ' · ' + (user.entityName || '');
+      role = (user.role || 'Autoritate decidentă') + ' · ' + (user.seniority || 'Scriptica');
     } else {
       role = (user.role || 'Contabil') + ' · Scriptica';
     }
