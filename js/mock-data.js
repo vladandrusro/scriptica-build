@@ -220,6 +220,18 @@ window.SCRIPTICA_MOCK = {
       status: "aprobata",
       responsibleIds: [2, 1, 3],
       perioadaAuditata: { from: "2023-01-01", to: "2023-12-31" }
+    },
+    {
+      id: "audit_0006", domain: "audit",
+      name: "Audit de regularitate — achiziții publice 2023",
+      entityId: 1, entityName: "Primăria Sectorului 1",
+      typeId: "misiune_audit_regularitate", typeName: "Misiune de audit de regularitate",
+      startDate: "2025-06-01",
+      deadlineStep1: "2025-06-16", deadlineStep2: "2025-07-16", deadlineStep3: "2025-08-30", deadlineStep4: "2025-11-28",
+      currentStep: 4, totalSteps: 4, stepsCompleted: 4,
+      status: "aprobata",
+      responsibleIds: [4, 1],
+      perioadaAuditata: { from: "2023-01-01", to: "2023-12-31" }
     }
   ],
 
@@ -254,6 +266,67 @@ window.SCRIPTICA_MOCK = {
   ],
 
   // Plan anual aprobat până la 20 dec. anul precedent; referat de justificare per misiune; planuri păstrate 10 ani. Fază ulterioară.
+
+  /* Rapoarte finale de audit (Brief #8) — pentru misiunile finalizate.
+     // Scor/criticitate: mock din seed. Calcul real = LLM local, faza ulterioara, tier platit. */
+  auditReports: {
+    "audit_0005": {
+      score: 20, level: "Nivel Sever",
+      domain: "Fiabilitatea sistemului financiar contabil",
+      auditor: "Ionuț Zicemult", finalizat: "2026-04-21", perioada: "12.05.2021 – 12.06.2022",
+      objectives: [
+        { title: "Analiza modului de organizare a activității financiar-contabile", crit: "hi", criticality: "Critic",
+          constatareTitle: "Atribuții nerealizate la fișa de post",
+          constatareText: "La fișa de post pentru șef serviciu au fost identificate atribuții care în realitate nu sunt realizate de către ocupantul acestui post, ci sunt incluse în atribuțiile Directorului Economic.",
+          recomandareTitle: "Actualizarea fișelor de post",
+          recomandareText: "Recomandăm actualizarea fișelor de post și adaptarea acestora la obiectivele specifice ale Serviciului Contabilitate.",
+          action: "part", actionText: "Actualizarea fișelor de post. Responsabil: Direcția Resurse Umane. Termen: 30.06.2026." },
+        { title: "Realizarea activităților financiar-contabile conform reglementărilor", crit: "mid", criticality: "Mediu",
+          constatareTitle: "Flux de facturi neconform",
+          constatareText: "Facturile înregistrate la Registratură sunt preluate de Serviciul Financiar fără a fi transmise la timp Serviciului Contabilitate.",
+          recomandareTitle: "Transmiterea facturilor la Contabilitate",
+          recomandareText: "Facturile trebuie transmise Serviciului Contabilitate și introduse în SIMEC conform O.M.F.P. nr. 1792/2002.",
+          action: "ok", actionText: "Procedură actualizată. Responsabil: Direcția Economică. Termen: 31.08.2026 — implementat." },
+        { title: "Evaluarea subsistemului de control intern managerial", crit: "hi", criticality: "Ridicat",
+          constatareTitle: "Riscuri neidentificate",
+          constatareText: "În cadrul Serviciului Financiar nu au fost identificate riscurile asociate activităților specifice desfășurate.",
+          recomandareTitle: "Registru de riscuri",
+          recomandareText: "La nivelul fiecărei structuri se vor stabili obiectivele și riscurile asociate, centralizate la nivelul Grupului de lucru SCIM.",
+          action: "no", actionText: "Registrul de riscuri — neînceput. Responsabil: SCIM. Termen: 31.12.2026." },
+        { title: "Respectarea termenelor de raportare financiară", crit: "mid", criticality: "Mediu",
+          constatareTitle: "Întârzieri ocazionale",
+          constatareText: "Au fost identificate 2 cazuri de raportare cu întârziere peste termenul legal.",
+          recomandareTitle: "Calendar de raportare",
+          recomandareText: "Implementarea unui calendar automatizat de raportare cu alerte.",
+          action: "ok", actionText: "Calendar activ din iulie 2026. Responsabil: Direcția Economică — implementat." }
+      ]
+    },
+    "audit_0006": {
+      score: 5, level: "Nivel Scăzut",
+      domain: "Analiza modului de efectuare a achizițiilor directe",
+      auditor: "Andrei Juvanesco", finalizat: "2026-03-18", perioada: "Anul 2023",
+      objectives: [
+        { title: "Organizarea și reglementarea achizițiilor directe", crit: "lo", criticality: "Scăzut",
+          constatareTitle: "Procedură conformă",
+          constatareText: "Procedura operațională pentru achiziții directe este actualizată și aplicată corespunzător.",
+          recomandareTitle: "Menținere bune practici",
+          recomandareText: "Se recomandă menținerea registrului centralizat și revizuirea anuală.",
+          action: "ok", actionText: "Revizuire anuală programată — implementat." },
+        { title: "Respectarea pragurilor valorice", crit: "lo", criticality: "Scăzut",
+          constatareTitle: "Praguri respectate",
+          constatareText: "Toate achizițiile directe verificate s-au încadrat în pragurile valorice legale.",
+          recomandareTitle: "Monitorizare continuă",
+          recomandareText: "Monitorizarea automată a pragurilor la inițierea achiziției.",
+          action: "ok", actionText: "Sistem de avertizare activ — implementat." },
+        { title: "Documentarea notelor justificative", crit: "mid", criticality: "Mediu",
+          constatareTitle: "Note justificative incomplete",
+          constatareText: "Pentru 2 achiziții nu a fost documentată nota justificativă de estimare a valorii.",
+          recomandareTitle: "Template notă justificativă",
+          recomandareText: "Introducerea unui template obligatoriu pentru nota justificativă.",
+          action: "part", actionText: "Template creat; instruire în curs. Termen: 31.10.2026." }
+      ]
+    }
+  },
 
   /* Phase 9 — taguri administrabile (admin panel) */
   adminTags: [

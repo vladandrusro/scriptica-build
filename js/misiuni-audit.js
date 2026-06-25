@@ -33,18 +33,18 @@
     page: 1,
     expandedId: null,
     showSecondary: false,
-    authTab: 'toate'
+    tab: 'toate'
   };
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || document.body.getAttribute('data-page') !== 'misiuni-audit') return;
-    if (isAuthority()) setupAuthorityUI();
+    setupTabs();
     populateFilterOptions();
     bindFilters();
     bindSecondaryToggle();
     bindTableDelegated();
     initModal();
-    render();
+    applyTab();
   });
 
   /* ---------- Persona „autoritate decidentă" (read-only) ---------- */
@@ -62,30 +62,50 @@
     catch (e) { return {}; }
   }
 
-  function setupAuthorityUI() {
-    /* Read-only: fără buton „Adaugă". */
-    var addBtn = $('#open-new-mission');
-    if (addBtn) addBtn.style.display = 'none';
-
-    /* Tab proeminent „Spre Aprobare" (reutilizează stilul .doc-tabs). */
+  /* Tab-uri la nivel de pagină (toate vederile): Toate · Spre Aprobare · Rapoarte.
+     Reutilizează stilul .doc-tabs. */
+  function setupTabs() {
     var filters = document.querySelector('.filters');
-    if (filters && !document.querySelector('.am-auth-tabs')) {
-      var tabs = document.createElement('div');
-      tabs.className = 'doc-tabs am-auth-tabs';
-      tabs.innerHTML =
-        '<button type="button" class="doc-tab is-active" data-auth-tab="toate">Toate</button>' +
-        '<button type="button" class="doc-tab" data-auth-tab="spre">Spre Aprobare</button>';
-      filters.parentNode.insertBefore(tabs, filters);
-      tabs.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-auth-tab]');
-        if (!btn) return;
-        state.authTab = btn.getAttribute('data-auth-tab');
-        tabs.querySelectorAll('.doc-tab').forEach(function (b) {
-          b.classList.toggle('is-active', b === btn);
-        });
-        resetPage();
-        render();
-      });
+    if (!filters || document.querySelector('.am-tabs')) return;
+    var tabs = document.createElement('div');
+    tabs.className = 'doc-tabs am-tabs';
+    tabs.innerHTML =
+      '<button type="button" class="doc-tab is-active" data-tab="toate">Toate</button>' +
+      '<button type="button" class="doc-tab" data-tab="spre">Spre Aprobare</button>' +
+      '<button type="button" class="doc-tab" data-tab="rapoarte">Rapoarte</button>';
+    filters.parentNode.insertBefore(tabs, filters);
+    tabs.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-tab]');
+      if (!btn) return;
+      state.tab = btn.getAttribute('data-tab');
+      tabs.querySelectorAll('.doc-tab').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+      resetPage();
+      applyTab();
+    });
+  }
+
+  /* Comută între lista standard (Toate/Spre Aprobare) și vederea Rapoarte. */
+  function applyTab() {
+    var isRap = state.tab === 'rapoarte';
+    var filters = document.querySelector('.filters');
+    var tableWrap = $('#table-wrap');
+    var tableEmpty = $('#table-empty');
+    var pagination = $('#sit-pagination');
+    var rapRoot = $('#rap-root');
+    var addBtn = $('#open-new-mission');
+
+    if (filters) filters.style.display = isRap ? 'none' : '';
+    if (pagination) pagination.style.display = isRap ? 'none' : '';
+    if (rapRoot) rapRoot.hidden = !isRap;
+    /* „Adaugă" doar pe tab-ul Toate și doar pentru utilizatorii non-autoritate. */
+    if (addBtn) addBtn.style.display = (!isRap && state.tab === 'toate' && !isAuthority()) ? '' : 'none';
+
+    if (isRap) {
+      if (tableWrap) tableWrap.style.display = 'none';
+      if (tableEmpty) tableEmpty.style.display = 'none';
+      if (rapRoot && window.SCRIPTICA_RAPOARTE) window.SCRIPTICA_RAPOARTE.render(rapRoot);
+    } else {
+      render();
     }
   }
 
@@ -210,7 +230,7 @@
     var f = state.filters;
     var q = normalize(f.search);
     return missions().filter(function (m) {
-      if (isAuthority() && state.authTab === 'spre' && m.status !== 'spre_aprobare') return false;
+      if (state.tab === 'spre' && m.status !== 'spre_aprobare') return false;
       if (q && normalize(m.name).indexOf(q) === -1 && normalize(m.entityName).indexOf(q) === -1) return false;
       if (f.status && m.status !== f.status) return false;
       if (f.tip && m.typeId !== f.tip) return false;
