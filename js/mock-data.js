@@ -328,6 +328,125 @@ window.SCRIPTICA_MOCK = {
     }
   },
 
+  /* ============================================================
+     Super Admin (zona Scriptica) — Brief Super Admin.
+     Scriptica HQ vede toate conturile de business; gestionează
+     comercial (tier/contract) + tehnic (infrastructură).
+     Date mock din seed; sursa reală = monitorizare infra/billing,
+     fază ulterioară.
+     ------------------------------------------------------------
+     Downtime defalcat pe 3 cauze — fiecare incident are `cauza`:
+       'server'   = platforma întreagă jos (cel mai grav)        → critical
+       'ai_vm'    = doar funcțiile A.I. jos (severitate medie)   → pending
+       'ai_limit' = plafon de calcul A.I. atins → throttling.
+                    NU e defecțiune, e semnal comercial de upsell → important
+     `day` = indexul zilei în fereastra de 30 de zile (0 = acum 30 zile, 29 = azi).
+     // downtime: mock din seed; sursa reala = monitorizare infra, faza ulterioara.
+     ============================================================ */
+  superAdmin: {
+    hq: { id: 9001, name: "Scriptica HQ", role: "Super Admin" },
+
+    kpis: {
+      clientiActivi: 34, clientiDelta: "+3",
+      contractePremium: 19, conturiTotal: 34,
+      procesariAI: "12.4k", procesariDelta: "+18%",
+      pePauza: 2
+    },
+
+    /* Încărcare VM globală (LLM local) — media pe ultimele 12 ore, % per interval. */
+    vmLoadGlobal: [40, 55, 48, 70, 92, 64, 50, 58, 44, 38, 52, 46],
+    vmPeakIdxGlobal: 4,
+    vmHours: ["08", "10", "12", "14", "16", "18"],
+
+    uptime30Global: 99.94,
+
+    clients: [
+      {
+        id: "cli_contzilla", name: "Contzilla S.R.L.", domain: "Contabilitate",
+        instance: "contzilla.scriptica.ro", users: 12, enrolled: "14.01.2026",
+        tier: "plus", contract: "activ", aiLoad: 62,
+        commercial: { plan: "Plus", renew: "14.01.2027", billing: "Anual · 4.800 RON", lastPay: "14.01.2026" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: true },
+          { name: "Mesaje smart", tier: "Plus", on: true },
+          { name: "Constructor de Anexe", tier: "Standard", on: true },
+          { name: "Vertical Audit", tier: "Enterprise", on: false },
+          { name: "Backup local", tier: "Plus · add-on", on: false }
+        ],
+        technical: {
+          vmLoad: [50, 64, 58, 88, 72, 60, 54, 48], vmPeakIdx: 3,
+          aiPerMonth: "1.240", docsStored: "8.6k", uptime30: 99.97, lastIncident: "acum 11 zile"
+        },
+        downtime: { incidents: [
+          { cauza: "server", minutes: 4, day: 16 },
+          { cauza: "ai_vm", minutes: 11, day: 23 },
+          { cauza: "ai_limit", minutes: 138, day: 27 }
+        ] }
+      },
+      {
+        id: "cli_auditexpert", name: "Audit Expert Group", domain: "Audit",
+        instance: "auditexpert.scriptica.ro", users: 8, enrolled: "03.11.2025",
+        tier: "ent", contract: "activ", aiLoad: 84,
+        commercial: { plan: "Enterprise", renew: "03.11.2026", billing: "Anual · 12.000 RON", lastPay: "03.11.2025" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: true },
+          { name: "Mesaje smart", tier: "Plus", on: true },
+          { name: "Constructor de Anexe", tier: "Standard", on: true },
+          { name: "Vertical Audit", tier: "Enterprise", on: true },
+          { name: "Backup local", tier: "Plus · add-on", on: true }
+        ],
+        technical: {
+          vmLoad: [62, 70, 66, 90, 80, 72, 68, 60], vmPeakIdx: 3,
+          aiPerMonth: "3.120", docsStored: "21k", uptime30: 99.99, lastIncident: "acum 3 zile"
+        },
+        downtime: { incidents: [
+          { cauza: "ai_vm", minutes: 6, day: 12 },
+          { cauza: "ai_limit", minutes: 22, day: 20 }
+        ] }
+      },
+      {
+        id: "cli_finpartners", name: "FinPartners", domain: "Contabilitate",
+        instance: "finpartners.scriptica.ro", users: 4, enrolled: "22.02.2026",
+        tier: "baza", contract: "pauza", aiLoad: 20,
+        commercial: { plan: "Bază", renew: "—", billing: "Lunar · 390 RON", lastPay: "restanță (mai 2026)" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: false },
+          { name: "Mesaje smart", tier: "Plus", on: false },
+          { name: "Constructor de Anexe", tier: "Standard", on: true },
+          { name: "Vertical Audit", tier: "Enterprise", on: false },
+          { name: "Backup local", tier: "Plus · add-on", on: false }
+        ],
+        technical: {
+          vmLoad: [18, 24, 20, 40, 30, 22, 16, 14], vmPeakIdx: 3,
+          aiPerMonth: "210", docsStored: "1.2k", uptime30: 99.90, lastIncident: "acum 2 zile"
+        },
+        downtime: { incidents: [
+          { cauza: "server", minutes: 12, day: 8 },
+          { cauza: "ai_vm", minutes: 3, day: 14 },
+          { cauza: "ai_limit", minutes: 44, day: 25 }
+        ] }
+      },
+      {
+        id: "cli_contaprim", name: "ContaPrim", domain: "Contabilitate",
+        instance: "contaprim.scriptica.ro", users: 6, enrolled: "09.2025",
+        tier: "baza", contract: "anulat", aiLoad: 8,
+        commercial: { plan: "Bază", renew: "—", billing: "—", lastPay: "—" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: false },
+          { name: "Mesaje smart", tier: "Plus", on: false },
+          { name: "Constructor de Anexe", tier: "Standard", on: false },
+          { name: "Vertical Audit", tier: "Enterprise", on: false },
+          { name: "Backup local", tier: "Plus · add-on", on: false }
+        ],
+        technical: {
+          vmLoad: [6, 8, 5, 12, 9, 7, 4, 3], vmPeakIdx: 3,
+          aiPerMonth: "0", docsStored: "640", uptime30: 99.50, lastIncident: "—"
+        },
+        downtime: { incidents: [] }
+      }
+    ]
+  },
+
   /* Phase 9 — taguri administrabile (admin panel) */
   adminTags: [
     { id: 1, name: "Urgent",             usageCount: 12 },

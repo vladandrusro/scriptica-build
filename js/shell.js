@@ -20,6 +20,7 @@
     if (p === 'accountant') return 'accountant';
     if (p === 'admin') return 'admin';
     if (p === 'autoritate') return 'autoritate';
+    if (p === 'superadmin') return 'superadmin';
     try { return localStorage.getItem(VIEW_KEY) || 'accountant'; }
     catch (e) { return 'accountant'; }
   };
@@ -74,6 +75,9 @@
   window.scripticaCurrentUser = function () {
     var MOCK = window.SCRIPTICA_MOCK;
     if (!MOCK) return null;
+    if (getCurrentView() === 'superadmin') {
+      return (MOCK.superAdmin && MOCK.superAdmin.hq) || { id: 9001, name: 'Scriptica HQ', role: 'Super Admin' };
+    }
     if (getCurrentView() === 'autoritate') {
       var auths = MOCK.auditAuthorities || [];
       if (auths.length) return auths[0];
@@ -108,7 +112,7 @@
      Contabile", ca paginile existente să nu necesite fiecare o editare de
      sidebar (același pattern ca injectAdminNav). Ascuns în vederea client. */
   function injectAuditNav() {
-    if (getCurrentView() === 'client') return;
+    if (getCurrentView() === 'client' || getCurrentView() === 'superadmin') return;
     var nav = document.querySelector('.sidebar__nav');
     if (!nav || nav.querySelector('[data-nav="misiuni-audit"]')) return;
     var a = document.createElement('a');
@@ -165,6 +169,7 @@
     document.body.classList.toggle('body--client', view === 'client');
     document.body.classList.toggle('body--admin', view === 'admin');
     document.body.classList.toggle('body--autoritate', view === 'autoritate');
+    document.body.classList.toggle('body--superadmin', view === 'superadmin');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -351,6 +356,7 @@
     if (view !== 'client') items.push({ view: 'client', label: 'Vezi ca și client', href: 'acasa.html?view=client' });
     if (view !== 'admin') items.push({ view: 'admin', label: 'Vezi ca administrator', href: 'administrare.html?view=admin' });
     if (view !== 'autoritate') items.push({ view: 'autoritate', label: 'Vezi ca autoritate decidentă', href: 'misiuni-audit.html?view=autoritate' });
+    if (view !== 'superadmin') items.push({ view: 'superadmin', label: 'Vezi ca Super Admin', href: 'super-admin.html?view=superadmin' });
     return items.map(function (it) {
       return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
@@ -371,6 +377,8 @@
       role = 'Client · ' + (user.companyName || '');
     } else if (view === 'autoritate') {
       role = (user.role || 'Autoritate decidentă') + ' · ' + (user.seniority || 'Scriptica');
+    } else if (view === 'superadmin') {
+      role = (user.role || 'Super Admin') + ' · Scriptica HQ';
     } else {
       role = (user.role || 'Contabil') + ' · Scriptica';
     }
