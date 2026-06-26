@@ -46,12 +46,30 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || !document.getElementById('sit-table')) return;
+    /* Gating pe arie de acces: pagina e contabilă; ascunsă pentru personas
+       fără „contabil" în scope (ex. audit-stat). */
+    if (typeof window.viewInScope === 'function' && !window.viewInScope('contabil')) {
+      renderOutOfScope('Situații Contabile', 'aria de contabilitate');
+      return;
+    }
     populateFilterOptions();
     bindFilters();
     bindSecondaryToggle();
     bindTableDelegated();
     render();
   });
+
+  function renderOutOfScope(title, area) {
+    var main = document.getElementById('main') || document.querySelector('.main');
+    if (!main) return;
+    main.innerHTML =
+      '<div class="scope-block">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">lock</span>' +
+        '<h1 class="scope-block__title">' + title + '</h1>' +
+        '<p class="scope-block__text">Această secțiune este disponibilă doar personelor cu acces la ' + area + '.</p>' +
+        '<a class="btn btn--primary" href="acasa.html">Înapoi la Acasă</a>' +
+      '</div>';
+  }
 
   /* ---------- Utilities ---------- */
 

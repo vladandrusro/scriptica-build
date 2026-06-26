@@ -1980,6 +1980,75 @@ window.SCRIPTICA_MOCK = {
       observatieAI: "Pare să conțină 3 facturi distincte pe paginile 1, 2-3 și 4. Necesită separare manuală pentru confirmare.",
       verificat: false, verificatManual: false,
       pageThumbnails: [null, null, null, null]
+    },
+
+    /* ===== Arhivă AUDIT (domain:'audit') — separată de contabil. Vizibilă doar
+       personelor cu „audit" în scope; container = entitatea auditată (din misiune).
+       Documente de audit dedicate, ca aria de audit să nu fie goală. ===== */
+    {
+      id: "adoc_001", domain: "audit", missionId: "audit_0005", entityId: 1,
+      filename: "raport_final_audit_investitii_2023.pdf",
+      uploadedAt: "2026-02-20T11:00:00", source: "upload", pagesCount: 24,
+      multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Raport de audit", emitent: "Compartiment Audit Public Intern",
+      numarDocument: "RA-2023-014", dataEmiterii: "2026-02-18", perioadaFiscala: "2023",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Raport de audit", broadCategory: "documentatie-contabila", subFilter: null,
+      confidenceExtraction: 96, confidenceCategorization: 97,
+      observatieAI: "Raport final al misiunii de audit privind investițiile 2023 — constatări și recomandări către conducerea entității.",
+      verificat: true, verificatManual: true, pageThumbnails: []
+    },
+    {
+      id: "adoc_002", domain: "audit", missionId: "audit_0005", entityId: 1,
+      filename: "fiap_control_intern_2023.pdf",
+      uploadedAt: "2025-11-12T09:30:00", source: "upload", pagesCount: 6,
+      multiDoc: false, multiDocConfidence: null,
+      tipDocument: "FIAP", emitent: "Echipa de audit",
+      numarDocument: "FIAP-014-3", dataEmiterii: "2025-11-10", perioadaFiscala: "2023",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Fișă de identificare", broadCategory: "documentatie-contabila", subFilter: null,
+      confidenceExtraction: 91, confidenceCategorization: 90,
+      observatieAI: "Fișă de identificare și analiză a problemei privind subsistemul de control intern managerial.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "adoc_003", domain: "audit", missionId: "audit_0006", entityId: 1,
+      filename: "raport_final_achizitii_2023.pdf",
+      uploadedAt: "2025-08-28T15:45:00", source: "upload", pagesCount: 18,
+      multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Raport de audit", emitent: "Compartiment Audit Public Intern",
+      numarDocument: "RA-2023-009", dataEmiterii: "2025-08-25", perioadaFiscala: "2023",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Raport de audit", broadCategory: "documentatie-contabila", subFilter: null,
+      confidenceExtraction: 94, confidenceCategorization: 95,
+      observatieAI: "Raport final al misiunii privind achizițiile publice 2023; punctaj de risc scăzut, fără iregularități majore.",
+      verificat: true, verificatManual: true, pageThumbnails: []
+    },
+    {
+      id: "adoc_004", domain: "audit", missionId: "audit_0002", entityId: 2,
+      filename: "minuta_sedinta_deschidere.pdf",
+      uploadedAt: "2026-02-05T10:00:00", source: "upload", pagesCount: 2,
+      multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Minută", emitent: "Spitalul Clinic Județean Cluj",
+      numarDocument: "MIN-2024-02", dataEmiterii: "2026-02-03", perioadaFiscala: "2024",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Minută ședință", broadCategory: "necategorisit", subFilter: null,
+      confidenceExtraction: 88, confidenceCategorization: 84,
+      observatieAI: "Minuta ședinței de deschidere a misiunii de audit privind execuția bugetară 2024.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "adoc_005", domain: "audit", missionId: "audit_0001", entityId: 1,
+      filename: "ordin_serviciu_achizitii_2025.pdf",
+      uploadedAt: "2026-03-21T08:15:00", source: "upload", pagesCount: 1,
+      multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Ordin de serviciu", emitent: "Conducătorul compartimentului de audit",
+      numarDocument: "OS-2025-031", dataEmiterii: "2026-03-20", perioadaFiscala: "2025",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Ordin de serviciu", broadCategory: "documentatie-contabila", subFilter: null,
+      confidenceExtraction: 97, confidenceCategorization: 96,
+      observatieAI: "Ordin de serviciu pentru misiunea de audit privind achizițiile publice 2025.",
+      verificat: true, verificatManual: false, pageThumbnails: []
     }
   ];
 
@@ -2285,8 +2354,36 @@ window.SCRIPTICA_MOCK = {
     return all.filter(function (c) { return c.id === CANVAS_CLIENT_ID; });
   };
 
+  /* Personas pe arie de acces — taguim anexele de audit cu domeniul 'audit'
+     (id-uri anx_audit_* + anx_obiective_audit). Anexele contabile rămân
+     netaguite = vizibile peste tot (decizie: untagged = peste tot).
+     anx_criterii_risc / anx_punctaj_risc au deja categories:['audit']. */
+  (function tagAuditAnexe() {
+    var M = window.SCRIPTICA_MOCK;
+    (M.anexeTypes || []).forEach(function (a) {
+      var isAudit = /^anx_audit/.test(a.id) || a.id === 'anx_obiective_audit';
+      if (isAudit && (!a.categories || !a.categories.length)) a.categories = ['audit'];
+    });
+  })();
+
+  /* Biblioteca de anexe vizibilă pentru scope-ul persoanei curente
+     (categories ∩ scope; netaguit = vizibil peste tot). */
+  window.getVisibleAnexe = function () {
+    var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.anexeTypes) || [];
+    var scope = (typeof window.getViewScope === 'function') ? window.getViewScope() : ['contabil', 'audit'];
+    return all.filter(function (a) {
+      var cats = a.categories;
+      if (!cats || !cats.length) return true;
+      return cats.some(function (c) { return scope.indexOf(c) !== -1; });
+    });
+  };
+
   window.getVisibleDocuments = function () {
     var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.documents) || [];
+    if (typeof window.getViewScope === 'function') {
+      var scope = window.getViewScope();
+      all = all.filter(function (d) { return scope.indexOf(d.domain || 'contabil') !== -1; });
+    }
     if (!isClientView()) return all;
     var visibleSitIds = window.getVisibleSituations().map(function (s) { return s.id; });
     return all.filter(function (d) { return visibleSitIds.indexOf(d.situationId) !== -1; });

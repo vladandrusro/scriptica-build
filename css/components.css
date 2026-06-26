@@ -5482,3 +5482,26 @@ body:not(.body--client) [data-client-only] {
   max-width: 480px;
   margin: 0 auto;
 }
+
+/* ===== Scope block — pagină indisponibilă pentru aria de acces a persoanei ===== */
+.scope-block {
+  max-width: 480px;
+  margin: var(--space-8) auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+}
+.scope-block .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--color-default);
+}
+.scope-block__title {
+  font-size: var(--font-size-headline-1);
+  font-weight: var(--font-weight-black);
+  color: var(--color-text-primary);
+}
+.scope-block__text { font-size: var(--font-size-body); line-height: var(--line-height-normal); }
+.scope-block .btn { margin-top: var(--space-2); }

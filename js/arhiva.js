@@ -43,6 +43,47 @@
     return MOCK.documents || [];
   }
 
+  /* ---------- Container/proveniență per domeniu (personas pe arie) ----------
+     Contabil: container = client (din situație). Audit: container = entitatea
+     auditată (din misiune). Astfel arhiva grupează ambele domenii în același
+     arbore (Container → An → Lună → Categorie). */
+  /* Id container: numeric pentru clienți contabili (păstrăm comportamentul
+     existent), string pentru entitățile de audit ('aud_<id>'). */
+  function cidVal(id) {
+    return /^\d+$/.test(String(id)) ? parseInt(id, 10) : String(id);
+  }
+
+  function docContainer(doc) {
+    if ((doc.domain || 'contabil') === 'audit') {
+      var m = (MOCK.auditMissions || []).find(function (x) { return x.id === doc.missionId; });
+      var entId = (doc.entityId != null) ? doc.entityId : (m && m.entityId);
+      var ent = (MOCK.auditEntities || []).find(function (e) { return e.id === entId; });
+      if (!ent) return null;
+      return { id: 'aud_' + ent.id, companyName: ent.name, _audit: true };
+    }
+    var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
+    if (!sit) return null;
+    return (MOCK.clients || []).find(function (c) { return c.id === sit.clientId; }) || null;
+  }
+
+  function docProvenanceCellHtml(d) {
+    if ((d.domain || 'contabil') === 'audit') {
+      var m = (MOCK.auditMissions || []).find(function (x) { return x.id === d.missionId; });
+      if (!m) return '<td><span class="text-muted">—</span></td>';
+      var sl = m.status === 'aprobata' ? 'Aprobată' : (m.status === 'spre_aprobare' ? 'Spre aprobare' : 'Activă');
+      var sc = m.status === 'aprobata' ? 'doc-row__source-status--closed' : 'doc-row__source-status--active';
+      return '<td><a class="doc-row__source-situation" href="misiune-audit-workspace.html?id=' + esc(m.id) + '">' +
+        esc(m.name) + '<span class="doc-row__source-status ' + sc + '">' + sl + '</span></a></td>';
+    }
+    var sit = (MOCK.situations || []).find(function (s) { return s.id === d.situationId; });
+    if (!sit) return '<td><span class="text-muted">—</span></td>';
+    var statusLabel = sit.status === 'inchisa' ? 'Finalizată' : (sit.status === 'anulata' ? 'Anulată' : 'Activă');
+    var statusCls = sit.status === 'inchisa' ? 'doc-row__source-status--closed' :
+                    (sit.status === 'anulata' ? 'doc-row__source-status--cancel' : 'doc-row__source-status--active');
+    return '<td><a class="doc-row__source-situation" href="situatie-detaliu.html?id=' + esc(sit.id) + '">' +
+      esc(sit.typeLabel) + '<span class="doc-row__source-status ' + statusCls + '">' + statusLabel + '</span></a></td>';
+  }
+
   function init() {
     state.tree = buildTree();
     restoreSelection();
@@ -61,9 +102,7 @@
   function buildTree() {
     var t = {};
     getArchiveDocs().forEach(function (doc) {
-      var sit = MOCK.situations.find(function (s) { return s.id === doc.situationId; });
-      if (!sit) return;
-      var client = MOCK.clients.find(function (c) { return c.id === sit.clientId; });
+      var client = docContainer(doc);
       if (!client) return;
       var d = new Date(doc.uploadedAt);
       var year = d.getFullYear();
@@ -128,9 +167,9 @@
   function getDocumentsForSelection(sel) {
     if (!sel) return [];
     return getArchiveDocs().filter(function (d) {
-      var sit = MOCK.situations.find(function (s) { return s.id === d.situationId; });
-      if (!sit) return false;
-      if (sel.clientId && sit.clientId !== sel.clientId) return false;
+      var container = docContainer(d);
+      if (!container) return false;
+      if (sel.clientId && String(container.id) !== String(sel.clientId)) return false;
       var dt = new Date(d.uploadedAt);
       if (sel.year  && dt.getFullYear() !== sel.year)  return false;
       if (sel.month && (dt.getMonth() + 1) !== sel.month) return false;
@@ -191,7 +230,7 @@
 
     var q = state.clientSearch.toLowerCase().trim();
     var clientIds = Object.keys(state.tree)
-      .map(function (id) { return parseInt(id, 10); })
+      .map(function (id) { return cidVal(id); })
       .filter(function (id) {
         var c = state.tree[id].client;
         return !q || c.companyName.toLowerCase().indexOf(q) !== -1;
@@ -463,9 +502,8 @@
     var q = state.globalSearch.toLowerCase().trim();
     var docs = getArchiveDocs().filter(function (d) {
       if (!matchesGlobal(d, q)) return false;
-      // must belong to a known client (safety)
-      var sit = MOCK.situations.find(function (s) { return s.id === d.situationId; });
-      return !!sit;
+      // must belong to a known container (client/entitate) — safety
+      return !!docContainer(d);
     }).sort(sortDocs);
 
     var crumbs = '<nav class="arhiva-breadcrumb" aria-label="Cale">' +
@@ -548,23 +586,7 @@
 
     var provenance = '';
     if (showProvenance) {
-      var sit = MOCK.situations.find(function (s) { return s.id === d.situationId; });
-      if (sit) {
-        var statusLabel = sit.status === 'inchisa' ? 'Finalizată' :
-                          sit.status === 'anulata' ? 'Anulată' : 'Activă';
-        var statusCls = sit.status === 'inchisa' ? 'doc-row__source-status--closed' :
-                        sit.status === 'anulata' ? 'doc-row__source-status--cancel' :
-                        'doc-row__source-status--active';
-        provenance =
-          '<td>' +
-            '<a class="doc-row__source-situation" href="situatie-detaliu.html?id=' + esc(sit.id) + '">' +
-              esc(sit.typeLabel) +
-              '<span class="doc-row__source-status ' + statusCls + '">' + statusLabel + '</span>' +
-            '</a>' +
-          '</td>';
-      } else {
-        provenance = '<td><span class="text-muted">—</span></td>';
-      }
+      provenance = docProvenanceCellHtml(d);
     }
 
     return '<tr class="doc-row" data-doc-id="' + esc(d.id) + '">' +
@@ -697,7 +719,7 @@
       btn.addEventListener('click', function () {
         if (btn.classList.contains('arhiva-tree__node--disabled')) return;
         var level = btn.getAttribute('data-node-level');
-        var clientId = parseInt(btn.getAttribute('data-node-client'), 10);
+        var clientId = cidVal(btn.getAttribute('data-node-client'));
         var year  = btn.getAttribute('data-node-year');
         var month = btn.getAttribute('data-node-month');
         var cat   = btn.getAttribute('data-node-category');
@@ -823,7 +845,7 @@
     if (state.globalSearch && state.globalSearch.trim()) {
       var q = state.globalSearch.toLowerCase().trim();
       return getArchiveDocs().filter(function (d) {
-        return matchesGlobal(d, q) && MOCK.situations.find(function (s) { return s.id === d.situationId; });
+        return matchesGlobal(d, q) && docContainer(d);
       }).length;
     }
     if (state.selection) {

@@ -38,6 +38,19 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || document.body.getAttribute('data-page') !== 'misiuni-audit') return;
+    /* Gating pe arie de acces: pagina e de audit; ascunsă pentru personas
+       fără „audit" în scope (ex. contabilitate). */
+    if (typeof window.viewInScope === 'function' && !window.viewInScope('audit')) {
+      var main = document.getElementById('main') || document.querySelector('.main');
+      if (main) main.innerHTML =
+        '<div class="scope-block">' +
+          '<span class="material-symbols-outlined" aria-hidden="true">lock</span>' +
+          '<h1 class="scope-block__title">Misiuni Audit</h1>' +
+          '<p class="scope-block__text">Această secțiune este disponibilă doar personelor cu acces la aria de audit.</p>' +
+          '<a class="btn btn--primary" href="acasa.html">Înapoi la Acasă</a>' +
+        '</div>';
+      return;
+    }
     setupTabs();
     populateFilterOptions();
     bindFilters();

@@ -12,20 +12,33 @@
   var MSG_COLLAPSED_KEY = 'scriptica.messagingPanelCollapsed';
   var VIEW_KEY = 'scriptica.view';
 
-  /* --- View flag (Phase 7) --- */
+  /* --- View flag (personas pe arie de acces) ---
+     Personas: complet · contabilitate · audit_stat · client · admin ·
+     autoritate · superadmin. 'accountant' = alias legacy = acces complet. */
+  var VALID_VIEWS = ['accountant', 'complet', 'contabilitate', 'audit_stat', 'client', 'admin', 'autoritate', 'superadmin'];
   window.getCurrentView = function () {
     var params = new URLSearchParams(window.location.search);
     var p = params.get('view');
-    if (p === 'client') return 'client';
-    if (p === 'accountant') return 'accountant';
-    if (p === 'admin') return 'admin';
-    if (p === 'autoritate') return 'autoritate';
-    if (p === 'superadmin') return 'superadmin';
-    try { return localStorage.getItem(VIEW_KEY) || 'accountant'; }
-    catch (e) { return 'accountant'; }
+    if (p && VALID_VIEWS.indexOf(p) !== -1) return p;
+    try { return localStorage.getItem(VIEW_KEY) || 'complet'; }
+    catch (e) { return 'complet'; }
   };
   window.setCurrentView = function (view) {
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+  };
+
+  /* Scope de domenii vizibile pentru persona curentă. Un singur sistem de
+     domeniu (contabil/audit), reutilizat din designul de formule/categorii. */
+  window.getViewScope = function () {
+    var v = getCurrentView();
+    if (v === 'contabilitate') return ['contabil'];
+    if (v === 'audit_stat' || v === 'autoritate') return ['audit'];
+    if (v === 'client') return ['contabil'];
+    return ['contabil', 'audit']; /* complet, accountant, admin, superadmin */
+  };
+  window.viewInScope = function (domain) {
+    if (!domain) return true;
+    return getViewScope().indexOf(domain) !== -1;
   };
 
   /* --- Shared avatar helpers (used by header dropdown + anywhere else) --- */
@@ -102,6 +115,7 @@
     injectAuditNav();
     injectPlanificareNav();
     injectAdminNav();
+    gateNavByScope();
     initActiveNav();
     initMessagingToggle();
     buildUserMenu();
@@ -112,13 +126,16 @@
      Contabile", ca paginile existente să nu necesite fiecare o editare de
      sidebar (același pattern ca injectAdminNav). Ascuns în vederea client. */
   function injectAuditNav() {
-    if (getCurrentView() === 'client' || getCurrentView() === 'superadmin') return;
+    /* Doar personas cu „audit" în scope (exclude contabilitate/client);
+       superadmin are propriul sidebar. */
+    if (!viewInScope('audit') || getCurrentView() === 'superadmin') return;
     var nav = document.querySelector('.sidebar__nav');
     if (!nav || nav.querySelector('[data-nav="misiuni-audit"]')) return;
     var a = document.createElement('a');
     a.className = 'nav-item';
     a.href = 'misiuni-audit.html';
     a.setAttribute('data-nav', 'misiuni-audit');
+    a.setAttribute('data-domain', 'audit');
     a.innerHTML =
       '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">verified_user</span>' +
       '<span class="nav-item__label">Misiuni Audit</span>';
@@ -140,6 +157,7 @@
     a.className = 'nav-item';
     a.href = 'planificare-audit.html' + (view === 'autoritate' ? '?view=autoritate' : '?view=admin');
     a.setAttribute('data-nav', 'planificare-audit');
+    a.setAttribute('data-domain', 'audit');
     a.innerHTML =
       '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">event_note</span>' +
       '<span class="nav-item__label">Planificare Audit</span>';
@@ -151,7 +169,8 @@
   /* Admin view gets an extra rail item (Phase 9). Injected dynamically so
      existing pages don't each need a sidebar edit. */
   function injectAdminNav() {
-    if (getCurrentView() !== 'admin') return;
+    /* Administrare: persona „admin" + „complet" (acces complet). */
+    if (getCurrentView() !== 'admin' && getCurrentView() !== 'complet') return;
     var nav = document.querySelector('.sidebar__nav');
     if (!nav || nav.querySelector('[data-nav="administrare"]')) return;
     var a = document.createElement('a');
@@ -164,12 +183,29 @@
     nav.appendChild(a);
   }
 
+  /* Gating de navigație pe arie de acces — ascunde itemii de domeniu care nu
+     sunt în scope-ul persoanei (ex. „Situații Contabile" la audit-stat,
+     „Misiuni Audit" la contabilitate). Itemii fără domeniu rămân vizibili. */
+  function gateNavByScope() {
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav) return;
+    var sit = nav.querySelector('[href="situatii.html"]');
+    if (sit && !sit.getAttribute('data-domain')) sit.setAttribute('data-domain', 'contabil');
+    nav.querySelectorAll('.nav-item[data-domain]').forEach(function (it) {
+      var dom = it.getAttribute('data-domain');
+      it.style.display = viewInScope(dom) ? '' : 'none';
+    });
+  }
+
   function applyViewBodyClass() {
     var view = getCurrentView();
     document.body.classList.toggle('body--client', view === 'client');
     document.body.classList.toggle('body--admin', view === 'admin');
     document.body.classList.toggle('body--autoritate', view === 'autoritate');
     document.body.classList.toggle('body--superadmin', view === 'superadmin');
+    document.body.classList.toggle('body--complet', view === 'complet');
+    document.body.classList.toggle('body--contabilitate', view === 'contabilitate');
+    document.body.classList.toggle('body--audit-stat', view === 'audit_stat');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -350,13 +386,17 @@
 
   /* The two views OTHER than the current one, as menu items (Phase 9: 3-way). */
   function viewSwitchItemsHtml() {
-    var view = getCurrentView();
-    var items = [];
-    if (view !== 'accountant') items.push({ view: 'accountant', label: 'Vezi ca și contabil', href: 'acasa.html' });
-    if (view !== 'client') items.push({ view: 'client', label: 'Vezi ca și client', href: 'acasa.html?view=client' });
-    if (view !== 'admin') items.push({ view: 'admin', label: 'Vezi ca administrator', href: 'administrare.html?view=admin' });
-    if (view !== 'autoritate') items.push({ view: 'autoritate', label: 'Vezi ca autoritate decidentă', href: 'misiuni-audit.html?view=autoritate' });
-    if (view !== 'superadmin') items.push({ view: 'superadmin', label: 'Vezi ca Super Admin', href: 'super-admin.html?view=superadmin' });
+    var cur = getCurrentView();
+    if (cur === 'accountant') cur = 'complet'; /* legacy alias */
+    var items = [
+      { view: 'complet',       label: 'Vezi ca utilizator complet',     href: 'acasa.html?view=complet' },
+      { view: 'contabilitate', label: 'Vezi ca și contabilitate',       href: 'acasa.html?view=contabilitate' },
+      { view: 'audit_stat',    label: 'Vezi ca audit (stat)',           href: 'misiuni-audit.html?view=audit_stat' },
+      { view: 'client',        label: 'Vezi ca și client',              href: 'acasa.html?view=client' },
+      { view: 'admin',         label: 'Vezi ca administrator',          href: 'administrare.html?view=admin' },
+      { view: 'autoritate',    label: 'Vezi ca autoritate decidentă',   href: 'misiuni-audit.html?view=autoritate' },
+      { view: 'superadmin',    label: 'Vezi ca Super Admin',            href: 'super-admin.html?view=superadmin' }
+    ].filter(function (it) { return it.view !== cur; });
     return items.map(function (it) {
       return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
@@ -379,6 +419,12 @@
       role = (user.role || 'Autoritate decidentă') + ' · ' + (user.seniority || 'Scriptica');
     } else if (view === 'superadmin') {
       role = (user.role || 'Super Admin') + ' · Scriptica HQ';
+    } else if (view === 'complet') {
+      role = 'Acces complet · Scriptica';
+    } else if (view === 'contabilitate') {
+      role = 'Contabilitate · Scriptica';
+    } else if (view === 'audit_stat') {
+      role = 'Audit (stat) · Scriptica';
     } else {
       role = (user.role || 'Contabil') + ' · Scriptica';
     }
