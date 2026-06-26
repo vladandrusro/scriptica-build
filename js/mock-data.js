@@ -2344,6 +2344,8 @@ window.SCRIPTICA_MOCK = {
 
   window.getVisibleSituations = function () {
     var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.situations) || [];
+    /* Situațiile sunt domeniul contabil → ascunse personelor fără 'contabil' în scope. */
+    if (typeof window.viewInScope === 'function' && !window.viewInScope('contabil')) return [];
     if (!isClientView()) return all;
     return all.filter(function (s) { return s.clientId === CANVAS_CLIENT_ID; });
   };
@@ -2391,6 +2393,8 @@ window.SCRIPTICA_MOCK = {
 
   window.getVisibleMessages = function () {
     var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.messages) || [];
+    /* Mesajele sunt legate de situații contabile → ascunse fără 'contabil' în scope. */
+    if (typeof window.viewInScope === 'function' && !window.viewInScope('contabil')) return [];
     if (!isClientView()) return all;
     var canvas = ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.clients) || [])
       .find(function (c) { return c.id === CANVAS_CLIENT_ID; });

@@ -10,9 +10,14 @@
    "Azi" este fixat la 2026-04-20 pentru date stabile de prototip.
    ============================================================ */
 
-/* View bootstrap — rulează la evaluarea scriptului, înainte de
-   DOMContentLoaded, ca shell.js să randeze contextul de admin. */
-try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore */ }
+/* View bootstrap — rulează la evaluarea scriptului, înainte de DOMContentLoaded,
+   ca shell.js să randeze contextul de admin. NU suprascrie persona 'complet'
+   (care are și ea acces la Administrare) — altfel ar bloca utilizatorul complet
+   în persona 'admin' după un click pe nav-ul Administrare. */
+try {
+  var _v = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : null;
+  if (_v !== 'complet') localStorage.setItem('scriptica.view', 'admin');
+} catch (e) { /* ignore */ }
 
 (function () {
   'use strict';

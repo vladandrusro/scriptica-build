@@ -24,6 +24,7 @@
       return;
     }
     if (routeClientHome()) return;
+    if (routeAuditHome()) { initHeaderWelcome(); return; }
     renderRegionNew();
     renderRegionAlerts();
     renderRegionClients();
@@ -33,6 +34,28 @@
     initMessagingBadge();
     initModal();
   });
+
+  /* Personas de audit (audit_stat/autoritate, scope ['audit']) NU văd dashboard-ul
+     contabil (situații/clienți/mesaje). Acasă rămâne accesibilă, dar cu un
+     ecran orientat pe audit. Previne scurgerea conținutului contabil. */
+  function routeAuditHome() {
+    if (typeof window.viewInScope !== 'function') return false;
+    if (window.viewInScope('contabil')) return false; /* are acces contabil → dashboard normal */
+    if (!document.querySelector('.dashboard') && !document.getElementById('main')) return false;
+    var main = document.getElementById('main') || document.querySelector('main');
+    if (!main) return false;
+    main.innerHTML =
+      '<div class="scope-block">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">verified_user</span>' +
+        '<h1 class="scope-block__title">Acasă · Audit</h1>' +
+        '<p class="scope-block__text">Ai acces la aria de audit. Continuă către misiunile de audit sau arhiva ta.</p>' +
+        '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;justify-content:center;">' +
+          '<a class="btn btn--primary" href="misiuni-audit.html">Misiuni Audit</a>' +
+          '<a class="btn btn--ghost" href="arhiva.html">Arhivă</a>' +
+        '</div>' +
+      '</div>';
+    return true;
+  }
 
   /* Client-view home routing: 0 → zero-state; 1 → redirect to detail; 2+ → dashboard.
      Only runs on acasa.html — dashboard.js is loaded on other pages too. */

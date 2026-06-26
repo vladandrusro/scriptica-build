@@ -19,9 +19,11 @@
   window.getCurrentView = function () {
     var params = new URLSearchParams(window.location.search);
     var p = params.get('view');
-    if (p && VALID_VIEWS.indexOf(p) !== -1) return p;
-    try { return localStorage.getItem(VIEW_KEY) || 'complet'; }
-    catch (e) { return 'complet'; }
+    if (p && VALID_VIEWS.indexOf(p) !== -1) return p === 'accountant' ? 'complet' : p;
+    try {
+      var stored = localStorage.getItem(VIEW_KEY);
+      return stored === 'accountant' ? 'complet' : (stored || 'complet'); /* migrare alias legacy */
+    } catch (e) { return 'complet'; }
   };
   window.setCurrentView = function (view) {
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
