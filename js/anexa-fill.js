@@ -79,6 +79,177 @@
     return seeds[key] || null;
   }
 
+  /* ============================================================
+     FORMULE AUTOMATE (cross-anexă) — motor de calcul
+     Formulele trăiesc pe tipul de misiune (situationType.formulas);
+     fiecare = { resultRef:"{anexaId}.{REF}", expr, resultType, allowManualOverride }.
+     Referențiabile sunt DOAR câmpurile numerice cu `ref`.
+     Evaluator sigur (fără eval) — recursive descent, operatori aritmetici și paranteze.
+     ============================================================ */
+
+  function tokenizeExpr(expr) {
+    var s = String(expr == null ? '' : expr), tokens = [], i = 0;
+    while (i < s.length) {
+      var ch = s.charAt(i);
+      if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') { i++; continue; }
+      if ('+-*/()'.indexOf(ch) !== -1) { tokens.push({ t: 'op', v: ch }); i++; continue; }
+      if ((ch >= '0' && ch <= '9') || ch === '.') {
+        var num = '';
+        while (i < s.length && ((s.charAt(i) >= '0' && s.charAt(i) <= '9') || s.charAt(i) === '.')) { num += s.charAt(i); i++; }
+        tokens.push({ t: 'num', v: parseFloat(num) }); continue;
+      }
+      if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch === '_') {
+        var id = '';
+        while (i < s.length) { var c = s.charAt(i); if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_' || c === '.') { id += c; i++; } else break; }
+        tokens.push({ t: 'ref', v: id }); continue;
+      }
+      return { error: 'Caracter neacceptat: ' + ch };
+    }
+    return { tokens: tokens };
+  }
+
+  /* resolver(refToken) → number | null. Returns {ok,value} | {ok:false,reason,missing}. */
+  function evalExpr(expr, resolver) {
+    var tk = tokenizeExpr(expr);
+    if (tk.error) return { ok: false, reason: tk.error };
+    var tokens = tk.tokens;
+    if (!tokens.length) return { ok: false, reason: 'empty' };
+    var pos = 0, missing = [], hadError = false;
+    function peek() { return tokens[pos]; }
+    function next() { return tokens[pos++]; }
+    function parseExpression() {
+      var v = parseTerm();
+      while (peek() && peek().t === 'op' && (peek().v === '+' || peek().v === '-')) {
+        var op = next().v; var r = parseTerm(); v = (op === '+') ? v + r : v - r;
+      }
+      return v;
+    }
+    function parseTerm() {
+      var v = parseFactor();
+      while (peek() && peek().t === 'op' && (peek().v === '*' || peek().v === '/')) {
+        var op = next().v; var r = parseFactor();
+        if (op === '*') v = v * r; else { if (r === 0) hadError = hadError || 'div0'; v = v / r; }
+      }
+      return v;
+    }
+    function parseFactor() {
+      var t = peek();
+      if (!t) { hadError = hadError || 'expr'; return NaN; }
+      if (t.t === 'op' && (t.v === '-' || t.v === '+')) { next(); var f = parseFactor(); return t.v === '-' ? -f : f; }
+      if (t.t === 'op' && t.v === '(') {
+        next(); var e = parseExpression();
+        if (peek() && peek().t === 'op' && peek().v === ')') next(); else hadError = hadError || 'paren';
+        return e;
+      }
+      if (t.t === 'num') { next(); return t.v; }
+      if (t.t === 'ref') {
+        next();
+        var val = resolver(t.v);
+        if (val == null || isNaN(Number(val))) { missing.push(t.v); return NaN; }
+        return Number(val);
+      }
+      hadError = hadError || 'expr'; next(); return NaN;
+    }
+    var result = parseExpression();
+    if (peek()) hadError = hadError || 'trailing';
+    if (missing.length) return { ok: false, reason: 'missing', missing: missing };
+    if (hadError) return { ok: false, reason: hadError };
+    if (isNaN(result) || !isFinite(result)) return { ok: false, reason: 'expr' };
+    return { ok: true, value: result };
+  }
+
+  function typeOfSituation(situation) {
+    return (getMock().situationTypes || []).find(function (t) { return t.id === situation.typeId; }) || null;
+  }
+  function formulasForType(situation) {
+    var t = typeOfSituation(situation);
+    return (t && t.formulas) || [];
+  }
+  function anexaById(id) {
+    return (getMock().anexeTypes || []).find(function (a) { return a.id === id; }) || null;
+  }
+  /* Formula al cărei rezultat aterizează pe `field` din `anexa` (sau null). */
+  function resultFormulaForField(situation, anexa, field) {
+    if (!field || !field.ref) return null;
+    var target = anexa.id + '.' + field.ref;
+    return formulasForType(situation).find(function (f) { return f.resultRef === target; }) || null;
+  }
+  function anexaHasFormulaResult(situation, anexa) {
+    var fields = (anexa.schema && anexa.schema.fields) || [];
+    return fields.some(function (f) { return !!resultFormulaForField(situation, anexa, f); });
+  }
+
+  /* Registru {anexaId.REF → number}. opts.liveAnexaId + opts.liveValues
+     suprascriu răspunsul salvat cu draft-ul anexei aflate în editare. */
+  function buildRefRegistry(situation, opts) {
+    var type = typeOfSituation(situation);
+    if (!type) return {};
+    var anexaIds = {};
+    (type.steps || []).forEach(function (st) { (st.anexeIds || []).forEach(function (id) { anexaIds[id] = true; }); });
+    var reg = {};
+    Object.keys(anexaIds).forEach(function (aid) {
+      var anexa = anexaById(aid);
+      if (!anexa) return;
+      var fields = (anexa.schema && anexa.schema.fields) || [];
+      var values;
+      if (opts && opts.liveAnexaId === aid && opts.liveValues) values = opts.liveValues;
+      else { var resp = getResponse(situation, aid); values = (resp && resp.values) || {}; }
+      fields.forEach(function (f, idx) {
+        if (!f.ref) return;
+        var raw = values[String(idx)];
+        var num = (raw == null || String(raw).trim() === '') ? null : Number(raw);
+        reg[aid + '.' + f.ref] = (num == null || isNaN(num)) ? undefined : num;
+      });
+    });
+    return reg;
+  }
+
+  function computeFormula(situation, formula, opts) {
+    var reg = buildRefRegistry(situation, opts);
+    return evalExpr(formula.expr, function (ref) { return (reg[ref] != null) ? reg[ref] : null; });
+  }
+
+  function formatComputed(value, resultType) {
+    if (resultType === 'integer') return String(Math.round(value));
+    var r = Math.round(value * 100) / 100;
+    return String(r);
+  }
+
+  /* Derivarea completă pentru modalul „Vezi calculul". */
+  function deriveFormula(situation, formula, opts) {
+    var reg = buildRefRegistry(situation, opts);
+    var tk = tokenizeExpr(formula.expr);
+    var seen = {}, parts = [];
+    (tk.tokens || []).forEach(function (t) {
+      if (t.t !== 'ref' || seen[t.v]) return; seen[t.v] = 1;
+      var dot = t.v.indexOf('.');
+      var aid = dot >= 0 ? t.v.slice(0, dot) : '';
+      var ref = dot >= 0 ? t.v.slice(dot + 1) : t.v;
+      var anexa = anexaById(aid);
+      var label = '';
+      if (anexa) { var fld = ((anexa.schema && anexa.schema.fields) || []).find(function (f) { return f.ref === ref; }); label = fld ? fld.label : ''; }
+      parts.push({ token: t.v, anexaId: aid, anexaName: anexa ? anexa.name : aid, ref: ref, label: label, value: reg[t.v] });
+    });
+    return { expr: formula.expr, parts: parts, result: computeFormula(situation, formula, opts) };
+  }
+
+  /* Întoarce o copie a `values` cu câmpurile-rezultat auto completate
+     (când sursele sunt complete și câmpul nu e suprascris manual). Folosit la
+     calculul completării pe card, fără a deschide modalul. */
+  function withComputedValues(situation, anexa, values) {
+    if (!formulasForType(situation).length) return values;
+    var fields = (anexa.schema && anexa.schema.fields) || [];
+    var out = null;
+    fields.forEach(function (f, idx) {
+      var formula = resultFormulaForField(situation, anexa, f);
+      if (!formula) return;
+      if (values['__fxman__' + idx]) return; /* suprascris manual → valoarea userului */
+      var auto = computeFormula(situation, formula, null);
+      if (auto.ok) { if (!out) out = JSON.parse(JSON.stringify(values)); out[String(idx)] = formatComputed(auto.value, formula.resultType); }
+    });
+    return out || values;
+  }
+
   /* ---------- Anexele pasului curent ---------- */
 
   function getStepAnexe(situation) {
@@ -171,6 +342,7 @@
     var fields = (anexa.schema && anexa.schema.fields) || [];
     var resp = getResponse(situation, anexa.id);
     var values = (resp && resp.values) || {};
+    values = withComputedValues(situation, anexa, values);
     var comp = completionFromValues(fields, values, situation);
     comp.completedByName = resp ? (resp.completedByName || null) : null;
     return comp;
@@ -280,7 +452,80 @@
     '</select>';
   }
 
-  function fieldHtml(field, idx, draft, situation, readonly) {
+  /* Starea unui câmp-rezultat: manual / auto / override / pending. */
+  function resultFieldState(situation, anexa, field, idx, draft, formula) {
+    var manualEdited = !!draft['__fxman__' + idx];
+    var auto = computeFormula(situation, formula, { liveAnexaId: anexa.id, liveValues: draft });
+    var autoStr = auto.ok ? formatComputed(auto.value, formula.resultType) : null;
+    var cur = (draft[String(idx)] != null) ? String(draft[String(idx)]) : '';
+    if (!manualEdited) {
+      if (auto.ok) return { state: 'auto', value: autoStr, auto: auto, autoStr: autoStr, showUpdate: false };
+      return { state: 'pending', value: cur, auto: auto, autoStr: null, showUpdate: false };
+    }
+    if (auto.ok) return { state: 'override', value: cur, auto: auto, autoStr: autoStr, showUpdate: (autoStr !== cur) };
+    return { state: 'manual', value: cur, auto: auto, autoStr: null, showUpdate: false };
+  }
+
+  /* Randarea unui câmp-rezultat (în locul lui normal) cu comportament special. */
+  function computedFieldHtml(field, idx, draft, situation, anexa, formula, readonly) {
+    var st = resultFieldState(situation, anexa, field, idx, draft, formula);
+    var unit = field.type === 'currency' ? esc(field.currency || 'RON') : (field.type === 'percent' ? '%' : '');
+    var tag, note = '', cls;
+    if (st.state === 'auto') {
+      tag = '<span class="afield-fx__tag afield-fx__tag--auto"><span class="material-symbols-outlined" aria-hidden="true">function</span>fx · calculat automat</span>';
+      note = 'Valoare calculată automat din alte câmpuri. Poate fi incorectă dacă sursele nu sunt complete.';
+      cls = 'is-auto';
+    } else if (st.state === 'override') {
+      tag = '<span class="afield-fx__tag afield-fx__tag--manual"><span class="material-symbols-outlined" aria-hidden="true">edit</span>modificat manual</span>';
+      cls = 'is-override';
+    } else if (st.state === 'manual') {
+      tag = '<span class="afield-fx__tag afield-fx__tag--manual"><span class="material-symbols-outlined" aria-hidden="true">edit</span>scris manual</span>';
+      cls = 'is-manual';
+    } else {
+      tag = '<span class="afield-fx__tag afield-fx__tag--pending"><span class="material-symbols-outlined" aria-hidden="true">function</span>necalculat</span>';
+      note = 'Se calculează automat după ce completezi câmpurile sursă.';
+      cls = 'is-pending';
+    }
+
+    var dis = readonly ? ' disabled' : '';
+    var recalcBtn = (!readonly && st.state === 'auto')
+      ? '<button type="button" class="afield-fx__recalc" data-fx-recalc="' + idx + '" title="Recalculează" aria-label="Recalculează"><span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>'
+      : '';
+    var input = '<input class="afield__input" type="number" step="any" data-af="' + idx + '" data-fx-input="' + idx + '"' +
+      ' value="' + esc(st.value) + '"' + dis + '>';
+    var group = '<div class="afield__group afield-fx__group">' + input +
+      (unit ? '<span class="afield__unit">' + unit + '</span>' : '') + recalcBtn + '</div>';
+
+    /* „Vezi calculul" mereu accesibil. */
+    var head = '<div class="afield-fx__head">' + tag +
+      '<button type="button" class="afield-fx__link" data-fx-derive="' + idx + '">Vezi calculul</button>' +
+    '</div>';
+    var noteHtml = note ? '<div class="afield-fx__note">' + esc(note) + '</div>' : '';
+
+    var updateHtml = '';
+    if (st.showUpdate && !readonly) {
+      updateHtml = '<div class="afield-fx__update">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">sync</span>' +
+        '<div class="afield-fx__update-body">' +
+          '<div>S-a modificat ceva în misiune. Rezultat calculat nou: <strong>' + esc(st.autoStr) + (unit ? ' ' + unit : '') + '</strong>.</div>' +
+          '<div class="afield-fx__update-actions">' +
+            '<button type="button" class="afield-fx__btn afield-fx__btn--primary" data-fx-recalc="' + idx + '">Actualizează</button>' +
+            '<button type="button" class="afield-fx__btn" data-fx-derive="' + idx + '">Vezi calculul</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    return wrapField(idx, labelHtml(field) + helpHtml(field) +
+      '<div class="afield-fx ' + cls + '">' + head + group + noteHtml + updateHtml + '</div>');
+  }
+
+  function fieldHtml(field, idx, draft, situation, readonly, anexa) {
+    /* Câmp-rezultat al unei formule automate (legată pe tipul de misiune)? */
+    if (anexa) {
+      var resFormula = resultFormulaForField(situation, anexa, field);
+      if (resFormula) return computedFieldHtml(field, idx, draft, situation, anexa, resFormula, readonly);
+    }
     var dis = readonly ? ' disabled' : '';
     var v = draft[String(idx)];
     var inner = '';
@@ -522,7 +767,21 @@
     subEl.textContent = situation.typeLabel + ' · ' + situation.clientCompany;
     saveBtn.hidden = readonly;
 
+    /* Sincronizează câmpurile-rezultat (auto) în draft, respectând override-ul
+       manual. Sursele incomplete → câmpul rămâne gol. */
+    function syncComputedFields() {
+      fields.forEach(function (f, idx) {
+        var formula = resultFormulaForField(situation, anexa, f);
+        if (!formula) return;
+        if (draft['__fxman__' + idx]) return;
+        var auto = computeFormula(situation, formula, { liveAnexaId: anexa.id, liveValues: draft });
+        if (auto.ok) draft[String(idx)] = formatComputed(auto.value, formula.resultType);
+        else delete draft[String(idx)];
+      });
+    }
+
     function updateProgress() {
+      syncComputedFields();
       var comp = completionFromValues(fields, draft, situation);
       progressText.textContent = comp.done + ' din ' + comp.total + ' câmpuri obligatorii completate';
       progressBar.style.width = comp.percent + '%';
@@ -531,17 +790,21 @@
     }
 
     function renderFormBody() {
+      syncComputedFields();
       formEl.innerHTML = fields.map(function (f, idx) {
-        return fieldHtml(f, idx, draft, situation, readonly);
+        return fieldHtml(f, idx, draft, situation, readonly, anexa);
       }).join('');
       updateProgress();
     }
+
+    var hasFormula = anexaHasFormulaResult(situation, anexa);
 
     function handleValueEvent(e) {
       if (readonly) return;
       var el = e.target;
       if (el.hasAttribute('data-af')) {
         draft[el.getAttribute('data-af')] = el.value;
+        if (el.hasAttribute('data-fx-input')) draft['__fxman__' + el.getAttribute('data-fx-input')] = true;
       } else if (el.hasAttribute('data-af-radio')) {
         if (el.checked) draft[el.getAttribute('data-af-radio')] = el.value;
       } else if (el.hasAttribute('data-af-check')) {
@@ -576,6 +839,9 @@
       } else {
         return;
       }
+      /* La blur (change), dacă anexa are câmpuri-rezultat, re-randăm pentru a
+         actualiza tag-urile/tooltip-urile (auto → modificat manual etc.). */
+      if (e.type === 'change' && hasFormula) { renderFormBody(); return; }
       updateProgress();
     }
 
@@ -583,7 +849,20 @@
     formEl.onchange = handleValueEvent;
     formEl.onsubmit = function (e) { e.preventDefault(); };
     formEl.onclick = function (e) {
+      /* „Vezi calculul" e accesibil și în read-only. */
+      var deriveRO = e.target.closest('[data-fx-derive]');
+      if (deriveRO) {
+        var dRo = parseInt(deriveRO.getAttribute('data-fx-derive'), 10);
+        openDeriveModal(situation, anexa, fields[dRo], dRo, draft);
+        return;
+      }
       if (readonly) return;
+      var recalc = e.target.closest('[data-fx-recalc]');
+      if (recalc) {
+        delete draft['__fxman__' + recalc.getAttribute('data-fx-recalc')];
+        renderFormBody();
+        return;
+      }
       var pick = e.target.closest('[data-af-file-pick]');
       if (pick) {
         var inp = formEl.querySelector('input[data-af-file="' + pick.getAttribute('data-af-file-pick') + '"]');
@@ -670,6 +949,64 @@
       var first = formEl.querySelector('input:not([disabled]):not([hidden]), select:not([disabled]), textarea:not([disabled])');
       (first || closeBtn).focus();
     }, 0);
+  }
+
+  /* ---------- Modal „Vezi calculul" (derivare) ---------- */
+  function openDeriveModal(situation, anexa, field, idx, draft) {
+    var formula = resultFormulaForField(situation, anexa, field);
+    if (!formula) return;
+    var d = deriveFormula(situation, formula, { liveAnexaId: anexa.id, liveValues: draft });
+    var existing = document.getElementById('fx-derive-modal');
+    if (existing) existing.remove();
+
+    var rows = d.parts.map(function (p) {
+      var val = (p.value == null)
+        ? '<span class="fx-derive__missing">necompletat</span>'
+        : esc(formatComputed(p.value, 'decimal'));
+      return '<tr><td>' + esc(p.label || p.ref) + '</td>' +
+        '<td class="fx-derive__src">' + esc(p.anexaName) + ' · <code>' + esc(p.ref) + '</code></td>' +
+        '<td class="fx-derive__val">' + val + '</td></tr>';
+    }).join('');
+    var resultLine = d.result.ok
+      ? '<strong>' + esc(formatComputed(d.result.value, formula.resultType)) + '</strong>'
+      : '<span class="fx-derive__missing">nu se poate calcula — surse incomplete</span>';
+    var manualNote = '';
+    if (draft['__fxman__' + idx]) {
+      var cur = draft[String(idx)] != null ? String(draft[String(idx)]) : '';
+      var differs = d.result.ok && formatComputed(d.result.value, formula.resultType) !== cur;
+      manualNote = '<div class="fx-derive__manual">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">edit</span>' +
+        'Valoare introdusă manual: <strong>' + esc(cur) + '</strong>' + (differs ? ' — diferă de valoarea calculată.' : '.') +
+      '</div>';
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'fx-derive-modal';
+    overlay.className = 'fx-derive-overlay';
+    overlay.innerHTML =
+      '<div class="fx-derive" role="dialog" aria-modal="true" aria-label="Cum a fost calculat acest câmp">' +
+        '<div class="fx-derive__head">' +
+          '<div><div class="fx-derive__eyebrow">Cum a fost calculat acest câmp</div>' +
+            '<div class="fx-derive__title">' + esc(field.label || 'Câmp calculat') + '</div></div>' +
+          '<button type="button" class="fx-derive__close" data-fx-derive-close aria-label="Închide">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
+        '</div>' +
+        '<div class="fx-derive__body">' +
+          '<table class="fx-derive__table"><thead><tr><th>Câmp sursă</th><th>Din anexa</th><th>Valoare</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table>' +
+          '<div class="fx-derive__formula"><span class="fx-derive__formula-label">Formulă</span><code>' + esc(d.expr) + '</code></div>' +
+          '<div class="fx-derive__result">Rezultat calculat: ' + resultLine + '</div>' +
+          manualNote +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    function close() { overlay.remove(); document.removeEventListener('keydown', onEsc); }
+    function onEsc(e) { if (e.key === 'Escape') { e.preventDefault(); close(); } }
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    var cb = overlay.querySelector('[data-fx-derive-close]');
+    if (cb) cb.addEventListener('click', close);
+    document.addEventListener('keydown', onEsc);
   }
 
   /* ---------- API public ---------- */

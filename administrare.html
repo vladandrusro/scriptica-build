@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=14">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=14">
-  <link rel="stylesheet" href="css/administrare.css?v=14">
+  <link rel="stylesheet" href="css/administrare.css?v=15">
 </head>
 <body>
   <div class="shell shell--messaging-closed">
@@ -491,12 +491,59 @@
             </button>
           </div>
         </div>
+
+        <div class="form-field" data-field="formule" id="mt-formule-field" hidden>
+          <span class="form-label">Formule automate</span>
+          <span class="form-helper">Calcule automate între câmpuri numerice (cu cod „ref") ale anexelor atașate. Se aplică tuturor misiunilor de acest tip.</span>
+          <div class="admin-formulas" id="mt-formulas"></div>
+          <button type="button" class="admin-add-btn" id="mt-add-formula">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Adaugă formulă
+          </button>
+        </div>
       </form>
 
       <footer class="modal__footer">
         <span class="modal__footer-helper">* Câmpuri obligatorii</span>
         <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
         <button type="button" class="btn btn--primary" id="mt-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Formulă automată (sub-modal al editorului de tip) -->
+  <div class="modal" id="modal-formula" role="dialog" aria-modal="true" aria-labelledby="mf-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="mf-title">Formulă automată</h2>
+        <p class="modal__subtitle">Rezultatul se calculează automat la completarea anexei.</p>
+      </header>
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="mf-result">
+          <label class="form-label" for="mf-result">Câmp-rezultat*</label>
+          <select id="mf-result" class="select"></select>
+          <span class="form-helper">Câmpul numeric (cu „ref") unde aterizează rezultatul.</span>
+          <span class="form-error" role="alert"></span>
+        </div>
+        <div class="form-field" data-field="mf-expr">
+          <label class="form-label" for="mf-expr">Expresie*</label>
+          <input id="mf-expr" type="text" class="input" autocomplete="off" placeholder="ex. anx_criterii.PROB * anx_criterii.IMP">
+          <span class="form-helper">Folosește codurile de mai jos, operatorii + − * / și paranteze.</span>
+          <span class="form-error" role="alert"></span>
+        </div>
+        <div class="form-field">
+          <span class="form-label">Câmpuri disponibile</span>
+          <span class="form-helper">Click pe un câmp pentru a-l insera în expresie.</span>
+          <div class="admin-formula-refs" id="mf-refs"></div>
+        </div>
+      </form>
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mf-save">Salvează formula</button>
       </footer>
     </div>
   </div>
@@ -583,10 +630,10 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=25"></script>
-  <script src="js/mock-data.js?v=25"></script>
-  <script src="js/timer.js?v=25"></script>
-  <script src="js/dashboard.js?v=25"></script>
-  <script src="js/administrare.js?v=25"></script>
+  <script src="js/shell.js?v=26"></script>
+  <script src="js/mock-data.js?v=26"></script>
+  <script src="js/timer.js?v=26"></script>
+  <script src="js/dashboard.js?v=26"></script>
+  <script src="js/administrare.js?v=26"></script>
 </body>
 </html>

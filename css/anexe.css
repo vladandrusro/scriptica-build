@@ -585,3 +585,105 @@ select.afield__input {
   font-style: italic;
   padding: var(--space-2) 0;
 }
+
+/* ============================================================
+   Câmp-rezultat al unei formule automate (cross-anexă).
+   3 stări: auto (calculat) · override (modificat) · manual/pending.
+   Token-based — vezi css/tokens.css.
+   ============================================================ */
+.afield-fx { display: flex; flex-direction: column; gap: var(--space-2); }
+.afield-fx__head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.afield-fx__tag {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-size: var(--font-size-tiny); font-weight: var(--font-weight-bold);
+  text-transform: uppercase; letter-spacing: .04em;
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
+}
+.afield-fx__tag .material-symbols-outlined { font-size: 14px; }
+.afield-fx__tag--auto { background: var(--color-surface-1); color: var(--color-default-highlight); }
+.afield-fx__tag--manual { background: var(--color-pending-surface); color: #b56a18; }
+.afield-fx__tag--pending { background: var(--color-surface-1); color: var(--color-text-muted); }
+.afield-fx__link {
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-family: var(--font-family-base); font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold); color: var(--color-default-highlight);
+}
+.afield-fx__link:hover { text-decoration: underline; }
+
+.afield-fx__group { position: relative; }
+.is-auto .afield__input { background: var(--color-surface-2); font-weight: var(--font-weight-bold); }
+.afield-fx__recalc {
+  position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border: none; background: transparent; cursor: pointer;
+  color: var(--color-text-muted); border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+.afield-fx__group:hover .afield-fx__recalc { opacity: 1; }
+.afield-fx__recalc:hover { background: var(--color-surface-1); color: var(--color-default-highlight); }
+.afield-fx__recalc .material-symbols-outlined { font-size: 18px; }
+.afield-fx__note { font-size: var(--font-size-small); color: var(--color-text-muted); line-height: var(--line-height-normal); }
+
+/* „Actualizează" — sursă schimbată după override */
+.afield-fx__update {
+  display: flex; gap: var(--space-2); align-items: flex-start;
+  background: var(--color-pending-surface); border: 1px solid var(--color-pending);
+  border-radius: var(--radius-sm); padding: var(--space-3);
+}
+.afield-fx__update > .material-symbols-outlined { font-size: 18px; color: #b56a18; flex: none; margin-top: 1px; }
+.afield-fx__update-body { font-size: var(--font-size-small); color: var(--color-text-primary); }
+.afield-fx__update-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.afield-fx__btn {
+  font-family: var(--font-family-base); font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  border: 1px solid var(--color-border-strong); background: var(--color-surface-white);
+  color: var(--color-default-highlight); border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3); cursor: pointer;
+}
+.afield-fx__btn:hover { background: var(--color-surface-1); }
+.afield-fx__btn--primary { background: var(--color-important); border-color: var(--color-important); color: var(--color-text-primary); }
+.afield-fx__btn--primary:hover { background: var(--color-important-hover); }
+
+/* Modal „Vezi calculul" — peste modalul de completare */
+.fx-derive-overlay {
+  position: fixed; inset: 0; background: rgba(26,20,51,.5); z-index: 500;
+  display: flex; align-items: center; justify-content: center; padding: var(--space-5);
+}
+.fx-derive {
+  background: var(--color-surface-white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); width: 100%; max-width: 560px; overflow: hidden;
+}
+.fx-derive__head {
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+.fx-derive__eyebrow { font-size: var(--font-size-tiny); font-weight: var(--font-weight-bold); text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-muted); }
+.fx-derive__title { font-size: var(--font-size-subtitle); font-weight: var(--font-weight-black); margin-top: 2px; }
+.fx-derive__close {
+  margin-left: auto; width: 34px; height: 34px; border: none; background: var(--color-surface-1);
+  border-radius: var(--radius-pill); color: var(--color-text-secondary); cursor: pointer; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.fx-derive__close:hover { color: var(--color-critical); }
+.fx-derive__body { padding: var(--space-5); }
+.fx-derive__table { width: 100%; border-collapse: collapse; font-size: var(--font-size-small); margin-bottom: var(--space-4); }
+.fx-derive__table th {
+  text-align: left; font-size: var(--font-size-tiny); text-transform: uppercase; letter-spacing: .04em;
+  color: var(--color-text-muted); font-weight: var(--font-weight-bold);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-border);
+}
+.fx-derive__table td { padding: var(--space-2); border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.fx-derive__src { color: var(--color-text-secondary); }
+.fx-derive__src code, .fx-derive__formula code { font-family: monospace; background: var(--color-surface-1); padding: 1px 5px; border-radius: var(--radius-sm); font-size: var(--font-size-tiny); }
+.fx-derive__val { font-weight: var(--font-weight-bold); text-align: right; white-space: nowrap; }
+.fx-derive__missing { color: var(--color-critical); font-weight: var(--font-weight-bold); }
+.fx-derive__formula { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+.fx-derive__formula-label { font-size: var(--font-size-tiny); text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); font-weight: var(--font-weight-bold); }
+.fx-derive__formula code { font-size: var(--font-size-small); }
+.fx-derive__result { font-size: var(--font-size-body); }
+.fx-derive__manual {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
+  background: var(--color-pending-surface); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-small); color: var(--color-text-primary);
+}
+.fx-derive__manual .material-symbols-outlined { font-size: 16px; color: #b56a18; }

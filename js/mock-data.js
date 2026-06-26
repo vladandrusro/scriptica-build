@@ -136,6 +136,25 @@ window.SCRIPTICA_MOCK = {
           tasks: [],
           anexeIds: ["anx_audit_urmarire_recomandari"] }
       ]
+    },
+    /* Tip demonstrativ pentru formulele automate (lanțul de risc Anexa 9).
+       `formulas` trăiește pe tip → se aplică tuturor misiunilor de acest tip.
+       Referințe prin {anexaId}.{ref} către anexele atașate pașilor. */
+    {
+      id: "misiune_audit_risc", name: "Evaluarea riscurilor (Anexa 9)",
+      domain: "audit", frequency: "anual", status: "activ",
+      description: "Misiune demonstrativă a calculului automat: punctajul riscului se derivă din criteriile de risc (Probabilitate × Impact × Pondere).",
+      steps: [
+        { name: "Evaluarea riscurilor", offsetDays: 20, tasks: [],
+          anexeIds: ["anx_criterii_risc", "anx_punctaj_risc"] },
+        { name: "Ierarhizare și raport", offsetDays: 40, tasks: [], anexeIds: [] }
+      ],
+      formulas: [
+        { resultRef: "anx_punctaj_risc.PUNCTAJ",
+          expr: "anx_criterii_risc.PROB * anx_criterii_risc.IMP * anx_criterii_risc.PONDERE",
+          resultType: "decimal",
+          allowManualOverride: true }
+      ]
     }
   ],
 
@@ -232,6 +251,18 @@ window.SCRIPTICA_MOCK = {
       status: "aprobata",
       responsibleIds: [4, 1],
       perioadaAuditata: { from: "2023-01-01", to: "2023-12-31" }
+    },
+    {
+      id: "audit_risc_demo", domain: "audit",
+      name: "Evaluarea riscurilor — analiză preliminară 2025",
+      entityId: 1, entityName: "Primăria Sectorului 1",
+      typeId: "misiune_audit_risc", typeName: "Evaluarea riscurilor (Anexa 9)",
+      startDate: "2026-04-01",
+      deadlineStep1: "2026-04-21", deadlineStep2: "2026-05-11",
+      currentStep: 1, totalSteps: 2, stepsCompleted: 0,
+      status: "in_verificare",
+      responsibleIds: [2, 1],
+      perioadaAuditata: { from: "2025-01-01", to: "2025-12-31" }
     }
   ],
 
@@ -789,6 +820,37 @@ window.SCRIPTICA_MOCK = {
         ], minRows: 1 },
         { type: "text_long", label: "Observații", rows: 2, required: false, help: "" }
       ] }
+    },
+
+    /* ===== Lanțul de risc — Anexa 9 (HG 1086/2013). Demonstrează calculul
+       automat cross-anexă: PUNCTAJ = PROB × IMP × PONDERE. Câmpurile numerice
+       au cod `ref`; formula e legată la nivelul tipului `misiune_audit_risc`. ===== */
+    {
+      id: "anx_criterii_risc",
+      name: "Criterii de risc (Anexa 9)",
+      status: "activ",
+      categories: ["audit"],
+      updatedAt: "2026-04-20",
+      schema: { fields: [
+        { type: "section_title", text: "Evaluarea riscului activității auditabile" },
+        { type: "paragraph", text: "Stabilește criteriile de risc conform Anexei 9 la HG 1086/2013. Probabilitatea și impactul se notează de la 1 (minim) la 3 (maxim); ponderea reflectă importanța criteriului." },
+        { type: "number", label: "Probabilitate (1–3)", required: true, help: "Probabilitatea de apariție a riscului.", min: 1, max: 3, decimals: 0, ref: "PROB" },
+        { type: "number", label: "Impact (1–3)", required: true, help: "Impactul riscului asupra obiectivelor.", min: 1, max: 3, decimals: 0, ref: "IMP" },
+        { type: "number", label: "Pondere criteriu", required: true, help: "Ponderea criteriului (ex. 1,0–2,0).", min: 0, max: null, decimals: 2, ref: "PONDERE" }
+      ] }
+    },
+    {
+      id: "anx_punctaj_risc",
+      name: "Stabilirea punctajului riscurilor",
+      status: "activ",
+      categories: ["audit"],
+      updatedAt: "2026-04-20",
+      schema: { fields: [
+        { type: "section_title", text: "Punctajul total al riscului" },
+        { type: "paragraph", text: "Punctajul se calculează automat din criteriile de risc: Probabilitate × Impact × Pondere. Nivelul de risc se stabilește pe baza punctajului și determină ierarhizarea activităților." },
+        { type: "number", label: "Punctaj total risc", required: true, help: "Calculat automat din criteriile de risc.", min: 0, max: null, decimals: 2, ref: "PUNCTAJ" },
+        { type: "dropdown", label: "Nivel de risc", required: true, help: "Mapează punctajul la un nivel — ierarhizează activitățile.", options: ["Scăzut", "Mediu", "Ridicat"] }
+      ] }
     }
   ],
 
@@ -817,8 +879,25 @@ window.SCRIPTICA_MOCK = {
       },
       updatedAt: "2026-04-19",
       completedByName: null
+    },
+    /* Lanțul de risc — sursele (PROB/IMP/PONDERE) seedate pe misiunea demo.
+       Deschiderea anexei „Stabilirea punctajului" arată PUNCTAJ = 2×3×1,5 = 9,
+       calculat automat. Câmpurile sunt indexate: PROB=2, IMP=3, PONDERE=4. */
+    "audit_risc_demo::anx_criterii_risc": {
+      values: { "2": "2", "3": "3", "4": "1.5" },
+      updatedAt: "2026-04-19",
+      completedByName: "Iulian Popescu"
     }
   },
+
+  /* Categorii de anexe (Part D) — sursa comună pentru Constructor (multi-select)
+     și pentru filtrul din picker-ul de anexe al builder-ului de tip de misiune. */
+  anexaCategories: [
+    { id: "contabilitate", label: "Contabilitate" },
+    { id: "audit", label: "Audit" },
+    { id: "salarizare", label: "Salarizare" },
+    { id: "fiscal", label: "Fiscal" }
+  ],
 
   clients: [
     { id: 1,  companyName: "Canvas S.R.L.",         contactName: "Antonio Popescu",     avatarId: 33, email: "antonio@canvas.ro",        phone: "+40712345678", cui: "RO18234561", personType: "pj",  status: "activ",   situationIds: ["0000000126"] },

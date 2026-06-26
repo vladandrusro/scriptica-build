@@ -29,9 +29,9 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     divider: { label: 'Separator', icon: 'horizontal_rule', defaults: {} },
     text_short: { label: 'Text scurt', icon: 'short_text', defaults: { label: 'Text scurt', placeholder: '', required: false, help: '', maxLength: 100 } },
     text_long: { label: 'Text lung', icon: 'subject', defaults: { label: 'Observații', placeholder: '', required: false, help: '', rows: 3 } },
-    number: { label: 'Număr', icon: 'numbers', defaults: { label: 'Cantitate', required: false, help: '', min: null, max: null, decimals: 0 } },
-    currency: { label: 'Sumă monetară', icon: 'payments', defaults: { label: 'Sumă', required: false, currency: 'RON', help: '' } },
-    percent: { label: 'Procent', icon: 'percent', defaults: { label: 'Cotă TVA', required: false, help: '' } },
+    number: { label: 'Număr', icon: 'numbers', defaults: { label: 'Cantitate', required: false, help: '', min: null, max: null, decimals: 0, ref: '' } },
+    currency: { label: 'Sumă monetară', icon: 'payments', defaults: { label: 'Sumă', required: false, currency: 'RON', help: '', ref: '' } },
+    percent: { label: 'Procent', icon: 'percent', defaults: { label: 'Cotă TVA', required: false, help: '', ref: '' } },
     cui: { label: 'Cod fiscal / CUI', icon: 'badge', defaults: { label: 'CUI', required: false, help: 'Cod fiscal românesc, ex: RO12345678' } },
     date: { label: 'Dată', icon: 'calendar_today', defaults: { label: 'Data', required: false, help: '' } },
     month: { label: 'Lună fiscală', icon: 'date_range', defaults: { label: 'Perioada fiscală', required: false, help: '' } },
@@ -57,6 +57,16 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
      (un singur nivel — fără bloc-în-bloc). */
   var BLOCK_FORBIDDEN_TYPES = { repeater_block: true };
 
+  /* Categorii de anexe (Part D) — multi-categorie. Absența oricărei categorii
+     = anexa e disponibilă în orice tip de flux. Folosite ca filtru în
+     picker-ul de anexe din builder-ul de tip de misiune. */
+  var ANEXA_CATEGORIES = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.anexaCategories) || [
+    { id: 'contabilitate', label: 'Contabilitate' },
+    { id: 'audit', label: 'Audit' },
+    { id: 'salarizare', label: 'Salarizare' },
+    { id: 'fiscal', label: 'Fiscal' }
+  ];
+
   /* ============================================================
      STATE
      ============================================================ */
@@ -71,6 +81,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   var anexaId = null;
   var anexaName = 'Anexă nouă';
   var anexaStatus = 'activ';
+  var anexaCategories = [];
   var notFound = false;
 
   /* Ultima versiune salvată (pentru Resetează) */
@@ -197,6 +208,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       anexaId = found.id;
       anexaName = found.name || 'Anexă nouă';
       anexaStatus = found.status || 'activ';
+      anexaCategories = Array.isArray(found.categories) ? found.categories.slice() : [];
       originalFields = deepCopy((found.schema && found.schema.fields) || []);
       originalName = anexaName;
       fields = withUids(deepCopy(originalFields));
@@ -207,6 +219,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var name = (params.get('name') || '').trim();
     anexaName = name || 'Anexă nouă';
     anexaStatus = 'activ';
+    anexaCategories = [];
     anexaId = null;
     originalFields = [];
     originalName = anexaName;
@@ -713,13 +726,47 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   /* ============================================================
      RENDER — settings panel
      ============================================================ */
+  function renderAnexaSettings() {
+    var checks = ANEXA_CATEGORIES.map(function (c) {
+      var on = anexaCategories.indexOf(c.id) !== -1;
+      return '<div class="builder__srow builder__srow--inline"><label>' +
+        '<input type="checkbox" data-anexa-cat="' + esc(c.id) + '"' + (on ? ' checked' : '') + '> ' +
+        esc(c.label) + '</label></div>';
+    }).join('');
+    return '<div class="builder__settings-header">' +
+        '<div class="builder__settings-type">Proprietăți anexă</div>' +
+        '<h3 class="builder__settings-title">Categorii</h3>' +
+      '</div>' +
+      group('Categorii / Tipuri de flux', checks) +
+      '<div class="builder__settings-note">Filtrează unde apare anexa în builder-ul de tip de misiune. Fără nicio categorie bifată = disponibilă peste tot. Selectează un câmp din canvas pentru a-i edita proprietățile.</div>';
+  }
+
+  function attachAnexaSettingsHandlers() {
+    settingsContentEl.querySelectorAll('[data-anexa-cat]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-anexa-cat');
+        var i = anexaCategories.indexOf(id);
+        if (cb.checked && i === -1) anexaCategories.push(id);
+        else if (!cb.checked && i !== -1) anexaCategories.splice(i, 1);
+      });
+    });
+  }
+
   function renderSettings() {
     if (!settingsEmptyEl || !settingsContentEl) return;
     var field = findFieldDeep(selectedId);
-    if (!field || mode === 'fill') {
+    if (mode === 'fill') {
       settingsEmptyEl.hidden = false;
       settingsContentEl.hidden = true;
       settingsContentEl.innerHTML = '';
+      return;
+    }
+    if (!field) {
+      /* Niciun câmp selectat → proprietăți la nivel de anexă (categorii). */
+      settingsEmptyEl.hidden = true;
+      settingsContentEl.hidden = false;
+      settingsContentEl.innerHTML = renderAnexaSettings();
+      attachAnexaSettingsHandlers();
       return;
     }
 
@@ -776,6 +823,16 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
           selectRow('currency', 'Monedă', field.currency, [
             { v: 'RON', l: 'RON' }, { v: 'EUR', l: 'EUR' }, { v: 'USD', l: 'USD' }
           ])
+        );
+      }
+
+      /* Cod referință — DOAR pe câmpuri numerice. Singurele câmpuri
+         referențiabile în formulele automate (legate la nivel de tip de
+         misiune). Cod scurt, stabil la reordonare. */
+      if (field.type === 'number' || field.type === 'currency' || field.type === 'percent') {
+        html += group('Cod referință (formule)',
+          textRow('ref', 'Cod ref (ex. PROB, IMP, PUNCTAJ)', field.ref || '') +
+          '<div class="builder__formula-help">Cod scurt și stabil pentru a referi acest câmp în <strong>formulele automate</strong> definite la nivelul tipului de misiune. Lasă gol dacă nu e folosit în calcule.</div>'
         );
       }
 
@@ -1330,6 +1387,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       id: anexaId,
       name: name,
       status: anexaStatus || 'activ',
+      categories: anexaCategories.slice(),
       updatedAt: TODAY_ISO,
       schema: { fields: stripUids(fields) }
     };

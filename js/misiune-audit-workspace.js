@@ -85,6 +85,10 @@
       var first = employeeById((m.responsibleIds || [])[0]);
       m.responsibleStepName = first ? first.name : '';
     }
+    /* Subtitlul modalului de completare folosește typeLabel · clientCompany;
+       pe misiuni de audit le mapăm din typeName · entityName. */
+    if (!m.typeLabel) m.typeLabel = m.typeName || 'Misiune de audit';
+    if (!m.clientCompany) m.clientCompany = m.entityName || '';
     return m;
   }
 

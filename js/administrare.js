@@ -93,6 +93,10 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
 
   /* Pașii în curs de editare în modalul de tip (step builder) */
   var draftSteps = [];
+  /* Formulele automate în curs de editare (legate la nivel de tip) */
+  var draftFormulas = [];
+  var editingFormulaIdx = -1;
+  var formulaModal = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || !document.getElementById('admin-tabs')) {
@@ -585,6 +589,30 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       });
     }
 
+    /* Formule automate (sub-modal) */
+    formulaModal = createModal('modal-formula');
+    var addFormulaBtn = $('mt-add-formula');
+    if (addFormulaBtn) addFormulaBtn.addEventListener('click', function () { openFormulaModal(-1); });
+    var saveFormulaBtn = $('mf-save');
+    if (saveFormulaBtn) saveFormulaBtn.addEventListener('click', saveFormula);
+    var refsWrap = $('mf-refs');
+    if (refsWrap) refsWrap.addEventListener('click', function (e) {
+      var chip = e.target.closest('[data-ref-token]');
+      if (!chip) return;
+      var inp = $('mf-expr');
+      var tok = chip.getAttribute('data-ref-token');
+      inp.value = (inp.value && !/\s$/.test(inp.value) && !/[(\s]$/.test(inp.value)) ? inp.value + ' ' + tok : inp.value + tok;
+      inp.focus();
+    });
+    var formulasWrap = $('mt-formulas');
+    if (formulasWrap) formulasWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('button'); if (!btn) return;
+      var fi = parseInt(btn.getAttribute('data-formula-idx'), 10);
+      if (isNaN(fi)) return;
+      if (btn.hasAttribute('data-edit-formula')) openFormulaModal(fi);
+      else if (btn.hasAttribute('data-remove-formula')) { draftFormulas.splice(fi, 1); renderFormulas(); }
+    });
+
     var stepsWrap = $('mt-steps');
     if (!stepsWrap) return;
 
@@ -654,6 +682,166 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return (MOCK.anexeTypes || []).find(function (a) { return a.id === id; });
   }
 
+  /* ============================================================
+     FORMULE AUTOMATE — builder la nivel de tip (Part B)
+     Filtru categorii pe picker + secțiunea de formule + validare/ciclu.
+     ============================================================ */
+
+  /* Anexa e potrivită domeniului curent? Fără categorii = disponibilă peste tot. */
+  function anexaInDomain(anexa, domain) {
+    var cats = anexa.categories;
+    if (!cats || !cats.length) return true;
+    if (domain === 'audit') return cats.indexOf('audit') !== -1;
+    return cats.some(function (c) { return c !== 'audit'; });
+  }
+
+  /* Câmpurile numerice (cu ref) ale anexelor atașate pașilor — referențiabile. */
+  function attachedNumericRefs() {
+    var ids = {};
+    draftSteps.forEach(function (st) { (st.anexeIds || []).forEach(function (id) { ids[id] = true; }); });
+    var out = [];
+    Object.keys(ids).forEach(function (aid) {
+      var anexa = anexaById(aid); if (!anexa) return;
+      ((anexa.schema && anexa.schema.fields) || []).forEach(function (f) {
+        if (!f.ref) return;
+        if (['number', 'currency', 'percent'].indexOf(f.type) === -1) return;
+        out.push({ token: aid + '.' + f.ref, anexaId: aid, anexaName: anexa.name, ref: f.ref, label: f.label || f.ref, type: f.type });
+      });
+    });
+    return out;
+  }
+  function refByToken(token) {
+    return attachedNumericRefs().find(function (r) { return r.token === token; }) || null;
+  }
+
+  /* Tokenizer minimal (doar pentru extragerea ref-urilor + detecția ciclurilor). */
+  function fxTokens(expr) {
+    var s = String(expr == null ? '' : expr), out = [], i = 0;
+    while (i < s.length) {
+      var ch = s.charAt(i);
+      if (ch === ' ' || ch === '\t') { i++; continue; }
+      if ('+-*/()'.indexOf(ch) !== -1) { out.push({ t: 'op', v: ch }); i++; continue; }
+      if ((ch >= '0' && ch <= '9') || ch === '.') { var n = ''; while (i < s.length && ((s.charAt(i) >= '0' && s.charAt(i) <= '9') || s.charAt(i) === '.')) { n += s.charAt(i); i++; } out.push({ t: 'num', v: n }); continue; }
+      if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch === '_') { var id = ''; while (i < s.length) { var c = s.charAt(i); if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_' || c === '.') { id += c; i++; } else break; } out.push({ t: 'ref', v: id }); continue; }
+      return { error: 'Caracter neacceptat: ' + ch };
+    }
+    return { tokens: out };
+  }
+  function exprRefs(expr) {
+    var tk = fxTokens(expr);
+    if (tk.error) return [];
+    return tk.tokens.filter(function (t) { return t.t === 'ref'; }).map(function (t) { return t.v; });
+  }
+  /* Detecție cicluri pe lista de formule. Returnează string-ul ciclului sau null. */
+  function detectFormulaCycle(formulas) {
+    var deps = {};
+    formulas.forEach(function (f) { deps[f.resultRef] = (deps[f.resultRef] || []).concat(exprRefs(f.expr)); });
+    var color = {}, cyclePath = null;
+    function dfs(node, stack) {
+      color[node] = 1; stack.push(node);
+      var nbrs = deps[node] || [];
+      for (var i = 0; i < nbrs.length; i++) {
+        var n = nbrs[i];
+        if (!(n in deps)) continue;
+        if (color[n] === 1) { cyclePath = stack.slice(stack.indexOf(n)).concat(n); return true; }
+        if (color[n] !== 2 && dfs(n, stack)) return true;
+      }
+      stack.pop(); color[node] = 2; return false;
+    }
+    var keys = Object.keys(deps);
+    for (var i = 0; i < keys.length; i++) { if (color[keys[i]] !== 2) { if (dfs(keys[i], [])) return cyclePath.join(' → '); } }
+    return null;
+  }
+
+  function renderFormulas() {
+    var wrap = $('mt-formulas');
+    var section = $('mt-formule-field');
+    if (!wrap || !section) return;
+    var refs = attachedNumericRefs();
+    /* Secțiunea apare doar dacă există câmpuri numerice referențiabile. */
+    section.hidden = (refs.length === 0);
+    if (refs.length === 0) { wrap.innerHTML = ''; return; }
+    if (!draftFormulas.length) {
+      wrap.innerHTML = '<div class="admin-formulas__empty">Nicio formulă definită. Adaugă una pentru a calcula automat un câmp numeric din altele.</div>';
+      return;
+    }
+    wrap.innerHTML = draftFormulas.map(function (f, i) {
+      var resName = refByToken(f.resultRef);
+      var invalid = !resName || exprRefs(f.expr).some(function (r) { return !refByToken(r); });
+      var resLabel = resName ? (resName.anexaName + ' · ' + resName.label) : f.resultRef;
+      return '<div class="admin-formula-row' + (invalid ? ' is-invalid' : '') + '">' +
+        '<div class="admin-formula-row__main">' +
+          '<div class="admin-formula-row__result"><span class="material-symbols-outlined" aria-hidden="true">function</span>' + esc(resLabel) + '</div>' +
+          '<div class="admin-formula-row__expr"><code>' + esc(f.expr) + '</code></div>' +
+          (invalid ? '<div class="admin-formula-row__warn">Referință inexistentă — verifică anexele atașate.</div>' : '') +
+        '</div>' +
+        '<div class="admin-formula-row__actions">' +
+          '<button type="button" class="admin-action-btn" data-edit-formula data-formula-idx="' + i + '" aria-label="Editează formula" title="Editează"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>' +
+          '<button type="button" class="admin-action-btn admin-action-btn--delete" data-remove-formula data-formula-idx="' + i + '" aria-label="Șterge formula" title="Șterge"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openFormulaModal(idx) {
+    editingFormulaIdx = idx;
+    var refs = attachedNumericRefs();
+    var existing = (idx >= 0) ? draftFormulas[idx] : null;
+    clearErrors(formulaModal.el);
+    $('mf-title').textContent = existing ? 'Editează formula' : 'Formulă automată';
+    var resSel = $('mf-result');
+    resSel.innerHTML = '<option value="">Selectează câmpul-rezultat...</option>' +
+      refs.map(function (r) {
+        return '<option value="' + esc(r.token) + '"' + (existing && existing.resultRef === r.token ? ' selected' : '') + '>' +
+          esc(r.anexaName + ' · ' + r.label + ' (' + r.ref + ')') + '</option>';
+      }).join('');
+    $('mf-expr').value = existing ? existing.expr : '';
+    $('mf-refs').innerHTML = refs.map(function (r) {
+      return '<button type="button" class="admin-formula-ref" data-ref-token="' + esc(r.token) + '" title="' + esc(r.anexaName + ' · ' + r.label) + '">' +
+        '<code>' + esc(r.token) + '</code><span>' + esc(r.label) + '</span></button>';
+    }).join('');
+    formulaModal.open();
+  }
+
+  function saveFormula() {
+    var modal = formulaModal.el;
+    var resultRef = $('mf-result').value;
+    var expr = $('mf-expr').value.trim();
+    clearErrors(modal);
+    var ok = true;
+    setErr(modal, 'mf-result', !resultRef, 'Alege câmpul-rezultat.');
+    if (!resultRef) ok = false;
+    setErr(modal, 'mf-expr', !expr, 'Introdu expresia de calcul.');
+    if (!expr) ok = false;
+    if (!ok) return;
+
+    /* Toate ref-urile din expresie există și sunt numerice. */
+    var tk = fxTokens(expr);
+    if (tk.error) { setErr(modal, 'mf-expr', true, tk.error); return; }
+    var refsInExpr = exprRefs(expr);
+    if (!refsInExpr.length) { setErr(modal, 'mf-expr', true, 'Expresia trebuie să folosească cel puțin un câmp.'); return; }
+    var unknown = refsInExpr.filter(function (r) { return !refByToken(r); });
+    if (unknown.length) { setErr(modal, 'mf-expr', true, 'Referință necunoscută: ' + unknown[0]); return; }
+    if (refsInExpr.indexOf(resultRef) !== -1) { setErr(modal, 'mf-expr', true, 'Câmpul-rezultat nu se poate referi pe sine.'); return; }
+
+    var resultType = (refByToken(resultRef) || {}).type === 'number' ? 'decimal' : 'decimal';
+    var entry = { resultRef: resultRef, expr: expr, resultType: resultType, allowManualOverride: true };
+
+    /* Verifică ciclurile pe setul rezultat. */
+    var candidate = draftFormulas.slice();
+    if (editingFormulaIdx >= 0) candidate[editingFormulaIdx] = entry; else candidate.push(entry);
+    var cycle = detectFormulaCycle(candidate);
+    if (cycle) { setErr(modal, 'mf-expr', true, 'Formula creează un ciclu: ' + cycle); return; }
+    /* Un singur rezultat per câmp. */
+    var dup = candidate.filter(function (f, k) { return f.resultRef === resultRef && k !== (editingFormulaIdx >= 0 ? editingFormulaIdx : candidate.length - 1); });
+    if (dup.length) { setErr(modal, 'mf-result', true, 'Există deja o formulă pentru acest câmp-rezultat.'); return; }
+
+    draftFormulas = candidate;
+    formulaModal.close();
+    renderFormulas();
+    toast('success', 'Formula a fost salvată.');
+  }
+
   function renderSteps() {
     var wrap = $('mt-steps');
     if (!wrap) return;
@@ -671,6 +859,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         if (sel.options[k].value === want) { sel.value = want; break; }
       }
     });
+    /* Anexele atașate s-au putut schimba → re-randează secțiunea de formule. */
+    renderFormulas();
   }
 
   function stepCardHtml(st, i) {
@@ -699,7 +889,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     }).join('');
 
     var available = (MOCK.anexeTypes || []).filter(function (a) {
-      return (a.status || 'activ') === 'activ' && st.anexeIds.indexOf(a.id) === -1;
+      return (a.status || 'activ') === 'activ' && st.anexeIds.indexOf(a.id) === -1 && anexaInDomain(a, editingTypeDomain);
     });
     var selectHtml = '<select class="select" data-anexa-select data-idx="' + i + '" aria-label="Alege anexa"' +
       (available.length ? '' : ' disabled') + '>' +
@@ -808,6 +998,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     } else {
       draftSteps = [emptyStep()];
     }
+    draftFormulas = (type && Array.isArray(type.formulas)) ? JSON.parse(JSON.stringify(type.formulas)) : [];
     renderSteps();
     typeModal.open();
   }
@@ -872,6 +1063,13 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         };
       })
     };
+
+    /* Formulele automate — păstrate doar cele valide (ref-uri încă atașate). */
+    var validFormulas = draftFormulas.filter(function (f) {
+      if (!refByToken(f.resultRef)) return false;
+      return exprRefs(f.expr).every(function (r) { return !!refByToken(r); });
+    });
+    if (validFormulas.length) record.formulas = validFormulas;
 
     var idx = MOCK.situationTypes.findIndex(function (t) { return t.id === record.id; });
     if (idx !== -1) MOCK.situationTypes[idx] = record;
