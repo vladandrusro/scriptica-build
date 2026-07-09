@@ -519,7 +519,15 @@
           if (t) openTemplateModal(root, verticalById(t.verticalId), t);
         }
         else if ((b = e.target.closest('[data-del-tpl]'))) confirmDeleteTemplate(root, templateById(b.getAttribute('data-del-tpl')));
+        else if ((b = e.target.closest('[data-cols-vert]'))) openColumnsModal(root, verticalById(b.getAttribute('data-cols-vert')));
       });
+    }
+    /* deep link din builderul de dashboard: ?cols=<verticalId> deschide
+       direct editorul de coloane al verticalei respective */
+    if (!renderFluxuri._colsDeepLinkDone && qs('cols')) {
+      renderFluxuri._colsDeepLinkDone = true;
+      var dlv = verticalById(qs('cols'));
+      if (dlv) openColumnsModal(root, dlv);
     }
   }
 
@@ -560,7 +568,10 @@
         ? '<table class="admin-table sa-flow-table"><thead><tr><th>Șablon de flux</th><th>Frecvență</th><th>Etape</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
         : '<div class="sa-flow-empty">Niciun șablon definit încă pentru această verticală.</div>') +
       '<div class="sa-flow-foot">' +
-        '<button class="btn btn--secondary" type="button" data-add-tpl="' + esc(v.id) + '">Șablon nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+        '<div class="sa-flow-foot__actions">' +
+          '<button class="btn btn--secondary" type="button" data-add-tpl="' + esc(v.id) + '">Șablon nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+          '<button class="btn btn--ghost" type="button" data-cols-vert="' + esc(v.id) + '">Coloanele tabelului<span class="material-symbols-outlined" aria-hidden="true">view_column</span></button>' +
+        '</div>' +
         '<a class="sa-flow-open" href="' + esc(listHref) + '">Deschide în aplicație<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
       '</div>' +
     '</div>';
@@ -763,6 +774,113 @@
         scripticaFlowDelete('template', t.id);
         close();
         toast('success', 'Șablonul a fost șters.');
+        renderFluxuri(root);
+      }
+    });
+  }
+
+  /* ============================================================
+     COLOANELE TABELULUI — „expresia în tabel" a unei verticale.
+     Editor prietenos: preview live pe date reale + listă ordonată de
+     coloane (săgeți / scoate) + chip-uri de adăugare. Se salvează pe
+     verticală (listView) și se aplică oriunde apare tabelul ei:
+     situatii.html, misiuni-audit.html, flux.html.
+     ============================================================ */
+  function openColumnsModal(root, v) {
+    if (!v || !window.SCRIPTICA_LISTVIEW) return;
+    var LV = window.SCRIPTICA_LISTVIEW;
+    var cols = LV.effectiveFor(v).slice();
+    var initialSnapshot = JSON.stringify(cols);
+    var samples = LV.sampleItems(v);
+
+    function previewHtml() {
+      var vv = Object.assign({}, v, { listView: cols });
+      var rows = samples.length
+        ? samples.map(function (n) { return '<tr class="sit-row">' + LV.cellsHtml(vv, n) + '</tr>'; }).join('')
+        : '<tr><td class="admin-table__muted" style="padding:var(--space-4)" colspan="' + cols.length + '">Fără date de exemplu încă — coloanele se aplică imediat ce apar elemente.</td></tr>';
+      return '<table class="sit-table">' +
+        '<thead>' + LV.headerHtml(vv) + '</thead><tbody>' + rows + '</tbody></table>';
+    }
+    function chosenHtml() {
+      return cols.map(function (id, i) {
+        var c = LV.colById(id);
+        if (!c) return '';
+        return '<div class="sa-col-row">' +
+          '<span class="sa-col-row__n">' + (i + 1) + '</span>' +
+          '<span class="sa-col-row__label"><b>' + esc(c.label(v)) + '</b><small>' + esc(c.desc) + '</small></span>' +
+          '<button type="button" class="sa-mini-btn" data-col-move="-1" data-i="' + i + '" title="Mută spre stânga tabelului"' + (i === 0 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
+          '<button type="button" class="sa-mini-btn" data-col-move="1" data-i="' + i + '" title="Mută spre dreapta tabelului"' + (i === cols.length - 1 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>' +
+          '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-col-remove="' + i + '" title="Scoate coloana"' + (cols.length <= 2 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
+        '</div>';
+      }).join('');
+    }
+    function availHtml() {
+      var avail = LV.availableFor(v).filter(function (c) { return cols.indexOf(c.id) === -1; });
+      if (!avail.length) return '<span class="admin-table__muted">Toate coloanele disponibile sunt deja afișate.</span>';
+      return avail.map(function (c) {
+        return '<button type="button" class="sa-col-add" data-col-add="' + esc(c.id) + '" title="' + esc(c.desc) + '">' +
+          '<span class="material-symbols-outlined" aria-hidden="true">add</span>' + esc(c.label(v)) + '</button>';
+      }).join('');
+    }
+    function hintHtml() {
+      return cols.length > 7
+        ? '<span class="material-symbols-outlined" aria-hidden="true">info</span>Peste 7 coloane — tabelul poate deveni aglomerat pe ecrane mici.'
+        : '';
+    }
+    function redraw(m) {
+      m.querySelector('[data-cols-preview]').innerHTML = previewHtml();
+      m.querySelector('[data-cols-chosen]').innerHTML = chosenHtml();
+      m.querySelector('[data-cols-avail]').innerHTML = availHtml();
+      m.querySelector('[data-cols-hint]').innerHTML = hintHtml();
+    }
+
+    saModal({
+      title: 'Coloanele tabelului — ' + v.name,
+      subtitle: 'Așa va arăta lista de ' + (v.itemLabelPlural || 'elemente').toLowerCase() + ' pentru clienți — preview-ul folosește date reale și se actualizează pe măsură ce modifici.',
+      wide: true,
+      isDirty: function () { return JSON.stringify(cols) !== initialSnapshot; },
+      bodyHtml:
+        '<div class="sa-cols-preview" data-cols-preview></div>' +
+        '<div class="form-field"><label class="form-label">Coloane afișate (în ordinea din tabel)</label>' +
+          '<div class="sa-cols-chosen" data-cols-chosen></div>' +
+          '<span class="form-helper sa-cols-hint" data-cols-hint></span>' +
+        '</div>' +
+        '<div class="form-field"><label class="form-label">Adaugă coloane</label>' +
+          '<div class="sa-cols-avail" data-cols-avail></div>' +
+        '</div>' +
+        '<button type="button" class="btn btn--ghost" data-cols-reset>Revino la varianta implicită<span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>',
+      submitLabel: 'Salvează coloanele',
+      footerHelper: 'Se aplică oriunde apare tabelul acestei verticale',
+      onOpen: function (m) {
+        redraw(m);
+        m.querySelector('.modal__body').addEventListener('click', function (e) {
+          var b;
+          if ((b = e.target.closest('[data-col-add]'))) {
+            cols.push(b.getAttribute('data-col-add'));
+            redraw(m);
+          } else if ((b = e.target.closest('[data-col-move]'))) {
+            var i = parseInt(b.getAttribute('data-i'), 10);
+            var j = i + parseInt(b.getAttribute('data-col-move'), 10);
+            if (j >= 0 && j < cols.length) {
+              var mv = cols.splice(i, 1)[0];
+              cols.splice(j, 0, mv);
+              redraw(m);
+            }
+          } else if ((b = e.target.closest('[data-col-remove]'))) {
+            if (cols.length > 2) { cols.splice(parseInt(b.getAttribute('data-col-remove'), 10), 1); redraw(m); }
+          } else if ((b = e.target.closest('[data-cols-reset]'))) {
+            cols = LV.defaultsFor(v);
+            redraw(m);
+          }
+        });
+      },
+      onSubmit: function (m, close) {
+        scripticaFlowSave('vertical', Object.assign({}, v, { listView: cols }));
+        close();
+        toast('success', 'Coloanele tabelului „' + v.name + '" au fost salvate.');
         renderFluxuri(root);
       }
     });
@@ -1198,10 +1316,17 @@
           'Dashboard gol — adaugă widget-uri din paleta din stânga.</div>';
       }
       return layout.map(function (item, i) {
+        /* widget de flux → scurtătură spre editorul de coloane al verticalei */
+        var colsLink = (item.widget === 'flow_summary' && item.params && item.params.verticalId)
+          ? '<a class="sa-mini-btn" href="super-admin-fluxuri.html?cols=' + encodeURIComponent(item.params.verticalId) +
+              (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '" title="Configurează tabelul verticalei">' +
+              '<span class="material-symbols-outlined" aria-hidden="true">view_column</span></a>'
+          : '';
         return '<div class="sa-dwb-item' + (item.size === 'full' ? ' dw-card--full' : '') + '" draggable="true" data-idx="' + i + '">' +
           '<div class="sa-dwb-item__bar">' +
             '<span class="material-symbols-outlined sa-dwb-item__grip" aria-hidden="true">drag_indicator</span>' +
             '<span class="sa-dwb-item__hint">trage sau folosește săgețile</span>' +
+            colsLink +
             '<button type="button" class="sa-mini-btn" data-dwb-move="-1" data-i="' + i + '" title="Mută mai sus"' + (i === 0 ? ' disabled' : '') + '>' +
               '<span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
             '<button type="button" class="sa-mini-btn" data-dwb-move="1" data-i="' + i + '" title="Mută mai jos"' + (i === layout.length - 1 ? ' disabled' : '') + '>' +

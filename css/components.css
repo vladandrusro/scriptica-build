@@ -5505,3 +5505,20 @@ body:not(.body--client) [data-client-only] {
 }
 .scope-block__text { font-size: var(--font-size-body); line-height: var(--line-height-normal); }
 .scope-block .btn { margin-top: var(--space-2); }
+
+/* ============================================================
+   Celule redate de motorul de coloane (js/list-columns.js) —
+   clase neutre, disponibile pe orice pagină cu tabel de fluxuri.
+   ============================================================ */
+.lv-name { font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
+.lv-sub { font-size: var(--font-size-small); color: var(--color-text-muted); margin-top: 2px; }
+.lv-avatars { display: inline-flex; align-items: center; }
+.lv-avatar {
+  width: 28px; height: 28px; border-radius: var(--radius-pill); overflow: hidden;
+  display: inline-flex; flex: none; border: 2px solid var(--color-surface-white);
+}
+.lv-avatar + .lv-avatar { margin-left: -8px; }
+.lv-avatars__more {
+  margin-left: var(--space-1); font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold); color: var(--color-text-secondary);
+}

@@ -482,3 +482,46 @@
 
 /* marcaj de modificări nesalvate pe butonul de salvare al builderului */
 #dwb-save.is-dirty::after { content: '•'; margin-left: var(--space-1); }
+
+/* ============================================================
+   Editorul de coloane (Coloanele tabelului)
+   ============================================================ */
+.sa-flow-foot__actions { display: flex; align-items: center; gap: var(--space-2); }
+
+.sa-cols-preview {
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  overflow-x: auto; margin-bottom: var(--space-4);
+  background: var(--color-surface-white);
+}
+.sa-cols-preview .sit-table { min-width: 640px; }
+
+.sa-cols-chosen { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+.sa-col-row {
+  display: flex; align-items: center; gap: var(--space-2);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+.sa-col-row__n {
+  width: 20px; height: 20px; border-radius: var(--radius-pill); flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-default-highlight); color: var(--color-surface-white);
+  font-size: var(--font-size-tiny); font-weight: var(--font-weight-bold);
+}
+.sa-col-row__label { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sa-col-row__label b { font-size: var(--font-size-body); }
+.sa-col-row__label small { font-size: var(--font-size-small); color: var(--color-text-muted); }
+
+.sa-cols-avail { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.sa-col-add {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+  border: 1px dashed var(--color-border-strong); background: var(--color-surface-white);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-fast);
+}
+.sa-col-add:hover { border-color: var(--color-default-highlight); color: var(--color-default-highlight); }
+.sa-col-add .material-symbols-outlined { font-size: 16px; }
+
+.sa-cols-hint { display: flex; align-items: center; gap: var(--space-1); }
+.sa-cols-hint:empty { display: none; }
+.sa-cols-hint .material-symbols-outlined { font-size: 16px; color: var(--color-pending); }

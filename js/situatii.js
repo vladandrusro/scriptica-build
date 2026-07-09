@@ -220,8 +220,10 @@
           '<th style="width:240px;">Acțiune necesară</th>' +
         '</tr>';
     } else {
-      thead.innerHTML =
-        '<tr>' +
+      var eng = listEngine();
+      thead.innerHTML = eng
+        ? eng.LV.headerHtml(eng.v, { chevron: true })
+        : '<tr>' +
           '<th style="width:44px;"></th>' +
           '<th style="width:140px;">Cod</th>' +
           '<th>Client</th>' +
@@ -234,6 +236,15 @@
           '<th style="width:80px;">Pas</th>' +
         '</tr>';
     }
+  }
+
+  /* Verticala contabilă din registrul de fluxuri — sursa „expresiei în
+     tabel" (listView) configurate în Super Admin → Fluxuri. Portalul de
+     client (isClient) NU trece pe aici — își păstrează vederea proprie. */
+  function listEngine() {
+    var v = (typeof window.scripticaVerticalById === 'function')
+      ? window.scripticaVerticalById('vert_contabil') : null;
+    return (v && window.SCRIPTICA_LISTVIEW) ? { LV: window.SCRIPTICA_LISTVIEW, v: v } : null;
   }
 
   function renderTable(filtered) {
@@ -273,12 +284,10 @@
   function rowHtml(s) {
     if (isClient()) return clientRowHtml(s);
     var isExpanded = state.expandedId === s.id;
-    var main =
-      '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(s.id) + '" data-row>' +
-        '<td class="sit-cell--chevron" data-chevron>' +
-          '<span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
-        '</td>' +
-        '<td class="sit-cell--code">' + esc(s.id) + '</td>' +
+    var eng = listEngine();
+    var cells = eng
+      ? eng.LV.cellsHtml(eng.v, eng.LV.normalizeSituation(s))
+      : '<td class="sit-cell--code">' + esc(s.id) + '</td>' +
         '<td class="sit-cell--client">' + esc(s.clientCompany) + '</td>' +
         '<td class="sit-cell--titular">' + esc(s.titularName) + '</td>' +
         '<td class="sit-cell--date">' + formatDate(s.startDate) + '</td>' +
@@ -286,7 +295,13 @@
         '<td class="sit-cell--responsabil">' + esc(s.responsibleStepName) + '</td>' +
         '<td>' + statusHtml(s.status) + '</td>' +
         '<td class="sit-cell--tip">' + esc(s.typeName) + '</td>' +
-        '<td>' + progressHtml(s) + '</td>' +
+        '<td>' + progressHtml(s) + '</td>';
+    var main =
+      '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(s.id) + '" data-row>' +
+        '<td class="sit-cell--chevron" data-chevron>' +
+          '<span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
+        '</td>' +
+        cells +
       '</tr>';
     return main + (isExpanded ? expandedHtml(s) : '');
   }
@@ -352,7 +367,9 @@
       : (MOCK.standardSteps[stepKey] || { name: '', number: s.currentStep });
     var tasks = (s.tasks && s.tasks[stepKey]) ? s.tasks[stepKey] : [];
     var tasksHtml = tasks.map(function (t) { return taskRowHtml(s.id, t); }).join('');
-    return '<tr class="sit-row-exp"><td colspan="10">' +
+    var eng = listEngine();
+    var span = eng ? eng.LV.colCount(eng.v, true) : 10;
+    return '<tr class="sit-row-exp"><td colspan="' + span + '">' +
       '<div class="exp-panel">' +
         '<div class="exp-header">' +
           '<span class="pill--step-current">Pasul ' + s.currentStep + '/' + s.totalSteps + '</span>' +

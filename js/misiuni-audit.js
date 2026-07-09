@@ -264,11 +264,24 @@
     renderPagination(filtered.length);
   }
 
+  /* Verticala de audit din registrul de fluxuri — sursa „expresiei în
+     tabel" (listView) configurate în Super Admin → Fluxuri. */
+  function auditVertical() {
+    return (typeof window.scripticaVerticalById === 'function')
+      ? window.scripticaVerticalById('vert_audit') : null;
+  }
+  function listEngine() {
+    var v = auditVertical();
+    return (v && window.SCRIPTICA_LISTVIEW) ? { LV: window.SCRIPTICA_LISTVIEW, v: v } : null;
+  }
+
   function renderThead() {
     var thead = $('#sit-thead');
     if (!thead) return;
-    thead.innerHTML =
-      '<tr>' +
+    var eng = listEngine();
+    thead.innerHTML = eng
+      ? eng.LV.headerHtml(eng.v, { chevron: true })
+      : '<tr>' +
         '<th style="width:44px;"></th>' +
         '<th>Misiune</th>' +
         '<th style="width:240px;">Tip Misiune</th>' +
@@ -301,19 +314,23 @@
 
   function rowHtml(m) {
     var isExpanded = state.expandedId === m.id;
-    var main =
-      '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(m.id) + '" data-row>' +
-        '<td class="sit-cell--chevron" data-chevron>' +
-          '<span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
-        '</td>' +
-        '<td class="sit-cell--client">' +
+    var eng = listEngine();
+    var cells = eng
+      ? eng.LV.cellsHtml(eng.v, eng.LV.normalizeMission(m))
+      : '<td class="sit-cell--client">' +
           '<div class="am-mission__name">' + esc(m.name) + '</div>' +
           '<div class="am-mission__entity">' + esc(m.entityName) + esc(planLabel(m)) + '</div>' +
         '</td>' +
         '<td class="sit-cell--tip">' + esc(m.typeName) + '</td>' +
         '<td class="sit-cell--termen">' + termenHtml(m) + '</td>' +
         '<td>' + respClusterHtml(m) + '</td>' +
-        '<td>' + statusHtml(m.status) + '</td>' +
+        '<td>' + statusHtml(m.status) + '</td>';
+    var main =
+      '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(m.id) + '" data-row>' +
+        '<td class="sit-cell--chevron" data-chevron>' +
+          '<span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
+        '</td>' +
+        cells +
       '</tr>';
     return main + (isExpanded ? expandedHtml(m) : '');
   }
@@ -367,7 +384,9 @@
         trail +
       '</div>';
     }).join('');
-    return '<tr class="sit-row-exp"><td colspan="6">' +
+    var eng = listEngine();
+    var span = eng ? eng.LV.colCount(eng.v, true) : 6;
+    return '<tr class="sit-row-exp"><td colspan="' + span + '">' +
       '<div class="exp-panel">' +
         '<div class="am-steps" role="list" aria-label="Etapele misiunii">' + stepsHtml + '</div>' +
         '<div class="exp-footer">' +

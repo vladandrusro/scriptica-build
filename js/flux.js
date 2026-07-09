@@ -197,14 +197,13 @@
       '</section>' +
       '<div id="fx-table-wrap" class="table-wrap">' +
         '<table class="sit-table">' +
-          '<thead><tr>' +
-            '<th style="width:44px;"></th>' +
-            '<th>' + esc(v.itemLabel || 'Element') + '</th>' +
-            '<th style="width:240px;">Șablon</th>' +
-            '<th style="width:110px;">Termen</th>' +
-            '<th style="width:160px;">Responsabili</th>' +
-            '<th style="width:180px;">Status</th>' +
-          '</tr></thead>' +
+          /* antetul vine din „expresia în tabel" a verticalei (listView) */
+          '<thead>' + (window.SCRIPTICA_LISTVIEW
+            ? window.SCRIPTICA_LISTVIEW.headerHtml(v, { chevron: true })
+            : '<tr><th style="width:44px;"></th><th>' + esc(v.itemLabel || 'Element') + '</th>' +
+              '<th style="width:240px;">Șablon</th><th style="width:110px;">Termen</th>' +
+              '<th style="width:160px;">Responsabili</th><th style="width:180px;">Status</th></tr>') +
+          '</thead>' +
           '<tbody id="fx-tbody"></tbody>' +
         '</table>' +
       '</div>' +
@@ -256,19 +255,22 @@
 
   function rowHtml(v, it) {
     var isExpanded = state.expandedId === it.id;
+    var cells = window.SCRIPTICA_LISTVIEW
+      ? window.SCRIPTICA_LISTVIEW.cellsHtml(v, window.SCRIPTICA_LISTVIEW.normalizeFlowItem(it))
+      : '<td class="sit-cell--client">' +
+          '<div class="lv-name">' + esc(it.name) + '</div>' +
+          '<div class="lv-sub">' + esc(it.clientName || '') + '</div>' +
+        '</td>' +
+        '<td class="sit-cell--tip">' + esc(it.templateName || '') + '</td>' +
+        '<td class="sit-cell--termen">' + termenHtml(it) + '</td>' +
+        '<td>' + respClusterHtml(it) + '</td>' +
+        '<td>' + statusHtml(it.status) + '</td>';
     var main =
       '<tr class="sit-row' + (isExpanded ? ' is-expanded' : '') + '" data-id="' + esc(it.id) + '" data-row>' +
         '<td class="sit-cell--chevron" data-chevron>' +
           '<span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
         '</td>' +
-        '<td class="sit-cell--client">' +
-          '<div class="am-mission__name">' + esc(it.name) + '</div>' +
-          '<div class="am-mission__entity">' + esc(it.clientName || '') + '</div>' +
-        '</td>' +
-        '<td class="sit-cell--tip">' + esc(it.templateName || '') + '</td>' +
-        '<td class="sit-cell--termen">' + termenHtml(it) + '</td>' +
-        '<td>' + respClusterHtml(it) + '</td>' +
-        '<td>' + statusHtml(it.status) + '</td>' +
+        cells +
       '</tr>';
     return main + (isExpanded ? expandedHtml(v, it) : '');
   }
@@ -288,7 +290,8 @@
         trail +
       '</div>';
     }).join('');
-    return '<tr class="sit-row-exp"><td colspan="6">' +
+    var span = window.SCRIPTICA_LISTVIEW ? window.SCRIPTICA_LISTVIEW.colCount(v, true) : 6;
+    return '<tr class="sit-row-exp"><td colspan="' + span + '">' +
       '<div class="exp-panel">' +
         '<div class="am-steps" role="list" aria-label="Etape">' + stepsHtml + '</div>' +
         '<div class="exp-footer">' +
