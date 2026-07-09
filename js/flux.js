@@ -77,6 +77,14 @@
   function employeeById(id) {
     return (MOCK.employees || []).find(function (e) { return e.id === id; }) || null;
   }
+  function trapFocus(e, container) {
+    if (!container) return;
+    var focusable = container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if (!focusable.length) return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
 
   function templateById(id) {
     return (MOCK.superAdmin.flowTemplates || []).find(function (t) { return t.id === id; }) || null;
@@ -164,7 +172,7 @@
         '<h1 class="page-header__title">' + esc(v.name) + '</h1>' +
         '<button id="fx-new" class="btn btn--primary" type="button">Adaugă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</header>' +
-      '<p class="fx-subtitle"><span class="pill pill--highlight">Verticală custom</span> ' + esc(v.description || '') + '</p>' +
+      '<p class="fx-subtitle">' + esc(v.description || '') + '</p>' +
       '<section class="filters" aria-label="Filtre">' +
         '<div class="filters__primary">' +
           '<div class="filter-input-search">' +
@@ -200,10 +208,7 @@
           '<tbody id="fx-tbody"></tbody>' +
         '</table>' +
       '</div>' +
-      '<div id="fx-empty" class="table-empty table-wrap" role="status" style="display:none">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
-        '<p>Niciun element nu corespunde filtrelor selectate.</p>' +
-      '</div>';
+      '<div id="fx-empty" class="table-empty table-wrap" role="status" style="display:none"></div>';
 
     bindList(root, v);
     renderRows(root, v);
@@ -229,6 +234,17 @@
     var filtered = getFiltered(v);
     if (!filtered.length) {
       tbody.innerHTML = '';
+      /* zero-state real la prima utilizare vs. „niciun rezultat" la filtrare */
+      var f = state.filters;
+      var hasFilters = !!(f.search || f.status || f.tip);
+      var noneAtAll = itemsFor(v).length === 0;
+      empty.innerHTML = (noneAtAll && !hasFilters)
+        ? '<span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' +
+          '<p>' + esc('Niciun ' + (v.itemLabel || 'element').toLowerCase() + ' încă în această verticală.') + '</p>' +
+          '<button type="button" class="btn btn--primary" data-fx-empty-new>' + esc('Creează primul ' + (v.itemLabel || 'element').toLowerCase()) +
+            '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
+        : '<span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
+          '<p>Niciun element nu corespunde filtrelor selectate.</p>';
       empty.style.display = 'flex';
       wrap.style.display = 'none';
       return;
@@ -301,6 +317,9 @@
       renderRows(root, v);
     });
     root.querySelector('#fx-new').addEventListener('click', function () { openNewItemModal(root, v); });
+    root.querySelector('#fx-empty').addEventListener('click', function (e) {
+      if (e.target.closest('[data-fx-empty-new]')) openNewItemModal(root, v);
+    });
   }
 
   /* ---------- modal element nou (construit din JS) ---------- */
@@ -321,32 +340,37 @@
           '<p class="modal__subtitle">Completează detaliile; termenele se calculează automat din șablon.</p>' +
         '</header>' +
         '<form class="modal__body" novalidate>' +
-          '<div class="form-field">' +
+          '<div class="form-field" data-field="tip">' +
             '<label class="form-label" for="fxm-tip">Șablon de flux</label>' +
             '<select id="fxm-tip" class="select">' +
               '<option value="">Selectează șablonul...</option>' +
               tpls.map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>'; }).join('') +
             '</select>' +
-            '<span class="form-helper">Șabloanele sunt definite de Scriptica HQ în registrul de fluxuri.</span>' +
+            '<span class="form-helper">Șabloanele de flux sunt gestionate de administratorul platformei.</span>' +
+            '<span class="form-error" role="alert"></span>' +
           '</div>' +
-          '<div class="form-field">' +
+          '<div class="form-field" data-field="nume">' +
             '<label class="form-label" for="fxm-name">Denumire</label>' +
             '<input id="fxm-name" type="text" class="input" placeholder="ex. Opinie fiscală — speță TVA">' +
+            '<span class="form-error" role="alert"></span>' +
           '</div>' +
-          '<div class="form-field">' +
+          '<div class="form-field" data-field="client">' +
             '<label class="form-label" for="fxm-client">Client / beneficiar</label>' +
             '<input id="fxm-client" type="text" class="input" placeholder="ex. Electro Distrib S.R.L.">' +
+            '<span class="form-error" role="alert"></span>' +
           '</div>' +
-          '<div class="form-field">' +
+          '<div class="form-field" data-field="resp">' +
             '<label class="form-label" for="fxm-resp">Responsabil</label>' +
             '<select id="fxm-resp" class="select">' +
               '<option value="">Selectează responsabilul...</option>' +
               (MOCK.employees || []).map(function (e) { return '<option value="' + e.id + '">' + esc(e.name) + '</option>'; }).join('') +
             '</select>' +
+            '<span class="form-error" role="alert"></span>' +
           '</div>' +
-          '<div class="form-field">' +
+          '<div class="form-field" data-field="data">' +
             '<label class="form-label" for="fxm-date">Data început</label>' +
             '<input id="fxm-date" type="date" class="input" value="' + todayISO() + '" min="' + todayISO() + '">' +
+            '<span class="form-error" role="alert"></span>' +
           '</div>' +
           '<div class="form-field">' +
             '<span class="form-label">Termene estimate</span>' +
@@ -360,14 +384,24 @@
       '</div>';
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
+    var lastTrigger = document.activeElement;
+    var dialog = overlay.querySelector('.modal__dialog');
 
     function close() {
       overlay.remove();
       document.body.style.overflow = '';
       document.removeEventListener('keydown', onKey);
+      if (lastTrigger && typeof lastTrigger.focus === 'function') lastTrigger.focus();
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      else if (e.key === 'Tab') trapFocus(e, dialog);
+    }
     document.addEventListener('keydown', onKey);
+    setTimeout(function () {
+      var first = overlay.querySelector('#fxm-tip');
+      if (first) first.focus();
+    }, 0);
     overlay.querySelector('[data-modal-close]').addEventListener('click', close);
     overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
@@ -393,17 +427,27 @@
     dateInp.addEventListener('input', recompute);
     recompute();
 
+    /* validare inline, într-o singură trecere — patternul setError */
+    function setError(name, msg) {
+      var f = overlay.querySelector('[data-field="' + name + '"]');
+      if (!f) return;
+      f.classList.toggle('has-error', !!msg);
+      var el = f.querySelector('.form-error');
+      if (el) el.textContent = msg || '';
+    }
     overlay.querySelector('[data-modal-submit]').addEventListener('click', function (e) {
       e.preventDefault();
       var t = tpls.find(function (x) { return x.id === tipSel.value; });
       var name = overlay.querySelector('#fxm-name').value.trim();
       var client = overlay.querySelector('#fxm-client').value.trim();
       var resp = parseInt(overlay.querySelector('#fxm-resp').value, 10);
-      if (!t) { toast('error', 'Selectează șablonul de flux.'); return; }
-      if (!name) { toast('error', 'Denumirea este obligatorie.'); return; }
-      if (!client) { toast('error', 'Clientul / beneficiarul este obligatoriu.'); return; }
-      if (!resp) { toast('error', 'Selectează responsabilul.'); return; }
-      if (!dateInp.value || dateInp.value < todayISO()) { toast('error', 'Alege o dată validă (azi sau ulterioară).'); return; }
+      var dateBad = !dateInp.value || dateInp.value < todayISO();
+      setError('tip', t ? '' : 'Selectează șablonul de flux.');
+      setError('nume', name ? '' : 'Denumirea este obligatorie.');
+      setError('client', client ? '' : 'Clientul / beneficiarul este obligatoriu.');
+      setError('resp', resp ? '' : 'Selectează responsabilul.');
+      setError('data', dateBad ? 'Alege o dată validă (azi sau ulterioară).' : '');
+      if (!t || !name || !client || !resp || dateBad) return;
       var rec = {
         id: 'fi_' + Date.now(),
         verticalId: v.id, domain: v.domain,
@@ -494,7 +538,7 @@
           '<div class="fx-card__title">Despre verticală</div>' +
           '<p class="fx-about">' + esc(v.description || '') + '</p>' +
           '<div class="fx-about__note"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-            'Verticală definită de Scriptica HQ în registrul de fluxuri — pagina este generată de motorul generic, fără cod dedicat.</div>' +
+            'Structura acestui flux este gestionată de administratorul platformei pentru profilul firmei tale.</div>' +
         '</div>' +
       '</div>';
 

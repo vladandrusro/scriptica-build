@@ -50,7 +50,8 @@
     if (days == null) return '';
     var cls = days < 0 ? 'dw-days--late' : (days <= 3 ? 'dw-days--soon' : 'dw-days--ok');
     var label = days < 0 ? (Math.abs(days) + ' zile întârziere') : (days === 0 ? 'azi' : days + ' zile');
-    return '<span class="dw-days ' + cls + '">' + label + '</span>';
+    /* compus pe .pill (geometria din design system) — modificatorul dă doar culorile */
+    return '<span class="pill dw-days ' + cls + '">' + label + '</span>';
   }
 
   var STATUS_LABELS = {
@@ -433,7 +434,9 @@
 
     main.innerHTML = '<div class="dashboard"><div class="dw-grid">' +
       layout.map(function (item) { return cardHtml(item, ct); }).join('') +
-    '</div></div>';
+    '</div>' +
+    '<p class="dw-note">Dashboard configurat pentru profilul firmei de către administratorul platformei.</p>' +
+    '</div>';
 
     /* Butonul „Situație Nouă" din widget: modalul static + handlerele lui
        (close/submit) rămân montate de dashboard.js; refacem doar deschiderea. */

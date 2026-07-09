@@ -23,6 +23,7 @@
 
   /* Surface tint for pending/warning banners (pending la 15% pe alb) */
   --color-pending-surface: #FEF2E6;
+  --color-critical-surface: #FFE9F1;
 
   /* --- Colors — Derived / Supporting --- */
   --color-text-primary: #1A1433;

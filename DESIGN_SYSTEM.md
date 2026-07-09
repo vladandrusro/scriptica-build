@@ -43,6 +43,7 @@ Single source of truth for design tokens and component styles. All values come f
 | `--color-text-muted` | `#918D9C` | Placeholders, timestamps, disabled labels |
 | `--color-border` | `#D4CFDA` | Standard border (cards, inputs) |
 | `--color-border-strong` | `#B4AEC4` | Stronger border, dividers |
+| `--color-critical-surface` | `#FFE9F1` | Tinted surface behind critical text (late badges, negative report rows) |
 | `--color-chat-left` | `#F7F7F7` | Incoming chat bubble |
 | `--color-chat-right` | `#F4F0FF` | Outgoing chat bubble |
 | `--color-important-hover` | `#E5A800` | Yellow CTA hover state |
@@ -112,7 +113,7 @@ All shadows use a tinted dark-purple (`rgba(39, 35, 67, …)`) instead of pure b
 
 ### 6.1 Buttons
 
-Height `40px`, padding `0 16px`, radius `--radius-md`, font `14px / 700`.
+Height `40px`, padding `8px 16px`, radius `--radius-sm`, font `14px / 700`.
 
 | Variant | Background | Text | Border | Hover |
 |---|---|---|---|---|

@@ -6,7 +6,7 @@
 
 .dw-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4); align-items: start;
+  gap: var(--space-5); align-items: start; /* același ritm ca .dashboard (24px) */
 }
 @media (max-width: 1100px) { .dw-grid { grid-template-columns: 1fr; } }
 .dw-card { margin: 0; min-width: 0; }
@@ -35,12 +35,9 @@ a.dw-row:hover .dw-row__title { color: var(--color-default-highlight); }
 .dw-doc-ico { font-size: 16px; color: var(--color-default-highlight); flex: none; }
 .dw-status { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-small); flex: none; }
 
-/* badge de termen */
-.dw-days {
-  flex: none; font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
-  padding: 2px var(--space-2); border-radius: var(--radius-pill);
-}
-.dw-days--late { background: #FFE3EE; color: var(--color-critical); }
+/* badge de termen — compus pe .pill; modificatorii dau doar culorile */
+.dw-days { flex: none; }
+.dw-days--late { background: var(--color-critical-surface); color: var(--color-critical); }
 .dw-days--soon { background: var(--color-pending-surface); color: var(--color-pending); }
 .dw-days--ok   { background: var(--color-surface-2); color: var(--color-text-secondary); }
 
@@ -56,3 +53,9 @@ a.dw-row:hover .dw-row__title { color: var(--color-default-highlight); }
 .dw-client__name { font-weight: var(--font-weight-bold); margin-bottom: var(--space-1); }
 .dw-client__meta { font-size: var(--font-size-small); color: var(--color-text-secondary); }
 .dw-client__count { font-size: var(--font-size-small); color: var(--color-default-highlight); font-weight: var(--font-weight-bold); margin-top: var(--space-2); }
+
+/* proveniența layout-ului (sub grila de widget-uri) */
+.dw-note {
+  margin: var(--space-4) 0 0; text-align: center;
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+}

@@ -52,52 +52,113 @@
   var CT_ICONS = ['calculate', 'verified_user', 'balance', 'diversity_2', 'gavel', 'apartment', 'handshake', 'storefront'];
   var FREQUENCIES = ['lunar', 'trimestrial', 'anual', 'punctual'];
 
-  /* ---- modal generic construit din JS (paginile HQ nu au markup static) ---- */
+  /* ---- modal generic construit din JS (paginile HQ nu au markup static) ----
+     Reproduce comportamentul modalelor statice: focus inițial, focus trap,
+     restaurarea focusului la trigger, footer aliniat la dreapta. `opts.isDirty`
+     (funcție) activează garda de modificări nesalvate pe Escape/backdrop/X. */
+  var saModalTitleSeq = 0;
   function saModal(opts) {
     var overlay = document.createElement('div');
+    var titleId = 'sa-modal-title-' + (++saModalTitleSeq);
+    var lastTrigger = document.activeElement;
     overlay.className = 'modal is-open';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', titleId);
     overlay.innerHTML =
-      '<div class="modal__dialog" role="document"' + (opts.wide ? ' style="max-width:760px"' : '') + '>' +
+      '<div class="modal__dialog' + (opts.wide ? ' modal__dialog--wide' : '') + '" role="document">' +
         '<button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">' +
           '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
         '<header class="modal__header">' +
-          '<h2 class="modal__title">' + esc(opts.title) + '</h2>' +
+          '<h2 class="modal__title" id="' + titleId + '">' + esc(opts.title) + '</h2>' +
           (opts.subtitle ? '<p class="modal__subtitle">' + esc(opts.subtitle) + '</p>' : '') +
         '</header>' +
         '<form class="modal__body" novalidate>' + opts.bodyHtml + '</form>' +
         '<footer class="modal__footer">' +
+          '<span class="modal__footer-helper">' + esc(opts.footerHelper || '') + '</span>' +
           '<button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>' +
           '<button type="button" class="btn ' + (opts.critical ? 'btn--critical' : 'btn--primary') + '" data-modal-submit>' + esc(opts.submitLabel || 'Salvează') + '</button>' +
         '</footer>' +
       '</div>';
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
+    var dialog = overlay.querySelector('.modal__dialog');
+
     function close() {
       overlay.remove();
       document.body.style.overflow = '';
       document.removeEventListener('keydown', onKey);
+      if (lastTrigger && typeof lastTrigger.focus === 'function') lastTrigger.focus();
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
+    /* garda de modificări nesalvate — confirmarea se deschide DEASUPRA
+       modalului curent (overlay separat), fără să-l închidă */
+    function guardedClose() {
+      if (opts.isDirty && opts.isDirty()) {
+        saModal({
+          title: 'Renunți la modificările nesalvate?',
+          bodyHtml: '<p class="sa-modal-note">Modificările din această fereastră nu au fost salvate și se vor pierde.</p>',
+          submitLabel: 'Renunță la modificări', critical: true,
+          onSubmit: function (m2, close2) { close2(); close(); }
+        });
+        return;
+      }
+      close();
+    }
+    function onKey(e) {
+      if (!document.body.contains(overlay)) return;
+      /* dacă o confirmare e deschisă peste noi, ea preia tastatura */
+      var overlays = document.querySelectorAll('.modal.is-open');
+      if (overlays[overlays.length - 1] !== overlay) return;
+      if (e.key === 'Escape') { e.preventDefault(); guardedClose(); }
+      else if (e.key === 'Tab') trapFocus(e, dialog);
+    }
     document.addEventListener('keydown', onKey);
-    overlay.querySelector('[data-modal-close]').addEventListener('click', close);
-    overlay.querySelector('[data-modal-cancel]').addEventListener('click', close);
-    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    overlay.querySelector('[data-modal-close]').addEventListener('click', guardedClose);
+    overlay.querySelector('[data-modal-cancel]').addEventListener('click', guardedClose);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) guardedClose(); });
     overlay.querySelector('[data-modal-submit]').addEventListener('click', function (e) {
       e.preventDefault();
       if (opts.onSubmit) opts.onSubmit(overlay, close);
     });
     if (opts.onOpen) opts.onOpen(overlay, close);
+    /* focus inițial: primul control din corp, altfel butonul de submit */
+    setTimeout(function () {
+      var first = dialog.querySelector('.modal__body input:not([disabled]), .modal__body select:not([disabled]), .modal__body textarea:not([disabled]), .modal__body button:not([disabled])') ||
+        dialog.querySelector('[data-modal-submit]');
+      if (first) first.focus();
+    }, 0);
     return { el: overlay, close: close };
   }
 
-  function fieldHtml(label, controlHtml, help) {
-    return '<div class="form-field">' +
+  function trapFocus(e, container) {
+    if (!container) return;
+    var focusable = container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if (!focusable.length) return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  function fieldHtml(label, controlHtml, help, name) {
+    return '<div class="form-field"' + (name ? ' data-field="' + esc(name) + '"' : '') + '>' +
       '<label class="form-label">' + esc(label) + '</label>' +
       controlHtml +
       (help ? '<span class="form-helper">' + esc(help) + '</span>' : '') +
+      '<span class="form-error" role="alert"></span>' +
     '</div>';
+  }
+  /* validare inline — același pattern ca setError din misiuni-audit.js */
+  function setFieldError(root, name, msg) {
+    var f = root.querySelector('[data-field="' + name + '"]');
+    if (!f) return;
+    f.classList.toggle('has-error', !!msg);
+    var el = f.querySelector('.form-error');
+    if (el) el.textContent = msg || '';
+  }
+  function clearFieldErrors(root) {
+    root.querySelectorAll('.form-field.has-error').forEach(function (f) {
+      f.classList.remove('has-error');
+    });
   }
   function iconPickerHtml(icons, selected) {
     return '<div class="sa-iconpick">' + icons.map(function (ic) {
@@ -233,7 +294,9 @@
         '<td>' + statusPill(c.contract) + '</td>' +
         '<td><div class="sa-load" title="' + c.aiLoad + '%"><span style="width:' + c.aiLoad + '%"></span></div></td>' +
         '<td class="admin-table__muted">' + esc(c.enrolled) + '</td>' +
-        '<td style="text-align:right"><span class="sa-rowbtn" aria-hidden="true"><span class="material-symbols-outlined">chevron_right</span></span></td>' +
+        '<td style="text-align:right"><a class="sa-rowbtn" href="super-admin-client.html?id=' + esc(c.id) +
+          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '" aria-label="Deschide clientul ' + esc(c.name) + '">' +
+          '<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></a></td>' +
       '</tr>';
   }
   function clientsTable(list) {
@@ -243,7 +306,8 @@
   }
   function bindRows(root) {
     root.querySelectorAll('.sa-row').forEach(function (tr) {
-      tr.addEventListener('click', function () {
+      tr.addEventListener('click', function (e) {
+        if (e.target.closest('a')) return; /* chevronul e link real (focusabil) */
         window.location.href = 'super-admin-client.html?id=' + encodeURIComponent(tr.getAttribute('data-id')) +
           (getCurrentView() === 'superadmin' ? '&view=superadmin' : '');
       });
@@ -315,8 +379,8 @@
       '<p class="sa-subtitle">Toate conturile de business · ' + list.length + ' clienți</p>' +
       clientsTable(list) +
       '<div style="margin-top:var(--space-4)">' +
-        '<button class="btn btn--primary" type="button" id="sa-new-client">' +
-          '<span class="material-symbols-outlined" aria-hidden="true">add</span>Cont de business nou</button>' +
+        '<button class="btn btn--primary" type="button" id="sa-new-client">Cont de business nou' +
+          '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</div>';
     bindRows(root);
     var nb = root.querySelector('#sa-new-client');
@@ -436,8 +500,8 @@
   function renderFluxuri(root) {
     root.innerHTML =
       '<header class="page-header"><h1 class="page-header__title">Fluxuri</h1>' +
-        '<button class="btn btn--primary" type="button" data-new-vert>' +
-          '<span class="material-symbols-outlined" aria-hidden="true">add</span>Verticală nouă</button>' +
+        '<button class="btn btn--primary" type="button" data-new-vert>Verticală nouă' +
+          '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</header>' +
       '<p class="sa-subtitle">Registrul platformei: verticale de lucru și șabloanele lor de flux. Pachetele implicite per client se compun în „Tipuri de clienți".</p>' +
       verticals().map(verticalCardHtml).join('');
@@ -478,8 +542,8 @@
         '</td></tr>';
     }).join('');
     var badge = v.builtin
-      ? '<span class="pill pill--neutral">Standard</span>'
-      : '<span class="pill pill--highlight">Custom</span>';
+      ? '<span class="pill pill--neutral">Predefinită</span>'
+      : '<span class="pill pill--purple">Personalizată</span>';
     var actions = v.builtin ? '' :
       '<button class="sa-mini-btn" type="button" data-edit-vert="' + esc(v.id) + '" title="Editează verticala"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>' +
       '<button class="sa-mini-btn sa-mini-btn--danger" type="button" data-del-vert="' + esc(v.id) + '" title="Șterge verticala"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>';
@@ -496,7 +560,7 @@
         ? '<table class="admin-table sa-flow-table"><thead><tr><th>Șablon de flux</th><th>Frecvență</th><th>Etape</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>'
         : '<div class="sa-flow-empty">Niciun șablon definit încă pentru această verticală.</div>') +
       '<div class="sa-flow-foot">' +
-        '<button class="btn btn--secondary" type="button" data-add-tpl="' + esc(v.id) + '"><span class="material-symbols-outlined" aria-hidden="true">add</span>Șablon nou</button>' +
+        '<button class="btn btn--secondary" type="button" data-add-tpl="' + esc(v.id) + '">Șablon nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
         '<a class="sa-flow-open" href="' + esc(listHref) + '">Deschide în aplicație<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
       '</div>' +
     '</div>';
@@ -513,18 +577,19 @@
   function openVerticalModal(root, v) {
     var lc = (v && v.lifecycle && v.lifecycle.slice()) || ['', ''];
     var body =
-      fieldHtml('Denumire verticală', '<input type="text" class="input" data-f="name" value="' + esc(v ? v.name : '') + '" placeholder="ex. Consultanță Fiscală">') +
+      fieldHtml('Denumire verticală', '<input type="text" class="input" data-f="name" value="' + esc(v ? v.name : '') + '" placeholder="ex. Consultanță Fiscală">', null, 'nume') +
       '<div class="sa-form-2col">' +
         fieldHtml('Element de lucru (singular)', '<input type="text" class="input" data-f="itemLabel" value="' + esc(v ? v.itemLabel || '' : '') + '" placeholder="ex. Dosar">', 'Cum se numește un element din verticală.') +
         fieldHtml('Element de lucru (plural)', '<input type="text" class="input" data-f="itemLabelPlural" value="' + esc(v ? v.itemLabelPlural || '' : '') + '" placeholder="ex. Dosare">') +
       '</div>' +
       fieldHtml('Pictogramă', iconPickerHtml(VERTICAL_ICONS, v ? v.icon : VERTICAL_ICONS[0])) +
       fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(v ? v.description || '' : '') + '</textarea>') +
-      '<div class="form-field">' +
+      '<div class="form-field" data-field="etape">' +
         '<label class="form-label">Etapele ciclului de viață</label>' +
         '<span class="form-helper">Forma fluxului: fiecare element trece prin aceste etape, în ordine. Termenele per etapă se stabilesc pe șabloane.</span>' +
         '<div class="sa-lc-rows" data-lc-rows>' + lc.map(lcRowHtml).join('') + '</div>' +
-        '<button type="button" class="btn btn--ghost" data-lc-add><span class="material-symbols-outlined" aria-hidden="true">add</span>Adaugă etapă</button>' +
+        '<button type="button" class="btn btn--ghost" data-lc-add>Adaugă etapă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+        '<span class="form-error" role="alert"></span>' +
       '</div>';
 
     saModal({
@@ -548,10 +613,12 @@
         });
       },
       onSubmit: function (m, close) {
+        clearFieldErrors(m);
         var name = fval(m, 'name');
         var lcNames = Array.prototype.map.call(m.querySelectorAll('[data-lc-name]'), function (i) { return i.value.trim(); }).filter(Boolean);
-        if (!name) { toast('error', 'Denumirea verticalei este obligatorie.'); return; }
-        if (lcNames.length < 2) { toast('error', 'Definește cel puțin două etape ale ciclului de viață.'); return; }
+        setFieldError(m, 'nume', name ? '' : 'Denumirea verticalei este obligatorie.');
+        setFieldError(m, 'etape', lcNames.length >= 2 ? '' : 'Definește cel puțin două etape ale ciclului de viață.');
+        if (!name || lcNames.length < 2) return;
         var itemLabel = fval(m, 'itemLabel') || 'Element';
         var rec = {
           id: v ? v.id : uid('vert', name, verticals()),
@@ -582,8 +649,27 @@
     });
   }
 
+  /* Elemente de flux active la clienți — blochează ștergerile care le-ar
+     lăsa fără șablon/verticală (timeline gol, item de neterminat). */
+  function activeFlowItems(pred) {
+    return ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.flowItems) || []).filter(function (i) {
+      return i.status !== 'finalizat' && i.status !== 'anulata' && pred(i);
+    });
+  }
+  function blockedDeleteModal(title, count) {
+    saModal({
+      title: title,
+      bodyHtml: '<p class="sa-modal-note">' + count + (count === 1 ? ' element activ al clienților folosește' : ' elemente active ale clienților folosesc') +
+        ' această configurație. Finalizează-le înainte de ștergere — altfel ar rămâne blocate, fără etape.</p>',
+      submitLabel: 'Am înțeles',
+      onSubmit: function (m, close) { close(); }
+    });
+  }
+
   function confirmDeleteVertical(root, v) {
     if (!v) return;
+    var active = activeFlowItems(function (i) { return i.verticalId === v.id; });
+    if (active.length) { blockedDeleteModal('Verticala nu poate fi ștearsă', active.length); return; }
     var tpls = templatesFor(v.id);
     var usedBy = clientTypesAll().filter(function (t) { return (t.verticalIds || []).indexOf(v.id) !== -1; });
     saModal({
@@ -626,16 +712,20 @@
       title: t ? 'Editează șablonul' : 'Șablon nou — ' + v.name,
       subtitle: 'Termenele unei instanțe se calculează din data de început + offset-urile etapelor.',
       bodyHtml:
-        fieldHtml('Denumire șablon', '<input type="text" class="input" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Opinie fiscală punctuală">') +
+        fieldHtml('Denumire șablon', '<input type="text" class="input" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Opinie fiscală punctuală">', null, 'nume') +
         fieldHtml('Frecvență', '<select class="select" data-f="frequency">' + freqOptions + '</select>') +
         fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(t ? t.description || '' : '') + '</textarea>') +
-        '<div class="form-field"><label class="form-label">Termene pe etapele verticalei</label>' + stepRows + '</div>',
+        '<div class="form-field" data-field="termene"><label class="form-label">Termene pe etapele verticalei</label>' + stepRows +
+          '<span class="form-error" role="alert"></span></div>',
       submitLabel: t ? 'Salvează modificările' : 'Creează șablonul',
       onSubmit: function (m, close) {
+        clearFieldErrors(m);
         var name = fval(m, 'name');
-        if (!name) { toast('error', 'Denumirea șablonului este obligatorie.'); return; }
         var offs = Array.prototype.map.call(m.querySelectorAll('[data-tpl-off]'), function (i) { return parseInt(i.value, 10); });
-        if (offs.some(function (n) { return !n || n < 1; })) { toast('error', 'Completează termenul (în zile) pentru fiecare etapă.'); return; }
+        var offsBad = offs.some(function (n) { return !n || n < 1; });
+        setFieldError(m, 'nume', name ? '' : 'Denumirea șablonului este obligatorie.');
+        setFieldError(m, 'termene', offsBad ? 'Completează termenul (în zile) pentru fiecare etapă.' : '');
+        if (!name || offsBad) return;
         var rec = {
           id: t ? t.id : uid('ft', name, templatesAll()),
           verticalId: v.id,
@@ -655,6 +745,8 @@
 
   function confirmDeleteTemplate(root, t) {
     if (!t) return;
+    var active = activeFlowItems(function (i) { return i.templateId === t.id; });
+    if (active.length) { blockedDeleteModal('Șablonul nu poate fi șters', active.length); return; }
     var usedBy = clientTypesAll().filter(function (ct) { return (ct.defaultTemplateIds || []).indexOf(t.id) !== -1; });
     saModal({
       title: 'Șterge șablonul „' + t.name + '"?',
@@ -689,8 +781,8 @@
   function renderClientTypes(root) {
     root.innerHTML =
       '<header class="page-header"><h1 class="page-header__title">Tipuri de clienți</h1>' +
-        '<button class="btn btn--primary" type="button" data-new-ct>' +
-          '<span class="material-symbols-outlined" aria-hidden="true">add</span>Tip de client nou</button>' +
+        '<button class="btn btn--primary" type="button" data-new-ct>Tip de client nou' +
+          '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</header>' +
       '<p class="sa-subtitle">Fiecare tip definește verticalele și șabloanele de flux primite implicit la înrolare — copiate în workspace-ul clientului, apoi adaptabile din Administrare. Un client are un singur tip.</p>' +
       '<div class="sa-ct-grid">' + clientTypesAll().map(ctCardHtml).join('') + '</div>';
@@ -737,14 +829,16 @@
       '<div class="sa-ct-arch">' +
         '<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>' +
         countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.' +
-        '<button class="btn btn--ghost sa-ct-arch__btn" type="button" data-arch-ct="' + esc(t.id) + '">Configurează</button>' +
+        (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') +
+        '<button class="btn btn--ghost sa-ct-arch__btn" type="button" data-arch-ct="' + esc(t.id) + '">Editează structura</button>' +
       '</div>' +
-      '<div class="sa-ct-sec">Dashboard (Acasă)</div>' +
+      '<div class="sa-ct-sec">Acasă (dashboard)</div>' +
       '<div class="sa-ct-arch">' +
         '<span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
         ((t.dashboardLayout || []).length) + ' widget-uri · denumire: „' + esc(t.clientLabel || 'Client') + '"' +
-        '<a class="btn btn--ghost sa-ct-arch__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
-          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Configurează</a>' +
+        (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') +
+        '<a class="sa-flow-open sa-ct-arch__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
+          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Deschide builderul<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
       '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';
@@ -770,14 +864,14 @@
       return '<div class="sa-ct-vblock">' +
         '<label class="checkbox sa-ct-vblock__head"><input type="checkbox" data-ct-vert value="' + esc(v.id) + '"' + (vChecked ? ' checked' : '') + '> ' +
           '<span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span><b>' + esc(v.name) + '</b></label>' +
-        '<div class="sa-ct-tpls">' + (tpls || '<span class="admin-table__muted">Fără șabloane — adaugă din „Fluxuri".</span>') + '</div>' +
+        '<div class="sa-ct-tpls">' + (tpls || '<span class="admin-table__muted">Fără șabloane — <a href="super-admin-fluxuri.html' + vq() + '">adaugă din „Fluxuri"</a>.</span>') + '</div>' +
       '</div>';
     }).join('');
     saModal({
       title: t ? 'Editează tipul de client' : 'Tip de client nou',
       subtitle: 'Clienții de acest tip primesc la înrolare verticalele bifate, cu șabloanele implicite selectate.',
       bodyHtml:
-        fieldHtml('Denumire tip', '<input type="text" class="input" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Cabinet de consultanță fiscală">') +
+        fieldHtml('Denumire tip', '<input type="text" class="input" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Cabinet de consultanță fiscală">', null, 'nume') +
         fieldHtml('Pictogramă', iconPickerHtml(CT_ICONS, t ? t.icon : CT_ICONS[0])) +
         fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(t ? t.description || '' : '') + '</textarea>') +
         '<div class="sa-form-2col">' +
@@ -785,7 +879,8 @@
             'Cum sunt numiți clienții în aplicație pentru acest tip.') +
           fieldHtml('Denumirea părții externe (plural)', '<input type="text" class="input" data-f="clientLabelPlural" value="' + esc(t ? t.clientLabelPlural || '' : '') + '" placeholder="ex. Clienți, Instituții">') +
         '</div>' +
-        '<div class="form-field"><label class="form-label">Verticale și șabloane implicite</label>' + blocks + '</div>',
+        '<div class="form-field" data-field="verticale"><label class="form-label">Verticale și șabloane implicite</label>' + blocks +
+          '<span class="form-error" role="alert"></span></div>',
       wide: true,
       submitLabel: t ? 'Salvează modificările' : 'Creează tipul',
       onOpen: function (m) {
@@ -800,14 +895,17 @@
         });
       },
       onSubmit: function (m, close) {
+        clearFieldErrors(m);
         var name = fval(m, 'name');
-        if (!name) { toast('error', 'Denumirea tipului este obligatorie.'); return; }
         var vids = Array.prototype.filter.call(m.querySelectorAll('[data-ct-vert]'), function (c) { return c.checked; })
           .map(function (c) { return c.value; });
-        if (!vids.length) { toast('error', 'Selectează cel puțin o verticală.'); return; }
         var tids = Array.prototype.filter.call(m.querySelectorAll('[data-ct-tpl]'), function (c) { return c.checked && !c.disabled; })
           .map(function (c) { return c.value; });
-        if (!tids.length) { toast('error', 'Selectează cel puțin un șablon implicit.'); return; }
+        setFieldError(m, 'nume', name ? '' : 'Denumirea tipului este obligatorie.');
+        var vErr = !vids.length ? 'Selectează cel puțin o verticală.'
+          : (!tids.length ? 'Selectează cel puțin un șablon implicit.' : '');
+        setFieldError(m, 'verticale', vErr);
+        if (!name || vErr) return;
         var clientLabel = fval(m, 'clientLabel') || 'Client';
         var rec = {
           id: t ? t.id : uid('ct', name, clientTypesAll()),
@@ -818,6 +916,9 @@
           verticalIds: vids,
           defaultTemplateIds: tids,
           archiveTree: t ? (t.archiveTree || []) : window.scripticaDefaultArchiveTree(),
+          /* tip nou → arhiva și dashboard-ul pornesc din valori implicite și
+             cer o trecere de revizuire (pastile pe card până la prima salvare) */
+          needsReview: t ? (t.needsReview || null) : { archive: true, dashboard: true },
           clientLabel: clientLabel,
           clientLabelPlural: fval(m, 'clientLabelPlural') || (clientLabel + 'i'),
           /* tip nou → dashboard de pornire: un widget per verticală + genericele */
@@ -847,10 +948,12 @@
 
   function openArchiveModal(root, t) {
     if (!t) return;
-    /* copie de lucru — se salvează doar la submit */
+    /* copie de lucru — se salvează doar la submit; snapshot-ul inițial
+       alimentează garda de modificări nesalvate din saModal */
     var tree = JSON.parse(JSON.stringify(
       (t.archiveTree && t.archiveTree.length) ? t.archiveTree : window.scripticaDefaultArchiveTree()
     ));
+    var initialSnapshot = JSON.stringify(tree);
 
     /* Dropdown-ul oferă tipurile de documente ale verticalelor tipului
        + cele generice (domain null). */
@@ -880,6 +983,16 @@
       })(tree);
       return used;
     }
+    function ownerNameFor(typeId) {
+      var owner = null;
+      (function walk(nodes) {
+        nodes.forEach(function (f) {
+          if ((f.docTypeIds || []).indexOf(typeId) !== -1) owner = f;
+          walk(f.children || []);
+        });
+      })(tree);
+      return owner ? owner.name : '';
+    }
 
     function folderRowHtml(f, depth) {
       var used = usedTypeIds();
@@ -889,17 +1002,28 @@
           '<button type="button" class="admin-anexa-chip__remove" data-arch-rmtype="' + esc(id) + '" data-node="' + esc(f.id) + '" aria-label="Elimină tipul" title="Elimină tipul">' +
             '<span class="material-symbols-outlined" aria-hidden="true">close</span></button></span>';
       }).join('');
-      var avail = allowedTypes.filter(function (dt) { return used.indexOf(dt.id) === -1; });
+      /* tipurile deja alocate rămân vizibile, dezactivate, cu folderul lor —
+         regula „un tip → un singur folder" devine lizibilă la locul frecării */
+      var anyAvailable = allowedTypes.some(function (dt) { return used.indexOf(dt.id) === -1; });
+      var options = allowedTypes.filter(function (dt) { return (f.docTypeIds || []).indexOf(dt.id) === -1; })
+        .map(function (dt) {
+          if (used.indexOf(dt.id) === -1) {
+            return '<option value="' + esc(dt.id) + '">' + esc(dt.name) + '</option>';
+          }
+          return '<option disabled>' + esc(dt.name) + ' — în „' + esc(ownerNameFor(dt.id)) + '"</option>';
+        }).join('');
       var typesUi = f.system
         ? '<div class="sa-arch-row__system"><span class="material-symbols-outlined" aria-hidden="true">smart_toy</span>' +
             'Primește automat documentele pe care A.I. nu le recunoaște. Nu poate fi șters.</div>'
         : '<div class="sa-arch-row__types">' + chips +
             '<select class="select sa-arch-row__select" data-arch-addtype data-node="' + esc(f.id) + '">' +
-              '<option value="">+ Adaugă tip de document...</option>' +
-              avail.map(function (dt) { return '<option value="' + esc(dt.id) + '">' + esc(dt.name) + '</option>'; }).join('') +
+              '<option value="">' + (anyAvailable ? '+ Adaugă tip de document...' : 'Toate tipurile sunt alocate — vezi unde:') + '</option>' +
+              options +
             '</select>' +
           '</div>';
       var actions = f.system ? '' :
+        '<button type="button" class="sa-mini-btn" data-arch-move="-1" data-node="' + esc(f.id) + '" title="Mută mai sus"><span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
+        '<button type="button" class="sa-mini-btn" data-arch-move="1" data-node="' + esc(f.id) + '" title="Mută mai jos"><span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>' +
         (depth < 3 ? '<button type="button" class="sa-mini-btn" data-arch-addchild data-node="' + esc(f.id) + '" title="Adaugă subfolder"><span class="material-symbols-outlined" aria-hidden="true">create_new_folder</span></button>' : '') +
         '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-arch-del data-node="' + esc(f.id) + '" title="Șterge folderul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>';
       return '<div class="sa-arch-row sa-arch-row--d' + depth + (f.system ? ' sa-arch-row--system' : '') + '">' +
@@ -924,10 +1048,12 @@
       wide: true,
       bodyHtml:
         '<div class="sa-arch-note"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>' +
-          'Un tip de document are un singur folder-destinație. Subfolderele participă la rutare împreună cu părintele; ce nu e recunoscut ajunge în „Necategorisit".</div>' +
+          'Un tip de document are un singur folder-destinație. Subfolderele participă la rutare împreună cu părintele; ce nu e recunoscut ajunge în „Necategorisit". Ordinea folderelor este ordinea din arhiva clientului.</div>' +
         '<div class="sa-arch-tree" data-arch-tree></div>' +
-        '<button type="button" class="btn btn--secondary" data-arch-addroot><span class="material-symbols-outlined" aria-hidden="true">create_new_folder</span>Folder nou</button>',
+        '<span class="form-error" role="alert" data-arch-error></span>' +
+        '<button type="button" class="btn btn--secondary" data-arch-addroot>Folder nou<span class="material-symbols-outlined" aria-hidden="true">create_new_folder</span></button>',
       submitLabel: 'Salvează structura',
+      isDirty: function () { return JSON.stringify(tree) !== initialSnapshot; },
       onOpen: function (m) {
         renderTree(m);
         m.querySelector('[data-arch-addroot]').addEventListener('click', function () {
@@ -969,23 +1095,37 @@
           } else if ((b = e.target.closest('[data-arch-del]'))) {
             var hit3 = findNode(tree, b.getAttribute('data-node'));
             if (hit3) { hit3.list.splice(hit3.index, 1); renderTree(m); }
+          } else if ((b = e.target.closest('[data-arch-move]'))) {
+            var hit4 = findNode(tree, b.getAttribute('data-node'));
+            if (hit4 && !hit4.node.system) {
+              var j = hit4.index + parseInt(b.getAttribute('data-arch-move'), 10);
+              /* folderul de sistem rămâne mereu ultimul */
+              if (j >= 0 && j < hit4.list.length && !hit4.list[j].system) {
+                hit4.list.splice(hit4.index, 1);
+                hit4.list.splice(j, 0, hit4.node);
+                renderTree(m);
+              }
+            }
           }
         });
       },
       onSubmit: function (m, close) {
+        var errEl = m.querySelector('[data-arch-error]');
         var invalid = false;
-        (function walk(nodes) {
-          nodes.forEach(function (f) {
-            if (!String(f.name || '').trim()) invalid = true;
-            walk(f.children || []);
-          });
-        })(tree);
-        if (invalid) { toast('error', 'Toate folderele trebuie să aibă un nume.'); return; }
-        if (!tree.some(function (f) { return !f.system; })) { toast('error', 'Structura are nevoie de cel puțin un folder în afară de „Necategorisit".'); return; }
+        m.querySelectorAll('.sa-arch-row__name').forEach(function (inp) { inp.classList.remove('has-error'); });
+        m.querySelectorAll('[data-arch-name]').forEach(function (inp) {
+          if (!inp.value.trim() && !inp.disabled) { inp.classList.add('has-error'); invalid = true; }
+        });
+        var noRealFolder = !tree.some(function (f) { return !f.system; });
+        errEl.textContent = invalid ? 'Toate folderele trebuie să aibă un nume.'
+          : (noRealFolder ? 'Structura are nevoie de cel puțin un folder în afară de „Necategorisit".' : '');
+        if (invalid || noRealFolder) return;
         if (!tree.some(function (f) { return f.system; })) {
           tree.push({ id: archUid(), name: 'Necategorisit', system: true, docTypeIds: [], children: [] });
         }
-        scripticaFlowSave('clientType', Object.assign({}, t, { archiveTree: tree }));
+        var upd = Object.assign({}, t, { archiveTree: tree });
+        if (upd.needsReview) upd.needsReview = Object.assign({}, upd.needsReview, { archive: false });
+        scripticaFlowSave('clientType', upd);
         close();
         toast('success', 'Structura de arhivă pentru „' + t.name + '" a fost salvată.');
         renderClientTypes(root);
@@ -1024,6 +1164,17 @@
     var layout = JSON.parse(JSON.stringify(ct.dashboardLayout || []));
     var palette = window.SCRIPTICA_WIDGETS.paletteFor(ct);
     var dragIdx = null;
+    var savedSnapshot = JSON.stringify(layout);
+
+    function isDirty() { return JSON.stringify(layout) !== savedSnapshot; }
+    function markDirty() {
+      var btn = root.querySelector('#dwb-save');
+      if (btn) btn.classList.toggle('is-dirty', isDirty());
+    }
+    /* layout-ul trăiește doar local până la Salvează — avertizăm la părăsire */
+    window.addEventListener('beforeunload', function (e) {
+      if (isDirty()) { e.preventDefault(); e.returnValue = ''; }
+    });
 
     function normParams(p) { return (p && Object.keys(p).length) ? p : null; }
     function keyOf(w, p) { return w + '|' + JSON.stringify(normParams(p)); }
@@ -1044,13 +1195,17 @@
     function previewHtml() {
       if (!layout.length) {
         return '<div class="sa-dwb-empty"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
-          'Dashboard gol — adaugă cutii de conținut din paleta din stânga.</div>';
+          'Dashboard gol — adaugă widget-uri din paleta din stânga.</div>';
       }
       return layout.map(function (item, i) {
         return '<div class="sa-dwb-item' + (item.size === 'full' ? ' dw-card--full' : '') + '" draggable="true" data-idx="' + i + '">' +
           '<div class="sa-dwb-item__bar">' +
             '<span class="material-symbols-outlined sa-dwb-item__grip" aria-hidden="true">drag_indicator</span>' +
-            '<span class="sa-dwb-item__hint">trage pentru a repoziționa</span>' +
+            '<span class="sa-dwb-item__hint">trage sau folosește săgețile</span>' +
+            '<button type="button" class="sa-mini-btn" data-dwb-move="-1" data-i="' + i + '" title="Mută mai sus"' + (i === 0 ? ' disabled' : '') + '>' +
+              '<span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
+            '<button type="button" class="sa-mini-btn" data-dwb-move="1" data-i="' + i + '" title="Mută mai jos"' + (i === layout.length - 1 ? ' disabled' : '') + '>' +
+              '<span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>' +
             '<button type="button" class="sa-mini-btn" data-dwb-size="' + i + '" title="' + (item.size === 'full' ? 'Fă-l pe jumătate de rând' : 'Fă-l pe tot rândul') + '">' +
               '<span class="material-symbols-outlined" aria-hidden="true">' + (item.size === 'full' ? 'collapse_content' : 'expand_content') + '</span></button>' +
             '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-dwb-remove="' + i + '" title="Elimină widget-ul">' +
@@ -1064,22 +1219,28 @@
     function draw() {
       root.querySelector('[data-dwb-palette]').innerHTML = paletteHtml();
       root.querySelector('[data-dwb-grid]').innerHTML = previewHtml();
+      markDirty();
     }
 
     root.innerHTML =
       '<div class="sa-crumb"><a href="super-admin-tipuri-clienti.html' + vq() + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' · Dashboard</div>' +
       '<header class="page-header"><h1 class="page-header__title">Dashboard — ' + esc(ct.name) + '</h1>' +
-        '<button class="btn btn--primary" type="button" id="dwb-save"><span class="material-symbols-outlined" aria-hidden="true">save</span>Salvează layout-ul</button>' +
+        '<button class="btn btn--primary" type="button" id="dwb-save">Salvează layout-ul<span class="material-symbols-outlined" aria-hidden="true">save</span></button>' +
       '</header>' +
-      '<p class="sa-subtitle">Adaugă cutii de conținut din paletă și aranjează-le prin tragere în preview. Clienții de tip „' + esc(ct.name) + '" primesc acest dashboard pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
+      '<p class="sa-subtitle">Adaugă widget-uri din paletă și aranjează-le prin tragere sau cu săgețile. Clienții de tip „' + esc(ct.name) + '" primesc acest dashboard pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
       '<div class="sa-dwb">' +
-        '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Cutii de conținut</div><div data-dwb-palette></div></aside>' +
+        '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Widget-uri disponibile</div><div data-dwb-palette></div></aside>' +
         '<div class="sa-dwb-preview"><div class="dw-grid" data-dwb-grid></div></div>' +
       '</div>';
     draw();
 
     root.querySelector('#dwb-save').addEventListener('click', function () {
-      scripticaFlowSave('clientType', Object.assign({}, clientTypeById(ct.id) || ct, { dashboardLayout: layout }));
+      var current = clientTypeById(ct.id) || ct;
+      var upd = Object.assign({}, current, { dashboardLayout: layout });
+      if (upd.needsReview) upd.needsReview = Object.assign({}, upd.needsReview, { dashboard: false });
+      scripticaFlowSave('clientType', upd);
+      savedSnapshot = JSON.stringify(layout);
+      markDirty();
       toast('success', 'Layout-ul de dashboard pentru „' + ct.name + '" a fost salvat.');
     });
 
@@ -1095,6 +1256,14 @@
           size: p.widget === 'clienti' ? 'full' : 'half'
         });
         draw();
+      } else if ((b = e.target.closest('[data-dwb-move]'))) {
+        var from = parseInt(b.getAttribute('data-i'), 10);
+        var to2 = from + parseInt(b.getAttribute('data-dwb-move'), 10);
+        if (to2 >= 0 && to2 < layout.length) {
+          var mv = layout.splice(from, 1)[0];
+          layout.splice(to2, 0, mv);
+          draw();
+        }
       } else if ((b = e.target.closest('[data-dwb-size]'))) {
         var i1 = parseInt(b.getAttribute('data-dwb-size'), 10);
         layout[i1].size = layout[i1].size === 'full' ? 'half' : 'full';
@@ -1166,11 +1335,11 @@
     }).join('');
     saModal({
       title: 'Cont de business nou',
-      subtitle: 'La creare, clientul primește automat fluxurile tipului ales (copii editabile în Administrare).',
+      subtitle: 'La creare, clientul primește fluxurile tipului ales; le poate adapta apoi din Administrare.',
       bodyHtml:
-        fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">') +
+        fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">', null, 'nume') +
         fieldHtml('Tip de client', '<select class="select" data-f="ctype"><option value="">Selectează tipul...</option>' + ctOptions + '</select>',
-          'Determină verticalele și șabloanele provisionate la înrolare.') +
+          'Determină verticalele și șabloanele primite la înrolare.', 'tip') +
         fieldHtml('Plan', '<select class="select" data-f="tier"><option value="baza">Bază</option><option value="plus" selected>Plus</option><option value="ent">Enterprise</option></select>') +
         '<div data-ct-preview class="sa-ct-preview"></div>',
       submitLabel: 'Creează contul',
@@ -1183,14 +1352,16 @@
           var vs = (t.verticalIds || []).map(verticalById).filter(Boolean)
             .map(function (v) { return v.name; }).join(' · ');
           prev.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">downloading</span>' +
-            'Se vor provisiona: <b>' + esc(vs) + '</b> cu ' + (t.defaultTemplateIds || []).length + ' șabloane implicite.';
+            'Clientul va primi: <b>' + esc(vs) + '</b> cu ' + (t.defaultTemplateIds || []).length + ' șabloane implicite.';
         });
       },
       onSubmit: function (m, close) {
+        clearFieldErrors(m);
         var name = fval(m, 'name');
         var t = clientTypeById(m.querySelector('[data-f="ctype"]').value);
-        if (!name) { toast('error', 'Denumirea firmei este obligatorie.'); return; }
-        if (!t) { toast('error', 'Selectează tipul de client.'); return; }
+        setFieldError(m, 'nume', name ? '' : 'Denumirea firmei este obligatorie.');
+        setFieldError(m, 'tip', t ? '' : 'Selectează tipul de client.');
+        if (!name || !t) return;
         var tier = m.querySelector('[data-f="tier"]').value;
         var hasAudit = (t.verticalIds || []).indexOf('vert_audit') !== -1;
         var rec = {
@@ -1214,7 +1385,7 @@
         };
         scripticaFlowSave('saClient', rec);
         close();
-        toast('success', 'Contul „' + name + '" a fost creat — fluxurile tipului „' + t.name + '" au fost provisionate.');
+        toast('success', 'Contul „' + name + '" a fost creat — fluxurile tipului „' + t.name + '" sunt active pentru client.');
         renderClients(root);
       }
     });
@@ -1232,12 +1403,12 @@
       '</div>';
     }).join('');
     return '<div class="sa-sec">' +
-      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Fluxuri provisionate' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Fluxurile clientului' +
         '<button class="btn btn--ghost sa-sec__action" type="button" data-change-ct>Schimbă tipul</button></div>' +
       kv('Tip client', ctPill(c.clientTypeId)) +
       inner +
       '<div class="sa-dt-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-        'Copiate la înrolare din tipul de client — clientul le poate adapta din Administrare.</div>' +
+        'Fluxurile afișate urmează tipul curent al clientului — clientul le poate adapta din Administrare.</div>' +
     '</div>';
   }
 
@@ -1249,7 +1420,7 @@
       title: 'Schimbă tipul clientului',
       subtitle: c.name,
       bodyHtml: fieldHtml('Tip de client', '<select class="select" data-f="ctype">' + opts + '</select>',
-        'Fluxurile noului tip se provisionează suplimentar; cele existente rămân la client.'),
+        'Fluxurile, arhiva și dashboard-ul clientului se actualizează la noul tip.'),
       submitLabel: 'Salvează',
       onSubmit: function (m, close) {
         var t = clientTypeById(m.querySelector('[data-f="ctype"]').value);

@@ -301,7 +301,7 @@
 .rap-act .material-symbols-outlined { font-size: 15px; }
 .rap-act.act--ok { background: var(--color-success-surface, #E7F7E6); color: var(--color-success); }
 .rap-act.act--part { background: var(--color-pending-surface, #FEF2E6); color: #b56a18; }
-.rap-act.act--no { background: var(--color-critical-surface, #FFE9F1); color: #c41f5c; }
+.rap-act.act--no { background: var(--color-critical-surface); color: #c41f5c; }
 
 /* --- overlay + modals --- */
 .rap-overlay {
