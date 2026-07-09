@@ -88,63 +88,63 @@
      `domains`: null = disponibilă oriunde; 'custom' acoperă orice verticală
      non-builtin. `label` poate depinde de verticală (ex. partea externă). */
   var CATALOG = [
-    { id: 'element',        width: null,  domains: null,
+    { id: 'element', icon: 'badge',        width: null,  domains: null,
       label: function (v) { return v.itemLabel || 'Element'; },
       desc: 'Denumirea elementului + partea externă, pe două rânduri.',
       render: elementCell },
-    { id: 'cod',            width: 140,   domains: ['contabil'],
+    { id: 'cod', icon: 'tag',            width: 140,   domains: ['contabil'],
       label: function () { return 'Cod'; },
       desc: 'Codul intern al situației.',
       render: function (n) { return '<span class="sit-cell--code">' + esc(n.code || '—') + '</span>'; } },
-    { id: 'partener',       width: null,  domains: null,
+    { id: 'partener', icon: 'apartment',       width: null,  domains: null,
       label: function (v) { return v.domain === 'audit' ? 'Entitate' : 'Client'; },
       desc: 'Partea externă (client / entitate / beneficiar).',
       render: function (n) { return esc(n.party || '—'); } },
-    { id: 'tip',            width: 220,   domains: null,
+    { id: 'tip', icon: 'category',            width: 220,   domains: null,
       label: function (v) { return v.domain === 'contabil' ? 'Denumire Raport' : (v.domain === 'audit' ? 'Tip Misiune' : 'Șablon'); },
       desc: 'Tipul sau șablonul de flux al elementului.',
       render: function (n) { return esc(n.typeName || '—'); } },
-    { id: 'termen',         width: 110,   domains: null,
+    { id: 'termen', icon: 'schedule',         width: 110,   domains: null,
       label: function () { return 'Termen'; },
       desc: 'Zilele rămase până la termenul etapei curente.',
       render: termenCell },
-    { id: 'termen_data',    width: 130,   domains: null,
+    { id: 'termen_data', icon: 'event',    width: 130,   domains: null,
       label: function () { return 'Data termen'; },
       desc: 'Data calendaristică a termenului curent.',
       render: function (n) { return fmtDate(n.deadlineIso); } },
-    { id: 'status',         width: 180,   domains: null,
+    { id: 'status', icon: 'flag',         width: 180,   domains: null,
       label: function () { return 'Status'; },
       desc: 'Statusul curent, cu indicator colorat.',
       render: statusCell },
-    { id: 'titular',        width: 160,   domains: ['contabil'],
+    { id: 'titular', icon: 'person',        width: 160,   domains: ['contabil'],
       label: function () { return 'Titular'; },
       desc: 'Titularul situației (responsabilul general).',
       render: function (n) { return esc(n.titularName || '—'); } },
-    { id: 'responsabil_pas', width: 160,  domains: ['contabil'],
+    { id: 'responsabil_pas', icon: 'person_pin_circle', width: 160,  domains: ['contabil'],
       label: function () { return 'Responsabil Pas'; },
       desc: 'Responsabilul pasului curent.',
       render: function (n) { return esc(n.respStepName || '—'); } },
-    { id: 'responsabili',   width: 160,   domains: ['audit', 'custom'],
+    { id: 'responsabili', icon: 'group',   width: 160,   domains: ['audit', 'custom'],
       label: function () { return 'Responsabili'; },
       desc: 'Echipa responsabilă (avatare).',
       render: avatarsCell },
-    { id: 'data_start',     width: 120,   domains: null,
+    { id: 'data_start', icon: 'today',     width: 120,   domains: null,
       label: function () { return 'Dată Start'; },
       desc: 'Data de început a elementului.',
       render: function (n) { return fmtDate(n.startDate); } },
-    { id: 'progres',        width: 90,    domains: null,
+    { id: 'progres', icon: 'clock_loader_40',        width: 90,    domains: null,
       label: function () { return 'Pas'; },
       desc: 'Progresul pe etape (ex. 2/4).',
       render: progressCell },
-    { id: 'etapa',          width: 200,   domains: null,
+    { id: 'etapa', icon: 'footprint',          width: 200,   domains: null,
       label: function () { return 'Etapa curentă'; },
       desc: 'Numele etapei în care se află elementul.',
       render: function (n) { return esc(n.currentStepName || '—'); } },
-    { id: 'perioada',       width: 160,   domains: ['contabil', 'audit'],
+    { id: 'perioada', icon: 'date_range',       width: 160,   domains: ['contabil', 'audit'],
       label: function (v) { return v.domain === 'audit' ? 'Perioadă auditată' : 'Perioadă'; },
       desc: 'Perioada acoperită (luna raportată / perioada auditată).',
       render: function (n) { return esc(n.perioada || '—'); } },
-    { id: 'plan_anual',     width: 120,   domains: ['audit'],
+    { id: 'plan_anual', icon: 'event_note',     width: 120,   domains: ['audit'],
       label: function () { return 'Plan anual'; },
       desc: 'Planul anual din care provine misiunea.',
       render: function (n) { return esc(n.planLabel || '—'); } }
@@ -278,13 +278,51 @@
     };
   }
 
-  /* Rânduri-exemplu pentru preview-ul din editorul HQ — date reale. */
-  function sampleItems(v) {
+  /* Rânduri-exemplu pentru simulatorul din editorul HQ — date reale,
+     completate cu rânduri sintetice pregenerate când verticala e goală
+     (simularea nu trebuie să arate niciodată moartă). */
+  function syntheticItems(v, count) {
+    var label = v.itemLabel || 'Element';
+    var tpl = (MOCK().superAdmin.flowTemplates || []).find(function (t) { return t.verticalId === v.id; });
+    var steps = (tpl && tpl.steps) || [{ name: (v.lifecycle || ['Etapa 1'])[0], offsetDays: 10 }];
+    var statuses = ['analiza', 'in_verificare', 'spre_aprobare', 'finalizat'];
+    var parties = ['Client Exemplu S.R.L.', 'Beneficiar Demo S.A.', 'Partener Model SRL-D', 'Firma Exemplu S.R.L.'];
+    var out = [];
+    for (var i = 0; i < count; i++) {
+      var start = new Date(TODAY);
+      start.setDate(start.getDate() - (i + 1) * 6);
+      var startIso = start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0');
+      var dl = new Date(start);
+      dl.setDate(dl.getDate() + (parseInt(steps[0].offsetDays, 10) || 10));
+      var dlIso = dl.getFullYear() + '-' + String(dl.getMonth() + 1).padStart(2, '0') + '-' + String(dl.getDate()).padStart(2, '0');
+      var status = statuses[i % statuses.length];
+      out.push({
+        code: 'EX-' + (1001 + i),
+        name: label + ' exemplu ' + (i + 1),
+        party: parties[i % parties.length],
+        typeName: tpl ? tpl.name : 'Șablon exemplu',
+        titularName: 'Anca Cobzaru', respStepName: 'Cristina Popescu',
+        responsibleIds: [1, 2].slice(0, (i % 2) + 1),
+        startDate: startIso,
+        deadlineIso: dlIso,
+        termenState: status === 'finalizat' ? 'finalizat' : null,
+        status: status,
+        stepsCompleted: Math.min(i, steps.length), totalSteps: steps.length,
+        currentStepName: (steps[Math.min(i, steps.length - 1)] || steps[0]).name,
+        perioada: '', planLabel: ''
+      });
+    }
+    return out;
+  }
+
+  function sampleItems(v, count) {
+    count = count || 3;
     var dk = domainKey(v);
-    if (dk === 'contabil') return (MOCK().situations || []).slice(0, 3).map(normalizeSituation);
-    if (dk === 'audit') return (MOCK().auditMissions || []).slice(0, 3).map(normalizeMission);
-    var items = (MOCK().flowItems || []).filter(function (i) { return i.verticalId === v.id; }).slice(0, 3);
-    return items.map(normalizeFlowItem);
+    var real;
+    if (dk === 'contabil') real = (MOCK().situations || []).slice(0, count).map(normalizeSituation);
+    else if (dk === 'audit') real = (MOCK().auditMissions || []).slice(0, count).map(normalizeMission);
+    else real = (MOCK().flowItems || []).filter(function (i) { return i.verticalId === v.id; }).slice(0, count).map(normalizeFlowItem);
+    return real.length >= count ? real : real.concat(syntheticItems(v, count - real.length));
   }
 
   window.SCRIPTICA_LISTVIEW = {

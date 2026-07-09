@@ -525,3 +525,56 @@
 .sa-cols-hint { display: flex; align-items: center; gap: var(--space-1); }
 .sa-cols-hint:empty { display: none; }
 .sa-cols-hint .material-symbols-outlined { font-size: 16px; color: var(--color-pending); }
+
+/* ============================================================
+   Builderul de tabel (mediu simulat)
+   ============================================================ */
+.sa-tbl-actions { display: flex; align-items: center; gap: var(--space-2); }
+#tbl-save.is-dirty::after { content: '•'; margin-left: var(--space-1); }
+
+.sa-tbl-sim { padding: 0; overflow: hidden; }
+.sa-tbl-sim__chrome {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface-1); border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--color-text-muted);
+}
+.sa-tbl-sim__chrome .material-symbols-outlined { font-size: 16px; }
+.sa-tbl-sim__page { padding: var(--space-4); }
+.sa-tbl-sim__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.sa-tbl-sim__title { font-size: var(--font-size-headline-2); font-weight: var(--font-weight-bold); }
+.sa-tbl-sim__inert { pointer-events: none; opacity: .7; }
+.sa-tbl-sim__filters { display: flex; gap: var(--space-2); margin-bottom: var(--space-3); }
+.sa-tbl-sim__search, .sa-tbl-sim__select {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  height: 36px; padding: 0 var(--space-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-surface-white); color: var(--color-text-muted);
+  font-size: var(--font-size-body); pointer-events: none;
+}
+.sa-tbl-sim__search { flex: 1; max-width: 320px; }
+.sa-tbl-sim__search .material-symbols-outlined,
+.sa-tbl-sim__select .material-symbols-outlined { font-size: 18px; }
+.sa-tbl-sim__tablewrap { overflow-x: auto; }
+.sa-tbl-sim__pagination {
+  padding-top: var(--space-3); text-align: right;
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+}
+
+/* controale de manipulare directă în capul tabelului simulat */
+.sa-th { display: flex; flex-direction: column; gap: 2px; }
+.sa-th__ctrl { display: inline-flex; gap: 2px; }
+.sa-th-btn {
+  width: 22px; height: 22px; border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface-white);
+  color: var(--color-text-muted); display: inline-flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast); padding: 0;
+}
+.sa-th-btn .material-symbols-outlined { font-size: 14px; }
+.sa-th-btn:hover:not(:disabled) { border-color: var(--color-border-strong); color: var(--color-text-primary); }
+.sa-th-btn--danger:hover:not(:disabled) { border-color: var(--color-critical); color: var(--color-critical); }
+.sa-th-btn:disabled { opacity: .35; cursor: default; }
