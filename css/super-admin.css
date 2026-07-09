@@ -229,3 +229,152 @@
 .sa-toggle.is-on::after { left: 18px; }
 .sa-flag__name { font-weight: var(--font-weight-bold); }
 .sa-flag__tier { font-size: var(--font-size-small); color: var(--color-text-muted); margin-left: auto; }
+
+/* ============================================================
+   Registrul de fluxuri + Tipuri de clienți (HQ)
+   ============================================================ */
+
+/* butoane mici, doar-pictogramă, pentru acțiuni pe rânduri/carduri */
+.sa-mini-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  border: 1px solid var(--color-border); background: var(--color-surface-white);
+  color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-fast);
+}
+.sa-mini-btn + .sa-mini-btn { margin-left: var(--space-1); }
+.sa-mini-btn:hover { border-color: var(--color-border-strong); color: var(--color-text-primary); }
+.sa-mini-btn--danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+.sa-mini-btn .material-symbols-outlined { font-size: 18px; }
+
+/* card de verticală */
+.sa-flow-card { margin-bottom: var(--space-5); }
+.sa-flow-head { display: flex; align-items: flex-start; gap: var(--space-3); }
+.sa-flow-ico {
+  width: 44px; height: 44px; border-radius: var(--radius-md); flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-surface-2); color: var(--color-default-highlight);
+}
+.sa-flow-ico .material-symbols-outlined { font-size: 24px; }
+.sa-flow-title { flex: 1; min-width: 0; }
+.sa-flow-title .pill { vertical-align: middle; margin-left: var(--space-1); }
+.sa-flow-title code {
+  font-size: var(--font-size-small); background: var(--color-surface-2);
+  padding: 0 var(--space-1); border-radius: var(--radius-sm);
+}
+.sa-flow-actions { display: flex; align-items: center; flex: none; }
+
+/* lanțul de etape (ciclul de viață) */
+.sa-flow-steps {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+.sa-step-chip {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+  background: var(--color-surface-2); border: 1px solid var(--color-border);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+}
+.sa-step-chip b {
+  width: 18px; height: 18px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-default-highlight); color: #fff; font-size: 11px;
+}
+.sa-step-arrow { font-size: 16px; color: var(--color-text-muted); }
+
+.sa-flow-table { margin-bottom: var(--space-3); }
+.sa-row-actions { text-align: right; white-space: nowrap; }
+.sa-flow-empty {
+  padding: var(--space-4); text-align: center; color: var(--color-text-muted);
+  background: var(--color-surface-2); border-radius: var(--radius-md); margin-bottom: var(--space-3);
+}
+.sa-flow-foot { display: flex; align-items: center; justify-content: space-between; }
+.sa-flow-open {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-weight: var(--font-weight-bold); color: var(--color-default-highlight); text-decoration: none;
+}
+.sa-flow-open:hover { text-decoration: underline; }
+.sa-flow-open .material-symbols-outlined { font-size: 18px; }
+
+/* rânduri dinamice: etapele ciclului de viață (modal verticală) */
+.sa-lc-rows { display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-2) 0 var(--space-3); }
+.sa-lc-row { display: flex; align-items: center; gap: var(--space-2); }
+.sa-lc-row .input { flex: 1; }
+.sa-lc-row__n {
+  width: 24px; height: 24px; border-radius: 50%; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-default-highlight); color: #fff;
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+}
+
+/* rânduri de termene per etapă (modal șablon) */
+.sa-tpl-steprow {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) 0; border-bottom: 1px dashed var(--color-border);
+}
+.sa-tpl-steprow:last-child { border-bottom: none; }
+.sa-tpl-steprow__name { flex: 1; font-weight: var(--font-weight-bold); }
+.sa-tpl-steprow__off { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-small); }
+.sa-tpl-steprow__off .input { width: 76px; }
+
+/* pickerul de pictograme */
+.sa-iconpick { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sa-iconpick__btn {
+  width: 40px; height: 40px; border-radius: var(--radius-md); cursor: pointer;
+  border: 1px solid var(--color-border); background: var(--color-surface-white);
+  color: var(--color-text-secondary); display: inline-flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.sa-iconpick__btn:hover { border-color: var(--color-border-strong); }
+.sa-iconpick__btn.is-selected {
+  border-color: var(--color-default-highlight); background: var(--color-surface-2); color: var(--color-default-highlight);
+}
+
+.sa-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.sa-modal-note { color: var(--color-text-secondary); line-height: 1.5; }
+
+/* grila tipurilor de clienți */
+.sa-ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--space-4); }
+.sa-ct-card { display: flex; flex-direction: column; margin-bottom: 0; }
+.sa-ct-sec {
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em;
+  margin: var(--space-3) 0 var(--space-2);
+}
+.sa-ct-verts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sa-ct-vert, .sa-ct-pill { display: inline-flex; align-items: center; gap: var(--space-1); }
+.sa-ct-vert .material-symbols-outlined, .sa-ct-pill .material-symbols-outlined { font-size: 15px; }
+.sa-ct-tpllist { margin: 0; padding-left: var(--space-4); color: var(--color-text-secondary); }
+.sa-ct-tpllist li { margin-bottom: var(--space-1); }
+.sa-ct-tpllist small { color: var(--color-text-muted); }
+.sa-ct-foot {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: auto;
+  padding-top: var(--space-3); border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary); font-size: var(--font-size-small);
+}
+.sa-ct-foot .material-symbols-outlined { font-size: 18px; }
+
+/* blocuri verticală+șabloane în modalul de tip de client */
+.sa-ct-vblock {
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-3); margin-bottom: var(--space-3);
+}
+.sa-ct-vblock__head { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-body); }
+.sa-ct-vblock__head .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+.sa-ct-tpls { display: flex; flex-direction: column; gap: var(--space-1); margin: var(--space-2) 0 0 var(--space-5); }
+
+/* preview provisioning în modalul de client nou */
+.sa-ct-preview {
+  display: flex; align-items: center; gap: var(--space-2);
+  color: var(--color-text-secondary); font-size: var(--font-size-small);
+}
+.sa-ct-preview:empty { display: none; }
+.sa-ct-preview .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+
+/* secțiunea „Fluxuri provisionate" din detaliul de client */
+.sa-sec__action { margin-left: auto; }
+.sa-prov-vert { margin-bottom: var(--space-3); }
+.sa-prov-vert__head {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-weight: var(--font-weight-bold); margin-bottom: var(--space-1);
+}
+.sa-prov-vert__head .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }

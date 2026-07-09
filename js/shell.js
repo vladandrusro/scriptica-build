@@ -36,7 +36,15 @@
     if (v === 'contabilitate') return ['contabil'];
     if (v === 'audit_stat' || v === 'autoritate') return ['audit'];
     if (v === 'client') return ['contabil'];
-    return ['contabil', 'audit']; /* complet, accountant, admin, superadmin */
+    /* complet, accountant, admin, superadmin: toate domeniile, inclusiv
+       verticalele custom din registrul de fluxuri (definite de HQ). */
+    var scope = ['contabil', 'audit'];
+    if (typeof window.scripticaCustomVerticals === 'function') {
+      window.scripticaCustomVerticals().forEach(function (cv) {
+        if (scope.indexOf(cv.domain) === -1) scope.push(cv.domain);
+      });
+    }
+    return scope;
   };
   window.viewInScope = function (domain) {
     if (!domain) return true;
@@ -116,6 +124,7 @@
     initSidebar();
     injectAuditNav();
     injectPlanificareNav();
+    injectCustomVerticalNav();
     injectAdminNav();
     gateNavByScope();
     initActiveNav();
@@ -166,6 +175,39 @@
     var anchor = nav.querySelector('[data-nav="misiuni-audit"]');
     if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
     else nav.appendChild(a);
+  }
+
+  /* Verticalele custom din registrul de fluxuri (definite de Super Admin) —
+     un item de nav per verticală, servit de motorul generic flux.html.
+     Injectat după „Misiuni Audit"; ascuns pentru personas fără domeniul
+     verticalei în scope (gateNavByScope face gating-ul prin data-domain). */
+  function injectCustomVerticalNav() {
+    var view = getCurrentView();
+    if (view === 'superadmin' || view === 'client') return;
+    if (typeof window.scripticaCustomVerticals !== 'function') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav) return;
+    var anchor = nav.querySelector('[data-nav="misiuni-audit"]') || nav.querySelector('[href="situatii.html"]');
+    window.scripticaCustomVerticals().forEach(function (v) {
+      if (nav.querySelector('[data-nav="flux-' + v.id + '"]')) return;
+      var a = document.createElement('a');
+      a.className = 'nav-item';
+      a.href = 'flux.html?vertical=' + encodeURIComponent(v.id);
+      a.setAttribute('data-nav', 'flux-' + v.id);
+      a.setAttribute('data-domain', v.domain);
+      var icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined nav-item__icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = v.icon || 'account_tree';
+      var label = document.createElement('span');
+      label.className = 'nav-item__label';
+      label.textContent = v.name;
+      a.appendChild(icon);
+      a.appendChild(label);
+      if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+      else nav.appendChild(a);
+      anchor = a;
+    });
   }
 
   /* Admin view gets an extra rail item (Phase 9). Injected dynamically so

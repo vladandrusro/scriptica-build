@@ -1,0 +1,77 @@
+/* ============================================================
+   Scriptica — Motorul generic de fluxuri (flux.html / flux-detaliu.html)
+   Redă verticalele custom din registrul HQ. Reutilizează tabelul
+   .sit-* și componentele standard; aici doar layout-ul specific.
+   ============================================================ */
+
+.fx-subtitle {
+  display: flex; align-items: center; gap: var(--space-2);
+  color: var(--color-text-secondary); font-size: var(--font-size-body);
+  margin: calc(-1 * var(--space-3)) 0 var(--space-4);
+}
+
+/* ---- breadcrumb (paginile flux nu încarcă super-admin.css) ---- */
+.fx-crumb {
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+.fx-crumb a { color: var(--color-default-highlight); text-decoration: none; font-weight: var(--font-weight-bold); }
+.fx-crumb a:hover { text-decoration: underline; }
+
+/* ---- antetul elementului ---- */
+.fx-head {
+  display: flex; align-items: flex-start; gap: var(--space-4);
+  background: var(--color-surface-white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: var(--space-5); margin-bottom: var(--space-4);
+}
+.fx-head__ico {
+  width: 52px; height: 52px; border-radius: var(--radius-md); flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-surface-2); color: var(--color-default-highlight);
+}
+.fx-head__ico .material-symbols-outlined { font-size: 28px; }
+.fx-head__main { flex: 1; min-width: 0; }
+.fx-head__title { font-size: var(--font-size-headline-2); margin: 0 0 var(--space-2); }
+.fx-head__meta {
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-body); color: var(--color-text-secondary);
+}
+.fx-head__status { flex: none; }
+
+/* ---- coloane detaliu ---- */
+.fx-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--space-4); align-items: start; }
+@media (max-width: 1100px) { .fx-cols { grid-template-columns: 1fr; } }
+.fx-card {
+  background: var(--color-surface-white); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: var(--space-5);
+}
+.fx-card__title {
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ---- timeline vertical de etape ---- */
+.fx-steps { display: flex; flex-direction: column; }
+.fx-step { display: flex; gap: var(--space-3); }
+.fx-step__rail { display: flex; flex-direction: column; align-items: center; flex: none; }
+.fx-step__rail .material-symbols-outlined { font-size: 22px; color: var(--color-border-strong); }
+.fx-step.is-done .fx-step__rail .material-symbols-outlined { color: var(--color-success); }
+.fx-step.is-current .fx-step__rail .material-symbols-outlined { color: var(--color-default-highlight); }
+.fx-step__line { flex: 1; width: 2px; min-height: 24px; background: var(--color-border); margin: var(--space-1) 0; }
+.fx-step.is-done .fx-step__line { background: var(--color-success); }
+.fx-step__body { padding-bottom: var(--space-5); min-width: 0; }
+.fx-step__title { font-weight: var(--font-weight-bold); margin-bottom: var(--space-1); }
+.fx-step.is-upcoming .fx-step__title { color: var(--color-text-muted); }
+.fx-step__meta { display: block; font-size: var(--font-size-small); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
+.fx-step__meta--done { color: var(--color-success); }
+.fx-step__meta--late { color: var(--color-critical); font-weight: var(--font-weight-bold); }
+
+/* ---- panoul „Despre verticală" ---- */
+.fx-about { color: var(--color-text-secondary); line-height: 1.5; margin: 0 0 var(--space-4); }
+.fx-about__note {
+  display: flex; gap: var(--space-2); align-items: flex-start;
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+  background: var(--color-surface-2); border-radius: var(--radius-md); padding: var(--space-3);
+}
+.fx-about__note .material-symbols-outlined { font-size: 18px; flex: none; color: var(--color-default-highlight); }

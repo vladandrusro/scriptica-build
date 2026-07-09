@@ -393,7 +393,7 @@ window.SCRIPTICA_MOCK = {
 
     clients: [
       {
-        id: "cli_contzilla", name: "Contzilla S.R.L.", domain: "Contabilitate",
+        id: "cli_contzilla", name: "Contzilla S.R.L.", domain: "Contabilitate", clientTypeId: "ct_contabilitate",
         instance: "contzilla.scriptica.ro", users: 12, enrolled: "14.01.2026",
         tier: "plus", contract: "activ", aiLoad: 62,
         commercial: { plan: "Plus", renew: "14.01.2027", billing: "Anual · 4.800 RON", lastPay: "14.01.2026" },
@@ -415,7 +415,7 @@ window.SCRIPTICA_MOCK = {
         ] }
       },
       {
-        id: "cli_auditexpert", name: "Audit Expert Group", domain: "Audit",
+        id: "cli_auditexpert", name: "Audit Expert Group", domain: "Audit", clientTypeId: "ct_audit",
         instance: "auditexpert.scriptica.ro", users: 8, enrolled: "03.11.2025",
         tier: "ent", contract: "activ", aiLoad: 84,
         commercial: { plan: "Enterprise", renew: "03.11.2026", billing: "Anual · 12.000 RON", lastPay: "03.11.2025" },
@@ -436,7 +436,7 @@ window.SCRIPTICA_MOCK = {
         ] }
       },
       {
-        id: "cli_finpartners", name: "FinPartners", domain: "Contabilitate",
+        id: "cli_finpartners", name: "FinPartners", domain: "Contabilitate", clientTypeId: "ct_contabilitate",
         instance: "finpartners.scriptica.ro", users: 4, enrolled: "22.02.2026",
         tier: "baza", contract: "pauza", aiLoad: 20,
         commercial: { plan: "Bază", renew: "—", billing: "Lunar · 390 RON", lastPay: "restanță (mai 2026)" },
@@ -458,7 +458,7 @@ window.SCRIPTICA_MOCK = {
         ] }
       },
       {
-        id: "cli_contaprim", name: "ContaPrim", domain: "Contabilitate",
+        id: "cli_contaprim", name: "ContaPrim", domain: "Contabilitate", clientTypeId: "ct_contabilitate",
         instance: "contaprim.scriptica.ro", users: 6, enrolled: "09.2025",
         tier: "baza", contract: "anulat", aiLoad: 8,
         commercial: { plan: "Bază", renew: "—", billing: "—", lastPay: "—" },
@@ -474,9 +474,200 @@ window.SCRIPTICA_MOCK = {
           aiPerMonth: "0", docsStored: "640", uptime30: 99.50, lastIncident: "—"
         },
         downtime: { incidents: [] }
+      },
+      {
+        id: "cli_taxwise", name: "TaxWise Consulting", domain: "Consultanță fiscală", clientTypeId: "ct_consultanta",
+        instance: "taxwise.scriptica.ro", users: 3, enrolled: "02.06.2026",
+        tier: "plus", contract: "activ", aiLoad: 34,
+        commercial: { plan: "Plus", renew: "02.06.2027", billing: "Anual · 4.800 RON", lastPay: "02.06.2026" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: true },
+          { name: "Mesaje smart", tier: "Plus", on: true },
+          { name: "Constructor de Anexe", tier: "Standard", on: true },
+          { name: "Vertical Audit", tier: "Enterprise", on: false },
+          { name: "Backup local", tier: "Plus · add-on", on: false }
+        ],
+        technical: {
+          vmLoad: [22, 30, 26, 48, 40, 32, 24, 20], vmPeakIdx: 3,
+          aiPerMonth: "460", docsStored: "2.1k", uptime30: 99.95, lastIncident: "acum 6 zile"
+        },
+        downtime: { incidents: [
+          { cauza: "ai_limit", minutes: 18, day: 26 }
+        ] }
+      }
+    ],
+
+    /* ============================================================
+       Registrul de fluxuri (HQ) — două straturi:
+       1. flowVerticals — verticale (module de lucru) cu forma ciclului
+          de viață. Cele `builtin` sunt Situații Contabile și Misiuni de
+          Audit — au pagini dedicate; cele custom sunt servite de motorul
+          generic (flux.html / flux-detaliu.html).
+       2. flowTemplates — șabloane concrete de flux în interiorul unei
+          verticale (echivalentul HQ al situationTypes de la client).
+       Tipurile de clienți (clientTypes) leagă verticale + șabloane
+       implicite; la înrolare, șabloanele sunt COPIATE în workspace-ul
+       clientului (seed-then-editable, editabile apoi în Administrare).
+       Editările HQ persistă în localStorage (același pattern mergeInto
+       ca 'scriptica.situationTypes').
+       ============================================================ */
+    flowVerticals: [
+      {
+        id: "vert_contabil", domain: "contabil", builtin: true, status: "activ",
+        name: "Situații Contabile", icon: "fact_check",
+        itemLabel: "Situație", itemLabelPlural: "Situații",
+        description: "Verticala contabilă: situații recurente pe pași standard (recepție → verificare → validare).",
+        lifecycle: ["Recepție documente", "Verificare documente", "Validare și închidere"],
+        pages: { list: "situatii.html" }
+      },
+      {
+        id: "vert_audit", domain: "audit", builtin: true, status: "activ",
+        name: "Misiuni de Audit", icon: "verified_user",
+        itemLabel: "Misiune", itemLabelPlural: "Misiuni",
+        description: "Verticala de audit public intern: misiuni pe etapele legale, cu planificare multianuală și rapoarte.",
+        lifecycle: ["Pregătirea misiunii", "Intervenția la fața locului", "Raportarea rezultatelor", "Urmărirea recomandărilor"],
+        pages: { list: "misiuni-audit.html" }
+      },
+      {
+        id: "vert_consultanta", domain: "consultanta", builtin: false, status: "activ",
+        name: "Consultanță Fiscală", icon: "balance",
+        itemLabel: "Dosar", itemLabelPlural: "Dosare",
+        description: "Dosare de consultanță fiscală: analiza solicitării, documentare, opinie scrisă și livrare.",
+        lifecycle: ["Analiza solicitării", "Documentare și redactare opinie", "Livrare și follow-up"]
+      }
+    ],
+
+    flowTemplates: [
+      /* — contabil (oglinda șabloanelor standard provisionate la clienți) — */
+      { id: "ft_raport_lunar", verticalId: "vert_contabil", name: "Raport Lunar", frequency: "lunar", status: "activ",
+        description: "Raport contabil lunar complet: înregistrare documente, închidere balanță și rapoarte.",
+        steps: [
+          { name: "Recepție documente", offsetDays: 10 },
+          { name: "Verificare documente", offsetDays: 20 },
+          { name: "Validare și închidere", offsetDays: 30 }
+        ] },
+      { id: "ft_jurnal_tva", verticalId: "vert_contabil", name: "Jurnal TVA", frequency: "lunar", status: "activ",
+        description: "Jurnal de TVA cu verificarea corelațiilor D300 ↔ D394.",
+        steps: [
+          { name: "Recepție documente", offsetDays: 7 },
+          { name: "Verificare documente", offsetDays: 14 },
+          { name: "Validare și închidere", offsetDays: 25 }
+        ] },
+      { id: "ft_salarizari", verticalId: "vert_contabil", name: "Salarizări", frequency: "lunar", status: "activ",
+        description: "Calcul salarii, ștat de plată și declarația D112.",
+        steps: [
+          { name: "Recepție documente", offsetDays: 5 },
+          { name: "Verificare documente", offsetDays: 10 },
+          { name: "Validare și închidere", offsetDays: 15 }
+        ] },
+      { id: "ft_declaratii_trim", verticalId: "vert_contabil", name: "Declarații Trimestriale", frequency: "trimestrial", status: "activ",
+        description: "Declarații fiscale trimestriale (D100, D101).",
+        steps: [
+          { name: "Recepție documente", offsetDays: 30 },
+          { name: "Verificare documente", offsetDays: 60 },
+          { name: "Validare și închidere", offsetDays: 85 }
+        ] },
+      /* — audit — */
+      { id: "ft_audit_regularitate", verticalId: "vert_audit", name: "Misiune de audit de regularitate", frequency: "anual", status: "activ",
+        description: "Misiune de audit public intern de regularitate, structurată pe etapele legale ale misiunii.",
+        steps: [
+          { name: "Pregătirea misiunii", offsetDays: 15 },
+          { name: "Intervenția la fața locului", offsetDays: 45 },
+          { name: "Raportarea rezultatelor", offsetDays: 90 },
+          { name: "Urmărirea recomandărilor", offsetDays: 180 }
+        ] },
+      { id: "ft_audit_risc", verticalId: "vert_audit", name: "Evaluarea riscurilor (Anexa 9)", frequency: "anual", status: "activ",
+        description: "Evaluarea riscurilor cu punctaj derivat automat (Probabilitate × Impact × Pondere).",
+        steps: [
+          { name: "Evaluarea riscurilor", offsetDays: 20 },
+          { name: "Ierarhizare și raport", offsetDays: 40 }
+        ] },
+      /* — consultanță fiscală (verticală custom, motor generic) — */
+      { id: "ft_consult_opinie", verticalId: "vert_consultanta", name: "Opinie fiscală punctuală", frequency: "punctual", status: "activ",
+        description: "Opinie scrisă pe o speță fiscală punctuală, cu documentare și livrare către client.",
+        steps: [
+          { name: "Analiza solicitării", offsetDays: 3 },
+          { name: "Documentare și redactare opinie", offsetDays: 10 },
+          { name: "Livrare și follow-up", offsetDays: 15 }
+        ] },
+      { id: "ft_consult_retainer", verticalId: "vert_consultanta", name: "Consultanță lunară (retainer)", frequency: "lunar", status: "activ",
+        description: "Pachet lunar de consultanță: colectarea spețelor, răspunsuri consolidate și sinteză de final de lună.",
+        steps: [
+          { name: "Analiza solicitării", offsetDays: 5 },
+          { name: "Documentare și redactare opinie", offsetDays: 18 },
+          { name: "Livrare și follow-up", offsetDays: 25 }
+        ] }
+    ],
+
+    /* Tipuri de clienți — fiecare tip împachetează verticalele + șabloanele
+       implicite pe care clienții de acest tip le primesc la înrolare.
+       Un client are UN singur tip (hibrizii au tip dedicat, ex. ct_mixt). */
+    clientTypes: [
+      {
+        id: "ct_contabilitate", name: "Cabinet de contabilitate", icon: "calculate", builtin: true,
+        description: "Firme de contabilitate — primesc verticala contabilă cu șabloanele standard de situații.",
+        verticalIds: ["vert_contabil"],
+        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim"]
+      },
+      {
+        id: "ct_audit", name: "Firmă de audit", icon: "verified_user", builtin: true,
+        description: "Structuri de audit public intern — primesc verticala de audit cu misiunile standard.",
+        verticalIds: ["vert_audit"],
+        defaultTemplateIds: ["ft_audit_regularitate", "ft_audit_risc"]
+      },
+      {
+        id: "ct_mixt", name: "Cabinet mixt (contabilitate + audit)", icon: "diversity_2", builtin: true,
+        description: "Firme care oferă și contabilitate, și audit — primesc ambele verticale cu toate șabloanele standard.",
+        verticalIds: ["vert_contabil", "vert_audit"],
+        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim", "ft_audit_regularitate", "ft_audit_risc"]
+      },
+      {
+        id: "ct_consultanta", name: "Cabinet de consultanță fiscală", icon: "balance", builtin: false,
+        description: "Cabinete de consultanță fiscală — primesc verticala de consultanță cu șabloanele de dosare.",
+        verticalIds: ["vert_consultanta"],
+        defaultTemplateIds: ["ft_consult_opinie", "ft_consult_retainer"]
       }
     ]
   },
+
+  /* Instanțe pentru verticalele custom (motorul generic flux.html).
+     Echivalentul `situations`/`auditMissions` pentru domeniile noi.
+     Termenele se calculează la runtime din startDate + offset-urile
+     șablonului. Itemii creați din UI persistă în 'scriptica.flowItems'. */
+  flowItems: [
+    {
+      id: "fi_0001", verticalId: "vert_consultanta", domain: "consultanta",
+      name: "Opinie fiscală — tratament TVA import servicii",
+      clientName: "Electro Distrib S.R.L.",
+      templateId: "ft_consult_opinie", templateName: "Opinie fiscală punctuală",
+      startDate: "2026-04-08", currentStep: 2, stepsCompleted: 1,
+      status: "in_verificare", responsibleIds: [6, 2]
+    },
+    {
+      id: "fi_0002", verticalId: "vert_consultanta", domain: "consultanta",
+      name: "Consultanță lunară — aprilie 2026",
+      clientName: "Mobexpert Log S.R.L.",
+      templateId: "ft_consult_retainer", templateName: "Consultanță lunară (retainer)",
+      startDate: "2026-04-01", currentStep: 3, stepsCompleted: 2,
+      status: "spre_aprobare", responsibleIds: [6]
+    },
+    {
+      id: "fi_0003", verticalId: "vert_consultanta", domain: "consultanta",
+      name: "Opinie fiscală — regim micro vs. profit 2026",
+      clientName: "AgroSem Trading S.R.L.",
+      templateId: "ft_consult_opinie", templateName: "Opinie fiscală punctuală",
+      startDate: "2026-04-15", currentStep: 1, stepsCompleted: 0,
+      status: "analiza", responsibleIds: [6, 4]
+    },
+    {
+      id: "fi_0004", verticalId: "vert_consultanta", domain: "consultanta",
+      name: "Consultanță lunară — martie 2026",
+      clientName: "Mobexpert Log S.R.L.",
+      templateId: "ft_consult_retainer", templateName: "Consultanță lunară (retainer)",
+      startDate: "2026-03-01", currentStep: 3, stepsCompleted: 3,
+      status: "finalizat", responsibleIds: [6, 2]
+    }
+  ],
 
   /* Phase 9 — taguri administrabile (admin panel) */
   adminTags: [
@@ -1370,6 +1561,89 @@ window.SCRIPTICA_MOCK = {
   var M = window.SCRIPTICA_MOCK;
   M.anexeTypes = mergeInto(M.anexeTypes || [], 'scriptica.anexe');
   M.situationTypes = mergeInto(M.situationTypes || [], 'scriptica.situationTypes');
+
+  /* Registrul de fluxuri + tipuri de clienți (HQ) — același pattern de
+     persistență ca tipurile de situații: map id → record în localStorage,
+     { deleted: true } = tombstone. */
+  var SA = M.superAdmin || {};
+  SA.flowVerticals = mergeInto(SA.flowVerticals || [], 'scriptica.flowVerticals');
+  SA.flowTemplates = mergeInto(SA.flowTemplates || [], 'scriptica.flowTemplates');
+  SA.clientTypes = mergeInto(SA.clientTypes || [], 'scriptica.clientTypes');
+  SA.clients = mergeInto(SA.clients || [], 'scriptica.saClients');
+  M.flowItems = mergeInto(M.flowItems || [], 'scriptica.flowItems');
+})();
+
+/* ------------------------------------------------------------
+   Registrul de fluxuri — helper-e globale.
+   Folosite de shell (navigație dinamică), motorul generic (flux.html)
+   și ecranele Super Admin. Salvarea scrie map-ul id → record în
+   localStorage și actualizează obiectul MOCK în memorie.
+   ------------------------------------------------------------ */
+(function flowRegistryHelpers() {
+  function readMap(key) {
+    try { return JSON.parse(localStorage.getItem(key) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function writeRecord(key, record) {
+    var map = readMap(key);
+    map[record.id] = record;
+    try { localStorage.setItem(key, JSON.stringify(map)); } catch (e) {}
+  }
+
+  var KEYS = {
+    vertical: 'scriptica.flowVerticals',
+    template: 'scriptica.flowTemplates',
+    clientType: 'scriptica.clientTypes',
+    saClient: 'scriptica.saClients',
+    flowItem: 'scriptica.flowItems'
+  };
+  var LISTS = {
+    vertical:  function (M) { return M.superAdmin.flowVerticals; },
+    template:  function (M) { return M.superAdmin.flowTemplates; },
+    clientType:function (M) { return M.superAdmin.clientTypes; },
+    saClient:  function (M) { return M.superAdmin.clients; },
+    flowItem:  function (M) { return M.flowItems; }
+  };
+
+  /* Upsert: persistă și sincronizează lista în memorie. kind ∈ KEYS. */
+  window.scripticaFlowSave = function (kind, record) {
+    if (!KEYS[kind] || !record || !record.id) return;
+    writeRecord(KEYS[kind], record);
+    var list = LISTS[kind](window.SCRIPTICA_MOCK);
+    var idx = list.findIndex(function (x) { return x.id === record.id; });
+    if (record.deleted) { if (idx !== -1) list.splice(idx, 1); }
+    else if (idx !== -1) list[idx] = record;
+    else list.push(record);
+  };
+  window.scripticaFlowDelete = function (kind, id) {
+    window.scripticaFlowSave(kind, { id: id, deleted: true });
+  };
+
+  window.scripticaFlowVerticals = function () {
+    return (window.SCRIPTICA_MOCK.superAdmin.flowVerticals || [])
+      .filter(function (v) { return (v.status || 'activ') === 'activ'; });
+  };
+  window.scripticaCustomVerticals = function () {
+    return window.scripticaFlowVerticals().filter(function (v) { return !v.builtin; });
+  };
+  window.scripticaVerticalById = function (id) {
+    return (window.SCRIPTICA_MOCK.superAdmin.flowVerticals || [])
+      .find(function (v) { return v.id === id; }) || null;
+  };
+  window.scripticaTemplatesForVertical = function (verticalId) {
+    return (window.SCRIPTICA_MOCK.superAdmin.flowTemplates || [])
+      .filter(function (t) { return t.verticalId === verticalId; });
+  };
+  window.scripticaClientTypes = function () {
+    return window.SCRIPTICA_MOCK.superAdmin.clientTypes || [];
+  };
+  window.scripticaClientTypeById = function (id) {
+    return window.scripticaClientTypes().find(function (t) { return t.id === id; }) || null;
+  };
+  window.scripticaFlowItemsForVertical = function (verticalId) {
+    return (window.SCRIPTICA_MOCK.flowItems || [])
+      .filter(function (i) { return i.verticalId === verticalId; });
+  };
 })();
 
 /* ------------------------------------------------------------

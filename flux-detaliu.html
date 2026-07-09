@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Spațiu de lucru Misiune — Scriptica</title>
+  <title>Detaliu flux — Scriptica</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,11 +13,11 @@
   <link rel="stylesheet" href="css/tokens.css?v=14">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=15">
-  <link rel="stylesheet" href="css/anexe.css?v=15">
-  <link rel="stylesheet" href="css/misiune-audit-workspace.css?v=3">
+  <link rel="stylesheet" href="css/misiuni-audit.css?v=5">
+  <link rel="stylesheet" href="css/flux.css?v=1">
 </head>
-<body data-page="misiune-audit-workspace">
-  <div class="shell">
+<body data-page="flux-detaliu">
+  <div class="shell shell--messaging-closed">
 
     <header class="header" role="banner">
       <div class="header__left">
@@ -82,67 +82,9 @@
     </aside>
 
     <main class="main" id="main" role="main">
-
-      <!-- Back + title -->
-      <div class="detail-title" id="ws-title"></div>
-
-      <!-- Step card: yellow banner header + white body (anexe + tasks) -->
-      <article class="step-card">
-        <header class="step-card__header" id="ws-step-banner" aria-label="Pas curent"></header>
-        <div class="step-card__body" id="ws-step-body"></div>
-      </article>
-
-      <!-- Documents section -->
-      <section class="docs-section" id="ws-docs" aria-label="Documente"></section>
-
+      <div id="fx-root"></div>
     </main>
 
-    <!-- Chat panel (reuses .messaging shell) -->
-    <aside class="messaging" aria-label="Mesagerie">
-      <div class="chat-header">
-        <span class="chat-header__title">Conversația misiunii</span>
-        <span class="chat-header__meta" id="ws-chat-meta">echipă + entitate auditată</span>
-      </div>
-      <div class="messaging__list" id="ws-msg-list"></div>
-      <div class="composer">
-        <textarea class="composer__textarea" rows="2" placeholder="scrie în chat..."></textarea>
-        <div class="composer__row">
-          <button class="btn btn--ghost" type="button" style="height:32px;padding:0 8px;" aria-label="Atașează document">
-            <span class="material-symbols-outlined" aria-hidden="true">attach_file</span>
-          </button>
-          <button class="btn btn--primary" type="button" style="height:32px;">Trimite</button>
-        </div>
-      </div>
-    </aside>
-
-  </div>
-
-  <!-- Modal: Completare anexă (full-screen) — reutilizat de anexa-fill.js -->
-  <div class="modal modal--anexa" id="modal-anexa-fill" role="dialog" aria-modal="true" aria-labelledby="modal-anexa-title" aria-hidden="true">
-    <div class="modal__dialog" role="document">
-      <header class="anexa-modal__header">
-        <div class="anexa-modal__title-block">
-          <div class="anexa-modal__title" id="modal-anexa-title" data-anexa-title></div>
-          <div class="anexa-modal__sub" data-anexa-subtitle></div>
-        </div>
-        <button type="button" class="modal__close" data-modal-close aria-label="Închide" style="position: static;">
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
-        </button>
-      </header>
-      <div class="anexa-modal__body">
-        <form class="anexa-form" id="anexa-form" novalidate></form>
-      </div>
-      <footer class="anexa-modal__footer">
-        <div class="anexa-modal__progress">
-          <span class="anexa-modal__progress-text" data-anexa-progress-text>0 din 0 câmpuri obligatorii completate</span>
-          <div class="anexa-modal__progress-track" aria-hidden="true">
-            <div class="anexa-modal__progress-bar" data-anexa-progress-bar></div>
-          </div>
-        </div>
-        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
-        <button type="button" class="btn btn--primary" data-anexa-save>Salvează progresul</button>
-      </footer>
-    </div>
   </div>
 
   <!-- Toast stack -->
@@ -150,9 +92,8 @@
 
   <script src="js/shell.js?v=29"></script>
   <script src="js/mock-data.js?v=29"></script>
-  <script src="js/timer.js?v=28"></script>
-  <script src="js/dashboard.js?v=28"></script>
-  <script src="js/anexa-fill.js?v=28"></script>
-  <script src="js/misiune-audit-workspace.js?v=4"></script>
+  <script src="js/timer.js?v=29"></script>
+  <script src="js/dashboard.js?v=29"></script>
+  <script src="js/flux.js?v=1"></script>
 </body>
 </html>
