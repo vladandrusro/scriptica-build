@@ -601,34 +601,150 @@ window.SCRIPTICA_MOCK = {
 
     /* Tipuri de clienți — fiecare tip împachetează verticalele + șabloanele
        implicite pe care clienții de acest tip le primesc la înrolare.
-       Un client are UN singur tip (hibrizii au tip dedicat, ex. ct_mixt). */
+       Un client are UN singur tip (hibrizii au tip dedicat, ex. ct_mixt).
+       ------------------------------------------------------------
+       `archiveTree` = structura de arhivă (sistemul de foldere) primită
+       implicit de clienții tipului. Fiecare folder declară prin
+       `docTypeIds` ce tipuri de documente ține — regula după care A.I.
+       (LLM-ul local) mută automat documentele intrate. Un tip de document
+       are UN singur folder-destinație. Folderul cu `system: true`
+       (Necategorisit) primește tot ce A.I. nu recunoaște și nu poate fi
+       șters. Subfolderele participă la rutare împreună cu părintele. */
     clientTypes: [
       {
         id: "ct_contabilitate", name: "Cabinet de contabilitate", icon: "calculate", builtin: true,
         description: "Firme de contabilitate — primesc verticala contabilă cu șabloanele standard de situații.",
         verticalIds: ["vert_contabil"],
-        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim"]
+        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim"],
+        /* Terminologia pentru partea externă (cum își numește firma clienții)
+           + layout-ul de dashboard (Acasă): listă ordonată de widget-uri,
+           size 'half' (o coloană) sau 'full' (toată lățimea). */
+        clientLabel: "Client", clientLabelPlural: "Clienți",
+        dashboardLayout: [
+          { id: "dw_ct1_1", widget: "situatii_noi", size: "half" },
+          { id: "dw_ct1_2", widget: "alerte", size: "half" },
+          { id: "dw_ct1_3", widget: "clienti", size: "full" },
+          { id: "dw_ct1_4", widget: "arhiva_recente", params: {}, size: "half" },
+          { id: "dw_ct1_5", widget: "notificari", size: "half" }
+        ],
+        archiveTree: [
+          { id: "af_ct1_intrare", name: "Documente intrare", docTypeIds: ["dt_factura_furnizor", "dt_bon_fiscal", "dt_nir", "dt_aviz_pv"], children: [] },
+          { id: "af_ct1_iesire", name: "Documente ieșire", docTypeIds: ["dt_factura_emisa", "dt_foaie_parcurs"], children: [] },
+          { id: "af_ct1_banca", name: "Bancă și casă", docTypeIds: ["dt_extras_cont", "dt_registru_casa"], children: [] },
+          { id: "af_ct1_salarizare", name: "Salarizare", docTypeIds: ["dt_stat_salarii", "dt_document_hr"], children: [] },
+          { id: "af_ct1_documentatie", name: "Documentație contabilă", docTypeIds: ["dt_balanta", "dt_registru_imobilizari", "dt_situatia_stocurilor"], children: [
+            { id: "af_ct1_declaratii", name: "Declarații ANAF", docTypeIds: ["dt_declaratie_fiscala"], children: [] }
+          ] },
+          { id: "af_ct1_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
+        ]
       },
       {
         id: "ct_audit", name: "Firmă de audit", icon: "verified_user", builtin: true,
         description: "Structuri de audit public intern — primesc verticala de audit cu misiunile standard.",
         verticalIds: ["vert_audit"],
-        defaultTemplateIds: ["ft_audit_regularitate", "ft_audit_risc"]
+        defaultTemplateIds: ["ft_audit_regularitate", "ft_audit_risc"],
+        /* Partea externă a auditului = entități publice → „Instituție". */
+        clientLabel: "Instituție", clientLabelPlural: "Instituții",
+        dashboardLayout: [
+          { id: "dw_ct2_1", widget: "flow_summary", params: { verticalId: "vert_audit" }, size: "half" },
+          { id: "dw_ct2_2", widget: "termene", size: "half" },
+          { id: "dw_ct2_3", widget: "rapoarte_audit", size: "half" },
+          { id: "dw_ct2_4", widget: "arhiva_recente", params: { folderId: "af_ct2_rapoarte" }, size: "half" },
+          { id: "dw_ct2_5", widget: "clienti", size: "full" }
+        ],
+        archiveTree: [
+          { id: "af_ct2_permanent", name: "Dosar permanent", docTypeIds: ["dt_ordin_serviciu", "dt_notificare_audit", "dt_minuta"], children: [] },
+          { id: "af_ct2_lucru", name: "Documente de lucru", docTypeIds: ["dt_program_misiune", "dt_fiap", "dt_fcri"], children: [] },
+          { id: "af_ct2_rapoarte", name: "Rapoarte de audit", docTypeIds: ["dt_raport_audit"], children: [] },
+          { id: "af_ct2_coresp", name: "Corespondență", docTypeIds: ["dt_corespondenta"], children: [] },
+          { id: "af_ct2_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
+        ]
       },
       {
         id: "ct_mixt", name: "Cabinet mixt (contabilitate + audit)", icon: "diversity_2", builtin: true,
         description: "Firme care oferă și contabilitate, și audit — primesc ambele verticale cu toate șabloanele standard.",
         verticalIds: ["vert_contabil", "vert_audit"],
-        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim", "ft_audit_regularitate", "ft_audit_risc"]
+        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim", "ft_audit_regularitate", "ft_audit_risc"],
+        clientLabel: "Client", clientLabelPlural: "Clienți",
+        dashboardLayout: [
+          { id: "dw_ct3_1", widget: "situatii_noi", size: "half" },
+          { id: "dw_ct3_2", widget: "alerte", size: "half" },
+          { id: "dw_ct3_3", widget: "flow_summary", params: { verticalId: "vert_audit" }, size: "half" },
+          { id: "dw_ct3_4", widget: "termene", size: "half" },
+          { id: "dw_ct3_5", widget: "clienti", size: "full" },
+          { id: "dw_ct3_6", widget: "arhiva_recente", params: {}, size: "half" },
+          { id: "dw_ct3_7", widget: "notificari", size: "half" }
+        ],
+        archiveTree: [
+          { id: "af_ct3_intrare", name: "Documente intrare", docTypeIds: ["dt_factura_furnizor", "dt_bon_fiscal", "dt_nir", "dt_aviz_pv"], children: [] },
+          { id: "af_ct3_iesire", name: "Documente ieșire", docTypeIds: ["dt_factura_emisa", "dt_foaie_parcurs"], children: [] },
+          { id: "af_ct3_banca", name: "Bancă și casă", docTypeIds: ["dt_extras_cont", "dt_registru_casa"], children: [] },
+          { id: "af_ct3_salarizare", name: "Salarizare", docTypeIds: ["dt_stat_salarii", "dt_document_hr"], children: [] },
+          { id: "af_ct3_documentatie", name: "Documentație contabilă", docTypeIds: ["dt_balanta", "dt_registru_imobilizari", "dt_situatia_stocurilor"], children: [
+            { id: "af_ct3_declaratii", name: "Declarații ANAF", docTypeIds: ["dt_declaratie_fiscala"], children: [] }
+          ] },
+          { id: "af_ct3_audit", name: "Dosar audit", docTypeIds: [], children: [
+            { id: "af_ct3_audit_permanent", name: "Dosar permanent", docTypeIds: ["dt_ordin_serviciu", "dt_notificare_audit", "dt_minuta"], children: [] },
+            { id: "af_ct3_audit_lucru", name: "Documente de lucru", docTypeIds: ["dt_program_misiune", "dt_fiap", "dt_fcri"], children: [] },
+            { id: "af_ct3_audit_rapoarte", name: "Rapoarte de audit", docTypeIds: ["dt_raport_audit"], children: [] }
+          ] },
+          { id: "af_ct3_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
+        ]
       },
       {
         id: "ct_consultanta", name: "Cabinet de consultanță fiscală", icon: "balance", builtin: false,
         description: "Cabinete de consultanță fiscală — primesc verticala de consultanță cu șabloanele de dosare.",
         verticalIds: ["vert_consultanta"],
-        defaultTemplateIds: ["ft_consult_opinie", "ft_consult_retainer"]
+        defaultTemplateIds: ["ft_consult_opinie", "ft_consult_retainer"],
+        clientLabel: "Client", clientLabelPlural: "Clienți",
+        dashboardLayout: [
+          { id: "dw_ct4_1", widget: "flow_summary", params: { verticalId: "vert_consultanta" }, size: "half" },
+          { id: "dw_ct4_2", widget: "termene", size: "half" },
+          { id: "dw_ct4_3", widget: "arhiva_recente", params: {}, size: "half" },
+          { id: "dw_ct4_4", widget: "echipa", size: "half" }
+        ],
+        archiveTree: [
+          { id: "af_ct4_solicitari", name: "Solicitări clienți", docTypeIds: ["dt_corespondenta"], children: [] },
+          { id: "af_ct4_opinii", name: "Opinii emise", docTypeIds: ["dt_opinie_fiscala"], children: [] },
+          { id: "af_ct4_suport", name: "Documente suport", docTypeIds: ["dt_contract"], children: [] },
+          { id: "af_ct4_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
+        ]
       }
     ]
   },
+
+  /* Tipuri de documente — vocabularul cu care A.I. (LLM-ul local)
+     etichetează documentele intrate (câmpul `tipDocument` de pe document).
+     Sursa dropdown-ului din editorul de structură de arhivă; `domain`
+     leagă tipul de verticala din care provine (null = generic). */
+  documentTypes: [
+    { id: "dt_factura_furnizor", name: "Factură furnizor", domain: "contabil" },
+    { id: "dt_factura_emisa", name: "Factură emisă", domain: "contabil" },
+    { id: "dt_bon_fiscal", name: "Bon fiscal", domain: "contabil" },
+    { id: "dt_extras_cont", name: "Extras de cont", domain: "contabil" },
+    { id: "dt_registru_casa", name: "Registru de casă", domain: "contabil" },
+    { id: "dt_nir", name: "NIR", domain: "contabil" },
+    { id: "dt_aviz_pv", name: "Aviz / Proces verbal", domain: "contabil" },
+    { id: "dt_foaie_parcurs", name: "Foaie de parcurs", domain: "contabil" },
+    { id: "dt_stat_salarii", name: "Ștat de salarii", domain: "contabil" },
+    { id: "dt_document_hr", name: "Document HR", domain: "contabil" },
+    { id: "dt_declaratie_fiscala", name: "Declarație fiscală", domain: "contabil" },
+    { id: "dt_balanta", name: "Balanță de verificare", domain: "contabil" },
+    { id: "dt_registru_imobilizari", name: "Registru imobilizări", domain: "contabil" },
+    { id: "dt_situatia_stocurilor", name: "Situația stocurilor", domain: "contabil" },
+    { id: "dt_ordin_serviciu", name: "Ordin de serviciu", domain: "audit" },
+    { id: "dt_notificare_audit", name: "Notificare misiune", domain: "audit" },
+    { id: "dt_minuta", name: "Minută", domain: "audit" },
+    { id: "dt_program_misiune", name: "Program de misiune", domain: "audit" },
+    { id: "dt_fiap", name: "FIAP", domain: "audit" },
+    { id: "dt_fcri", name: "FCRI", domain: "audit" },
+    { id: "dt_raport_audit", name: "Raport de audit", domain: "audit" },
+    { id: "dt_opinie_fiscala", name: "Opinie fiscală", domain: "consultanta" },
+    { id: "dt_contract", name: "Contract", domain: null },
+    { id: "dt_corespondenta", name: "E-mail de transmitere", domain: null },
+    { id: "dt_document_multiplu", name: "Document multiplu", domain: null },
+    { id: "dt_altele", name: "Altele", domain: null }
+  ],
 
   /* Instanțe pentru verticalele custom (motorul generic flux.html).
      Echivalentul `situations`/`auditMissions` pentru domeniile noi.
@@ -1643,6 +1759,36 @@ window.SCRIPTICA_MOCK = {
   window.scripticaFlowItemsForVertical = function (verticalId) {
     return (window.SCRIPTICA_MOCK.flowItems || [])
       .filter(function (i) { return i.verticalId === verticalId; });
+  };
+
+  /* ---- Structura de arhivă (per tip de client) ---- */
+  window.scripticaDocumentTypes = function () {
+    return window.SCRIPTICA_MOCK.documentTypes || [];
+  };
+  window.scripticaDocTypeById = function (id) {
+    return window.scripticaDocumentTypes().find(function (t) { return t.id === id; }) || null;
+  };
+  /* Structura implicită pentru tipurile de clienți create din UI. */
+  window.scripticaDefaultArchiveTree = function () {
+    return [
+      { id: 'af_doc_' + Date.now(), name: 'Documente', docTypeIds: [], children: [] },
+      { id: 'af_necat_' + Date.now(), name: 'Necategorisit', system: true, docTypeIds: [], children: [] }
+    ];
+  };
+  window.scripticaArchiveTreeFor = function (clientTypeId) {
+    var ct = window.scripticaClientTypeById(clientTypeId);
+    return (ct && ct.archiveTree && ct.archiveTree.length)
+      ? ct.archiveTree
+      : window.scripticaDefaultArchiveTree();
+  };
+
+  /* Tipul de client al firmei demo, dedus din persona curentă — folosit de
+     paginile de tenant (Arhivă, Acasă) ca să reflecte configurația HQ. */
+  window.scripticaTenantClientTypeId = function () {
+    var v = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
+    if (v === 'contabilitate' || v === 'client') return 'ct_contabilitate';
+    if (v === 'audit_stat' || v === 'autoritate') return 'ct_audit';
+    return 'ct_mixt'; /* complet, admin — firma demo e cabinet mixt */
   };
 })();
 

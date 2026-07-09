@@ -702,6 +702,7 @@
         if ((b = e.target.closest('[data-new-ct]'))) openClientTypeModal(root, null);
         else if ((b = e.target.closest('[data-edit-ct]'))) openClientTypeModal(root, clientTypeById(b.getAttribute('data-edit-ct')));
         else if ((b = e.target.closest('[data-del-ct]'))) confirmDeleteClientType(root, clientTypeById(b.getAttribute('data-del-ct')));
+        else if ((b = e.target.closest('[data-arch-ct]'))) openArchiveModal(root, clientTypeById(b.getAttribute('data-arch-ct')));
       });
     }
   }
@@ -732,8 +733,30 @@
       '</div>' +
       '<div class="sa-ct-sec">Verticale</div><div class="sa-ct-verts">' + vertPills + '</div>' +
       '<div class="sa-ct-sec">Șabloane implicite (' + tpls.length + ')</div><ul class="sa-ct-tpllist">' + tplList + '</ul>' +
+      '<div class="sa-ct-sec">Structură arhivă</div>' +
+      '<div class="sa-ct-arch">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>' +
+        countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.' +
+        '<button class="btn btn--ghost sa-ct-arch__btn" type="button" data-arch-ct="' + esc(t.id) + '">Configurează</button>' +
+      '</div>' +
+      '<div class="sa-ct-sec">Dashboard (Acasă)</div>' +
+      '<div class="sa-ct-arch">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
+        ((t.dashboardLayout || []).length) + ' widget-uri · denumire: „' + esc(t.clientLabel || 'Client') + '"' +
+        '<a class="btn btn--ghost sa-ct-arch__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
+          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Configurează</a>' +
+      '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';
+  }
+
+  function countArchFolders(tree) {
+    var n = 0;
+    (tree || []).forEach(function walk(f) {
+      n++;
+      (f.children || []).forEach(walk);
+    });
+    return n;
   }
 
   function openClientTypeModal(root, t) {
@@ -757,6 +780,11 @@
         fieldHtml('Denumire tip', '<input type="text" class="input" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Cabinet de consultanță fiscală">') +
         fieldHtml('Pictogramă', iconPickerHtml(CT_ICONS, t ? t.icon : CT_ICONS[0])) +
         fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(t ? t.description || '' : '') + '</textarea>') +
+        '<div class="sa-form-2col">' +
+          fieldHtml('Denumirea părții externe (singular)', '<input type="text" class="input" data-f="clientLabel" value="' + esc(t ? t.clientLabel || '' : '') + '" placeholder="ex. Client, Instituție, Customer">',
+            'Cum sunt numiți clienții în aplicație pentru acest tip.') +
+          fieldHtml('Denumirea părții externe (plural)', '<input type="text" class="input" data-f="clientLabelPlural" value="' + esc(t ? t.clientLabelPlural || '' : '') + '" placeholder="ex. Clienți, Instituții">') +
+        '</div>' +
         '<div class="form-field"><label class="form-label">Verticale și șabloane implicite</label>' + blocks + '</div>',
       wide: true,
       submitLabel: t ? 'Salvează modificările' : 'Creează tipul',
@@ -780,6 +808,7 @@
         var tids = Array.prototype.filter.call(m.querySelectorAll('[data-ct-tpl]'), function (c) { return c.checked && !c.disabled; })
           .map(function (c) { return c.value; });
         if (!tids.length) { toast('error', 'Selectează cel puțin un șablon implicit.'); return; }
+        var clientLabel = fval(m, 'clientLabel') || 'Client';
         var rec = {
           id: t ? t.id : uid('ct', name, clientTypesAll()),
           builtin: t ? !!t.builtin : false,
@@ -787,11 +816,178 @@
           icon: pickedIcon(m, 'category'),
           description: fval(m, 'description'),
           verticalIds: vids,
-          defaultTemplateIds: tids
+          defaultTemplateIds: tids,
+          archiveTree: t ? (t.archiveTree || []) : window.scripticaDefaultArchiveTree(),
+          clientLabel: clientLabel,
+          clientLabelPlural: fval(m, 'clientLabelPlural') || (clientLabel + 'i'),
+          /* tip nou → dashboard de pornire: un widget per verticală + genericele */
+          dashboardLayout: t ? (t.dashboardLayout || []) : vids.map(function (vid, i) {
+            return { id: 'dw_' + Date.now().toString(36) + '_' + i, widget: 'flow_summary', params: { verticalId: vid }, size: 'half' };
+          }).concat([
+            { id: 'dw_' + Date.now().toString(36) + '_t', widget: 'termene', size: 'half' },
+            { id: 'dw_' + Date.now().toString(36) + '_c', widget: 'clienti', size: 'full' }
+          ])
         };
         scripticaFlowSave('clientType', rec);
         close();
         toast('success', t ? 'Tipul de client a fost actualizat.' : 'Tipul „' + name + '" a fost creat.');
+        renderClientTypes(root);
+      }
+    });
+  }
+
+  /* ============================================================
+     STRUCTURĂ ARHIVĂ — editorul arborelui de foldere al unui tip
+     de client. Fiecare folder declară tipurile de documente pe care
+     le ține (regula de rutare a A.I.-ului local); un tip de document
+     are un singur folder-destinație în arbore.
+     ============================================================ */
+  var archUidCounter = 0;
+  function archUid() { return 'af_' + Date.now().toString(36) + '_' + (archUidCounter++); }
+
+  function openArchiveModal(root, t) {
+    if (!t) return;
+    /* copie de lucru — se salvează doar la submit */
+    var tree = JSON.parse(JSON.stringify(
+      (t.archiveTree && t.archiveTree.length) ? t.archiveTree : window.scripticaDefaultArchiveTree()
+    ));
+
+    /* Dropdown-ul oferă tipurile de documente ale verticalelor tipului
+       + cele generice (domain null). */
+    var domains = (t.verticalIds || []).map(function (vid) {
+      var v = verticalById(vid);
+      return v ? v.domain : null;
+    }).filter(Boolean);
+    var allowedTypes = window.scripticaDocumentTypes().filter(function (dt) {
+      return !dt.domain || domains.indexOf(dt.domain) !== -1;
+    });
+
+    function findNode(nodes, id, parent, depth) {
+      for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].id === id) return { node: nodes[i], parent: parent, list: nodes, index: i, depth: depth || 1 };
+        var hit = findNode(nodes[i].children || [], id, nodes[i], (depth || 1) + 1);
+        if (hit) return hit;
+      }
+      return null;
+    }
+    function usedTypeIds() {
+      var used = [];
+      (function walk(nodes) {
+        nodes.forEach(function (f) {
+          used = used.concat(f.docTypeIds || []);
+          walk(f.children || []);
+        });
+      })(tree);
+      return used;
+    }
+
+    function folderRowHtml(f, depth) {
+      var used = usedTypeIds();
+      var chips = (f.docTypeIds || []).map(function (id) {
+        var dt = window.scripticaDocTypeById(id);
+        return '<span class="pill admin-anexa-chip">' + esc(dt ? dt.name : id) +
+          '<button type="button" class="admin-anexa-chip__remove" data-arch-rmtype="' + esc(id) + '" data-node="' + esc(f.id) + '" aria-label="Elimină tipul" title="Elimină tipul">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">close</span></button></span>';
+      }).join('');
+      var avail = allowedTypes.filter(function (dt) { return used.indexOf(dt.id) === -1; });
+      var typesUi = f.system
+        ? '<div class="sa-arch-row__system"><span class="material-symbols-outlined" aria-hidden="true">smart_toy</span>' +
+            'Primește automat documentele pe care A.I. nu le recunoaște. Nu poate fi șters.</div>'
+        : '<div class="sa-arch-row__types">' + chips +
+            '<select class="select sa-arch-row__select" data-arch-addtype data-node="' + esc(f.id) + '">' +
+              '<option value="">+ Adaugă tip de document...</option>' +
+              avail.map(function (dt) { return '<option value="' + esc(dt.id) + '">' + esc(dt.name) + '</option>'; }).join('') +
+            '</select>' +
+          '</div>';
+      var actions = f.system ? '' :
+        (depth < 3 ? '<button type="button" class="sa-mini-btn" data-arch-addchild data-node="' + esc(f.id) + '" title="Adaugă subfolder"><span class="material-symbols-outlined" aria-hidden="true">create_new_folder</span></button>' : '') +
+        '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-arch-del data-node="' + esc(f.id) + '" title="Șterge folderul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>';
+      return '<div class="sa-arch-row sa-arch-row--d' + depth + (f.system ? ' sa-arch-row--system' : '') + '">' +
+        '<div class="sa-arch-row__head">' +
+          '<span class="material-symbols-outlined sa-arch-row__folder" aria-hidden="true">' + (f.system ? 'inbox' : 'folder') + '</span>' +
+          '<input type="text" class="input sa-arch-row__name" data-arch-name data-node="' + esc(f.id) + '" value="' + esc(f.name) + '" placeholder="Numele folderului"' + (f.system ? ' disabled' : '') + '>' +
+          '<span class="sa-arch-row__actions">' + actions + '</span>' +
+        '</div>' +
+        typesUi +
+      '</div>' +
+      (f.children || []).map(function (c) { return folderRowHtml(c, depth + 1); }).join('');
+    }
+
+    function renderTree(m) {
+      m.querySelector('[data-arch-tree]').innerHTML =
+        tree.map(function (f) { return folderRowHtml(f, 1); }).join('');
+    }
+
+    saModal({
+      title: 'Structură arhivă — ' + t.name,
+      subtitle: 'Sistemul de foldere primit implicit de clienții acestui tip. A.I. (LLM-ul local) mută automat fiecare document intrat în folderul care îi declară tipul.',
+      wide: true,
+      bodyHtml:
+        '<div class="sa-arch-note"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>' +
+          'Un tip de document are un singur folder-destinație. Subfolderele participă la rutare împreună cu părintele; ce nu e recunoscut ajunge în „Necategorisit".</div>' +
+        '<div class="sa-arch-tree" data-arch-tree></div>' +
+        '<button type="button" class="btn btn--secondary" data-arch-addroot><span class="material-symbols-outlined" aria-hidden="true">create_new_folder</span>Folder nou</button>',
+      submitLabel: 'Salvează structura',
+      onOpen: function (m) {
+        renderTree(m);
+        m.querySelector('[data-arch-addroot]').addEventListener('click', function () {
+          /* folderul de sistem rămâne ultimul */
+          var sysIdx = tree.findIndex(function (f) { return f.system; });
+          var node = { id: archUid(), name: '', docTypeIds: [], children: [] };
+          if (sysIdx === -1) tree.push(node); else tree.splice(sysIdx, 0, node);
+          renderTree(m);
+        });
+        var cont = m.querySelector('[data-arch-tree]');
+        cont.addEventListener('input', function (e) {
+          var inp = e.target.closest('[data-arch-name]');
+          if (!inp) return;
+          var hit = findNode(tree, inp.getAttribute('data-node'));
+          if (hit) hit.node.name = inp.value;
+        });
+        cont.addEventListener('change', function (e) {
+          var sel = e.target.closest('[data-arch-addtype]');
+          if (!sel || !sel.value) return;
+          var hit = findNode(tree, sel.getAttribute('data-node'));
+          if (hit) { hit.node.docTypeIds = (hit.node.docTypeIds || []).concat([sel.value]); renderTree(m); }
+        });
+        cont.addEventListener('click', function (e) {
+          var b;
+          if ((b = e.target.closest('[data-arch-rmtype]'))) {
+            var hit1 = findNode(tree, b.getAttribute('data-node'));
+            if (hit1) {
+              var rid = b.getAttribute('data-arch-rmtype');
+              hit1.node.docTypeIds = (hit1.node.docTypeIds || []).filter(function (x) { return x !== rid; });
+              renderTree(m);
+            }
+          } else if ((b = e.target.closest('[data-arch-addchild]'))) {
+            var hit2 = findNode(tree, b.getAttribute('data-node'));
+            if (hit2) {
+              hit2.node.children = hit2.node.children || [];
+              hit2.node.children.push({ id: archUid(), name: '', docTypeIds: [], children: [] });
+              renderTree(m);
+            }
+          } else if ((b = e.target.closest('[data-arch-del]'))) {
+            var hit3 = findNode(tree, b.getAttribute('data-node'));
+            if (hit3) { hit3.list.splice(hit3.index, 1); renderTree(m); }
+          }
+        });
+      },
+      onSubmit: function (m, close) {
+        var invalid = false;
+        (function walk(nodes) {
+          nodes.forEach(function (f) {
+            if (!String(f.name || '').trim()) invalid = true;
+            walk(f.children || []);
+          });
+        })(tree);
+        if (invalid) { toast('error', 'Toate folderele trebuie să aibă un nume.'); return; }
+        if (!tree.some(function (f) { return !f.system; })) { toast('error', 'Structura are nevoie de cel puțin un folder în afară de „Necategorisit".'); return; }
+        if (!tree.some(function (f) { return f.system; })) {
+          tree.push({ id: archUid(), name: 'Necategorisit', system: true, docTypeIds: [], children: [] });
+        }
+        scripticaFlowSave('clientType', Object.assign({}, t, { archiveTree: tree }));
+        close();
+        toast('success', 'Structura de arhivă pentru „' + t.name + '" a fost salvată.');
         renderClientTypes(root);
       }
     });
@@ -809,6 +1005,155 @@
         toast('success', 'Tipul de client a fost șters.');
         renderClientTypes(root);
       }
+    });
+  }
+
+  /* ============================================================
+     DASHBOARD BUILDER — layout-ul de Acasă per tip de client.
+     Paletă în stânga (widget-urile permise de verticalele tipului),
+     preview live în dreapta (aceleași renderere ca pe Acasă, prin
+     SCRIPTICA_WIDGETS). Reordonare prin drag & drop; size half/full.
+     ============================================================ */
+  function renderDashboardBuilder(root) {
+    var ct = clientTypeById(qs('ct'));
+    if (!ct || !window.SCRIPTICA_WIDGETS) {
+      root.innerHTML = '<p class="sa-subtitle">Tipul de client nu a fost găsit. <a href="super-admin-tipuri-clienti.html' + vq() + '">Înapoi la Tipuri de clienți</a></p>';
+      return;
+    }
+    markTipuriNavActive();
+    var layout = JSON.parse(JSON.stringify(ct.dashboardLayout || []));
+    var palette = window.SCRIPTICA_WIDGETS.paletteFor(ct);
+    var dragIdx = null;
+
+    function normParams(p) { return (p && Object.keys(p).length) ? p : null; }
+    function keyOf(w, p) { return w + '|' + JSON.stringify(normParams(p)); }
+    function placedKeys() { return layout.map(function (it) { return keyOf(it.widget, it.params); }); }
+
+    function paletteHtml() {
+      var placed = placedKeys();
+      return palette.map(function (p, i) {
+        var isPlaced = placed.indexOf(keyOf(p.widget, p.params)) !== -1;
+        return '<button type="button" class="sa-dwb-pal' + (isPlaced ? ' is-placed' : '') + '" data-pal-add="' + i + '"' + (isPlaced ? ' disabled' : '') + '>' +
+          '<span class="material-symbols-outlined sa-dwb-pal__ico" aria-hidden="true">' + esc(p.icon) + '</span>' +
+          '<span class="sa-dwb-pal__main"><b>' + esc(p.label) + '</b><small>' + esc(p.desc) + '</small></span>' +
+          '<span class="material-symbols-outlined sa-dwb-pal__add" aria-hidden="true">' + (isPlaced ? 'check' : 'add') + '</span>' +
+        '</button>';
+      }).join('');
+    }
+
+    function previewHtml() {
+      if (!layout.length) {
+        return '<div class="sa-dwb-empty"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
+          'Dashboard gol — adaugă cutii de conținut din paleta din stânga.</div>';
+      }
+      return layout.map(function (item, i) {
+        return '<div class="sa-dwb-item' + (item.size === 'full' ? ' dw-card--full' : '') + '" draggable="true" data-idx="' + i + '">' +
+          '<div class="sa-dwb-item__bar">' +
+            '<span class="material-symbols-outlined sa-dwb-item__grip" aria-hidden="true">drag_indicator</span>' +
+            '<span class="sa-dwb-item__hint">trage pentru a repoziționa</span>' +
+            '<button type="button" class="sa-mini-btn" data-dwb-size="' + i + '" title="' + (item.size === 'full' ? 'Fă-l pe jumătate de rând' : 'Fă-l pe tot rândul') + '">' +
+              '<span class="material-symbols-outlined" aria-hidden="true">' + (item.size === 'full' ? 'collapse_content' : 'expand_content') + '</span></button>' +
+            '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-dwb-remove="' + i + '" title="Elimină widget-ul">' +
+              '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
+          '</div>' +
+          window.SCRIPTICA_WIDGETS.cardHtml(item, ct) +
+        '</div>';
+      }).join('');
+    }
+
+    function draw() {
+      root.querySelector('[data-dwb-palette]').innerHTML = paletteHtml();
+      root.querySelector('[data-dwb-grid]').innerHTML = previewHtml();
+    }
+
+    root.innerHTML =
+      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti.html' + vq() + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' · Dashboard</div>' +
+      '<header class="page-header"><h1 class="page-header__title">Dashboard — ' + esc(ct.name) + '</h1>' +
+        '<button class="btn btn--primary" type="button" id="dwb-save"><span class="material-symbols-outlined" aria-hidden="true">save</span>Salvează layout-ul</button>' +
+      '</header>' +
+      '<p class="sa-subtitle">Adaugă cutii de conținut din paletă și aranjează-le prin tragere în preview. Clienții de tip „' + esc(ct.name) + '" primesc acest dashboard pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
+      '<div class="sa-dwb">' +
+        '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Cutii de conținut</div><div data-dwb-palette></div></aside>' +
+        '<div class="sa-dwb-preview"><div class="dw-grid" data-dwb-grid></div></div>' +
+      '</div>';
+    draw();
+
+    root.querySelector('#dwb-save').addEventListener('click', function () {
+      scripticaFlowSave('clientType', Object.assign({}, clientTypeById(ct.id) || ct, { dashboardLayout: layout }));
+      toast('success', 'Layout-ul de dashboard pentru „' + ct.name + '" a fost salvat.');
+    });
+
+    root.addEventListener('click', function (e) {
+      var b;
+      if ((b = e.target.closest('[data-pal-add]'))) {
+        var p = palette[parseInt(b.getAttribute('data-pal-add'), 10)];
+        if (!p) return;
+        layout.push({
+          id: 'dw_' + Date.now().toString(36) + '_' + layout.length,
+          widget: p.widget,
+          params: normParams(p.params) || undefined,
+          size: p.widget === 'clienti' ? 'full' : 'half'
+        });
+        draw();
+      } else if ((b = e.target.closest('[data-dwb-size]'))) {
+        var i1 = parseInt(b.getAttribute('data-dwb-size'), 10);
+        layout[i1].size = layout[i1].size === 'full' ? 'half' : 'full';
+        draw();
+      } else if ((b = e.target.closest('[data-dwb-remove]'))) {
+        layout.splice(parseInt(b.getAttribute('data-dwb-remove'), 10), 1);
+        draw();
+      }
+    });
+
+    /* drag & drop de reordonare — mutarea se aplică la drop, redraw o dată */
+    var overIdx = null;
+    root.addEventListener('dragstart', function (e) {
+      var item = e.target.closest('.sa-dwb-item');
+      if (!item) return;
+      dragIdx = parseInt(item.getAttribute('data-idx'), 10);
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', String(dragIdx)); } catch (err) {}
+      item.classList.add('is-dragging');
+    });
+    root.addEventListener('dragover', function (e) {
+      var item = e.target.closest('.sa-dwb-item');
+      if (!item || dragIdx == null) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var idx = parseInt(item.getAttribute('data-idx'), 10);
+      if (idx !== overIdx) {
+        root.querySelectorAll('.sa-dwb-item').forEach(function (x) { x.classList.remove('is-over'); });
+        if (idx !== dragIdx) item.classList.add('is-over');
+        overIdx = idx;
+      }
+    });
+    root.addEventListener('drop', function (e) {
+      var item = e.target.closest('.sa-dwb-item');
+      if (!item || dragIdx == null) return;
+      e.preventDefault();
+      var to = parseInt(item.getAttribute('data-idx'), 10);
+      if (to !== dragIdx) {
+        var moved = layout.splice(dragIdx, 1)[0];
+        layout.splice(to, 0, moved);
+      }
+      dragIdx = null; overIdx = null;
+      draw();
+    });
+    root.addEventListener('dragend', function () {
+      dragIdx = null; overIdx = null;
+      root.querySelectorAll('.sa-dwb-item').forEach(function (x) { x.classList.remove('is-dragging', 'is-over'); });
+    });
+  }
+
+  /* builder-ul aparține secțiunii „Tipuri de clienți" în rail */
+  function markTipuriNavActive() {
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav) return;
+    nav.querySelectorAll('.nav-item').forEach(function (it) {
+      var is = (it.getAttribute('href') || '').indexOf('super-admin-tipuri-clienti') === 0;
+      it.classList.toggle('nav-item--active', is);
+      var icon = it.querySelector('.material-symbols-outlined');
+      if (icon) icon.classList.toggle('filled', is);
     });
   }
 
@@ -938,6 +1283,7 @@
     else if (page === 'super-admin-client') renderClientDetail(root);
     else if (page === 'super-admin-fluxuri') renderFluxuri(root);
     else if (page === 'super-admin-tipuri-clienti') renderClientTypes(root);
+    else if (page === 'super-admin-dashboard') renderDashboardBuilder(root);
   });
 
 })();

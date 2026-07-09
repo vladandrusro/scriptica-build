@@ -1,0 +1,58 @@
+/* ============================================================
+   Scriptica — Widget-uri de dashboard (Acasă configurabil + builder HQ)
+   Reutilizează .region-card din components.css; aici doar grila și
+   rândurile interne ale widget-urilor.
+   ============================================================ */
+
+.dw-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4); align-items: start;
+}
+@media (max-width: 1100px) { .dw-grid { grid-template-columns: 1fr; } }
+.dw-card { margin: 0; min-width: 0; }
+.dw-card--full { grid-column: 1 / -1; }
+
+/* rânduri generice de conținut */
+.dw-rows { display: flex; flex-direction: column; }
+.dw-row {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border);
+  text-decoration: none; color: inherit;
+}
+.dw-row:last-child { border-bottom: none; }
+a.dw-row:hover .dw-row__title { color: var(--color-default-highlight); }
+.dw-row__main { flex: 1; min-width: 0; }
+.dw-row__title {
+  font-weight: var(--font-weight-bold); font-size: var(--font-size-body);
+  display: flex; align-items: center; gap: var(--space-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dw-row__sub {
+  font-size: var(--font-size-small); color: var(--color-text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dw-row__date { font-size: var(--font-size-small); color: var(--color-text-muted); flex: none; }
+.dw-doc-ico { font-size: 16px; color: var(--color-default-highlight); flex: none; }
+.dw-status { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-small); flex: none; }
+
+/* badge de termen */
+.dw-days {
+  flex: none; font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  padding: 2px var(--space-2); border-radius: var(--radius-pill);
+}
+.dw-days--late { background: #FFE3EE; color: var(--color-critical); }
+.dw-days--soon { background: var(--color-pending-surface); color: var(--color-pending); }
+.dw-days--ok   { background: var(--color-surface-2); color: var(--color-text-secondary); }
+
+/* mini-carduri de clienți / instituții */
+.dw-clients {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+.dw-client {
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+.dw-client__name { font-weight: var(--font-weight-bold); margin-bottom: var(--space-1); }
+.dw-client__meta { font-size: var(--font-size-small); color: var(--color-text-secondary); }
+.dw-client__count { font-size: var(--font-size-small); color: var(--color-default-highlight); font-weight: var(--font-weight-bold); margin-top: var(--space-2); }

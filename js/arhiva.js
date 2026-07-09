@@ -13,14 +13,58 @@
 
   var SELECTION_KEY = 'scriptica.arhiva.selection';
   var RO_MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
-  var CATEGORY_LABELS = {
-    intrare: 'Intrare',
-    iesire: 'Ieșire',
-    salarizare: 'Salarizare',
-    necategorisit: 'Necategorisit',
-    'documentatie-contabila': 'Documentație contabilă'
-  };
-  var CATEGORY_ORDER = ['intrare','iesire','salarizare','necategorisit','documentatie-contabila'];
+
+  /* ---------- Foldere din structura de arhivă (per tip de client) ----------
+     Nivelul „categorie" al arborelui = folderele rădăcină din structura
+     configurată de Super Admin pe tipul de client al firmei (Tipuri de
+     clienți → Structură arhivă). Documentele sunt rutate după `tipDocument`
+     (eticheta A.I. a LLM-ului local) către folderul care le declară tipul;
+     subfolderele participă la rutare împreună cu părintele. Ce nu e
+     recunoscut ajunge în folderul de sistem (Necategorisit). */
+  function tenantClientTypeId() {
+    return (typeof window.scripticaTenantClientTypeId === 'function')
+      ? window.scripticaTenantClientTypeId()
+      : 'ct_mixt';
+  }
+
+  function buildArchiveFolders() {
+    var tree = (typeof window.scripticaArchiveTreeFor === 'function')
+      ? window.scripticaArchiveTreeFor(tenantClientTypeId()) : [];
+    var folders = tree.map(function (f) {
+      var names = [];
+      (function walk(n) {
+        (n.docTypeIds || []).forEach(function (id) {
+          var dt = window.scripticaDocTypeById(id);
+          if (dt) names.push(dt.name);
+        });
+        (n.children || []).forEach(walk);
+      })(f);
+      return { key: f.id, label: f.name, system: !!f.system, typeNames: names };
+    });
+    if (!folders.some(function (f) { return f.system; })) {
+      folders.push({ key: 'af_fallback', label: 'Necategorisit', system: true, typeNames: [] });
+    }
+    return folders;
+  }
+
+  var ARCH_FOLDERS = buildArchiveFolders();
+  var CATEGORY_LABELS = {};
+  var CATEGORY_ORDER = [];
+  var SYSTEM_FOLDER_KEY = null;
+  ARCH_FOLDERS.forEach(function (f) {
+    CATEGORY_ORDER.push(f.key);
+    CATEGORY_LABELS[f.key] = f.label;
+    if (f.system) SYSTEM_FOLDER_KEY = f.key;
+  });
+
+  function docCategory(doc) {
+    for (var i = 0; i < ARCH_FOLDERS.length; i++) {
+      if (!ARCH_FOLDERS[i].system && ARCH_FOLDERS[i].typeNames.indexOf(doc.tipDocument) !== -1) {
+        return ARCH_FOLDERS[i].key;
+      }
+    }
+    return SYSTEM_FOLDER_KEY;
+  }
 
   var state = {
     tree: {},
@@ -107,8 +151,7 @@
       var d = new Date(doc.uploadedAt);
       var year = d.getFullYear();
       var month = d.getMonth() + 1;
-      var cat = doc.broadCategory;
-      if (!CATEGORY_LABELS[cat]) return;
+      var cat = docCategory(doc);
 
       if (!t[client.id]) t[client.id] = { client: client, years: {}, total: 0 };
       if (!t[client.id].years[year]) t[client.id].years[year] = { months: {}, total: 0 };
@@ -138,6 +181,8 @@
       var sel = JSON.parse(raw);
       if (!sel || !sel.level || !sel.clientId) return;
       if (!state.tree[sel.clientId]) return;
+      /* selecție salvată cu o structură de arhivă veche → o ignorăm */
+      if (sel.category && !CATEGORY_LABELS[sel.category]) return;
       state.selection = {
         level: sel.level,
         clientId: sel.clientId,
@@ -173,7 +218,7 @@
       var dt = new Date(d.uploadedAt);
       if (sel.year  && dt.getFullYear() !== sel.year)  return false;
       if (sel.month && (dt.getMonth() + 1) !== sel.month) return false;
-      if (sel.category && d.broadCategory !== sel.category) return false;
+      if (sel.category && docCategory(d) !== sel.category) return false;
       return true;
     });
   }
@@ -189,7 +234,7 @@
     var docs = getDocumentsForSelection(scope);
     var counts = { all: docs.length };
     CATEGORY_ORDER.forEach(function (c) {
-      counts[c] = docs.filter(function (d) { return d.broadCategory === c; }).length;
+      counts[c] = docs.filter(function (d) { return docCategory(d) === c; }).length;
     });
     return counts;
   }
