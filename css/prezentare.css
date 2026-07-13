@@ -325,6 +325,265 @@ body.prez-body {
 }
 .prez-summary__item b { color: var(--color-default-highlight); }
 
+/* ============================================================
+   Slide 5 — "Arhitectura: totul este un flux"
+   ============================================================ */
+
+/* Variantă densă: slide-ul 5 are 4 secțiuni — încape fără scroll la 720p */
+.prez-slide--dense { padding-top: var(--space-5); }
+.prez-content--dense { gap: var(--space-4); }
+.prez-content--dense .prez-summary { padding: var(--space-3) var(--space-4); }
+
+/* A. Lanțul de configurare (Tip de client → ... → Pas) */
+.prez-chain {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.prez-chain__item {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prez-chain__icon {
+  font-size: 20px;
+  color: var(--color-default-highlight);
+}
+
+.prez-chain__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-chain__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+
+.prez-chain__ex {
+  margin-top: auto;
+  padding-top: var(--space-1);
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-tight);
+}
+
+.prez-chain__arrow {
+  align-self: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-default);
+}
+
+/* B. Expresiile fluxului — grilă 3×2 */
+.prez-express {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.prez-express__card {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-3);
+  align-items: center;
+}
+
+.prez-express__icon {
+  grid-row: 1 / span 2;
+  font-size: 22px;
+  color: var(--color-default-highlight);
+}
+
+.prez-express__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-express__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+
+/* C. Drumul unui document — titlu + pași pe un singur rând (wrap la nevoie) */
+.prez-docflow {
+  background: var(--color-chat-right);
+  border: 1px solid var(--color-default-highlight);
+  border-left-width: 4px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.prez-docflow__title {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-docflow__title .material-symbols-outlined { font-size: 20px; }
+
+.prez-docflow__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.prez-docflow__step {
+  font-size: var(--font-size-small);
+  color: var(--color-text-primary);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+}
+
+.prez-docflow__step b { color: var(--color-default-highlight); }
+.prez-docflow__step i { color: var(--color-text-muted); font-style: normal; }
+
+.prez-docflow__arrow {
+  font-size: 16px;
+  color: var(--color-default);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Slide 6 — "Cum lansezi un nou tip de business"
+   ============================================================ */
+.prez-journey {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.prez-journey__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.prez-journey__page {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-headline-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-default-highlight);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-default-highlight);
+}
+
+.prez-journey__page .material-symbols-outlined { font-size: 20px; }
+
+.prez-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+}
+
+.prez-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prez-step__title {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-step__opt {
+  display: inline-block;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+
+.prez-step__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.prez-step--payoff {
+  background: var(--color-chat-right);
+  border-color: var(--color-default-highlight);
+  border-left-width: 4px;
+}
+
+.prez-step__check {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: var(--color-default-highlight);
+}
+
+/* Ecrane mai mici: lanțul + grilele trec pe o coloană utilă */
+@media (max-width: 1024px) {
+  .prez-chain { flex-direction: column; }
+  .prez-chain__arrow { transform: rotate(90deg); align-self: flex-start; margin-left: var(--space-4); }
+  .prez-express { grid-template-columns: repeat(2, 1fr); }
+  .prez-journey { grid-template-columns: 1fr; }
+}
+
 /* ----- Slide-4 "press again" hint --------------------------- */
 .prez-hint {
   position: absolute;

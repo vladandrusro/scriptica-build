@@ -1,14 +1,14 @@
 /* ============================================================
    Scriptica — Phase 8: Presentation deck behaviour
-   4-slide deck, opacity cross-fade, two-press redirect on Slide 4
-   (slide 4 = HTML "user types" matrix; slides 1-3 = generated images).
-   No global namespace pollution.
+   6-slide deck, opacity cross-fade, two-press redirect on the last slide
+   (slides 4-6 = HTML content: user types / architecture / launch journey;
+   slides 1-3 = generated images). No global namespace pollution.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  var TOTAL_SLIDES = 4;
+  var TOTAL_SLIDES = 6;
   var REDIRECT_TARGET = 'index.html';
 
   var currentSlide = 1;
