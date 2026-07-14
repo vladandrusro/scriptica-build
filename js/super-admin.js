@@ -990,20 +990,26 @@
       '</div>' +
       '<div class="sa-ct-sec">Verticale</div><div class="sa-ct-verts">' + vertPills + '</div>' +
       '<div class="sa-ct-sec">Șabloane implicite (' + tpls.length + ')</div><ul class="sa-ct-tpllist">' + tplList + '</ul>' +
-      '<div class="sa-ct-sec">Structură arhivă</div>' +
-      '<div class="sa-ct-arch">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>' +
-        countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.' +
-        (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') +
-        '<button class="btn btn--ghost sa-ct-arch__btn" type="button" data-arch-ct="' + esc(t.id) + '">Editează structura</button>' +
-      '</div>' +
-      '<div class="sa-ct-sec">Ecranul Acasă</div>' +
-      '<div class="sa-ct-arch">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
-        ((t.dashboardLayout || []).length) + ' widget-uri · denumire: „' + esc(t.clientLabel || 'Client') + '"' +
-        (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') +
-        '<a class="sa-flow-open sa-ct-arch__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
-          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Configurează ecranul Acasă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
+      '<div class="sa-ct-cfg">' +
+        '<div class="sa-ct-cfg__row">' +
+          '<span class="material-symbols-outlined sa-ct-cfg__ico" aria-hidden="true">folder_open</span>' +
+          '<div class="sa-ct-cfg__text">' +
+            '<div class="sa-ct-cfg__label">Structură arhivă' +
+              (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') + '</div>' +
+            '<div class="sa-ct-cfg__meta">' + countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.</div>' +
+          '</div>' +
+          '<button class="btn btn--secondary sa-ct-cfg__btn" type="button" data-arch-ct="' + esc(t.id) + '" aria-label="Editează structura arhivei">Editează</button>' +
+        '</div>' +
+        '<div class="sa-ct-cfg__row">' +
+          '<span class="material-symbols-outlined sa-ct-cfg__ico" aria-hidden="true">space_dashboard</span>' +
+          '<div class="sa-ct-cfg__text">' +
+            '<div class="sa-ct-cfg__label">Ecranul Acasă' +
+              (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') + '</div>' +
+            '<div class="sa-ct-cfg__meta">' + ((t.dashboardLayout || []).length) + ' widget-uri · „' + esc(t.clientLabel || 'Client') + '"</div>' +
+          '</div>' +
+          '<a class="btn btn--secondary sa-ct-cfg__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
+            (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '" aria-label="Configurează ecranul Acasă">Configurează<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
+        '</div>' +
       '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';
