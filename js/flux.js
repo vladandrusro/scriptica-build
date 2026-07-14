@@ -520,7 +520,7 @@
     root.innerHTML =
       '<div class="sa-crumb fx-crumb"><a href="flux.html?vertical=' + esc(v.id) + '">' + esc(v.name) + '</a> › ' + esc(item.name) + '</div>' +
       '<div class="fx-head">' +
-        '<div class="fx-head__ico"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span></div>' +
+        '<div class="fx-head__ico fx-head__ico--va ' + (window.scripticaVerticalAccentClass ? scripticaVerticalAccentClass(v) : '') + '"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span></div>' +
         '<div class="fx-head__main">' +
           '<h1 class="fx-head__title">' + esc(item.name) + '</h1>' +
           '<div class="fx-head__meta">' +

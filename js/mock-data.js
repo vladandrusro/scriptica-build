@@ -531,7 +531,7 @@ window.SCRIPTICA_MOCK = {
        ============================================================ */
     flowVerticals: [
       {
-        id: "vert_contabil", domain: "contabil", builtin: true, status: "activ",
+        id: "vert_contabil", domain: "contabil", builtin: true, status: "activ", color: "albastru",
         name: "Situații Contabile", icon: "fact_check",
         itemLabel: "Situație", itemLabelPlural: "Situații",
         description: "Verticala contabilă: situații recurente pe pași standard (recepție → verificare → validare).",
@@ -539,7 +539,7 @@ window.SCRIPTICA_MOCK = {
         pages: { list: "situatii.html" }
       },
       {
-        id: "vert_audit", domain: "audit", builtin: true, status: "activ",
+        id: "vert_audit", domain: "audit", builtin: true, status: "activ", color: "auriu",
         name: "Misiuni de Audit", icon: "verified_user",
         itemLabel: "Misiune", itemLabelPlural: "Misiuni",
         description: "Verticala de audit public intern: misiuni pe etapele legale, cu planificare multianuală și rapoarte.",
@@ -547,14 +547,14 @@ window.SCRIPTICA_MOCK = {
         pages: { list: "misiuni-audit.html" }
       },
       {
-        id: "vert_consultanta", domain: "consultanta", builtin: false, status: "activ",
+        id: "vert_consultanta", domain: "consultanta", builtin: false, status: "activ", color: "verde",
         name: "Consultanță Fiscală", icon: "balance",
         itemLabel: "Dosar", itemLabelPlural: "Dosare",
         description: "Dosare de consultanță fiscală: analiza solicitării, documentare, opinie scrisă și livrare.",
         lifecycle: ["Analiza solicitării", "Documentare și redactare opinie", "Livrare și follow-up"]
       },
       {
-        id: "vert_constructii", domain: "constructii", builtin: false, status: "activ",
+        id: "vert_constructii", domain: "constructii", builtin: false, status: "activ", color: "portocaliu",
         name: "Proiecte", icon: "construction",
         itemLabel: "Proiect", itemLabelPlural: "Proiecte",
         description: "Proiecte de construcții — fiecare stadiu (ofertare, contractare, execuție) e un flux de sine stătător, cu un singur pas de lucru.",
@@ -1950,6 +1950,11 @@ window.SCRIPTICA_MOCK = {
   /* ---- Structura de arhivă (per tip de client) ---- */
   window.scripticaDocumentTypes = function () {
     return window.SCRIPTICA_MOCK.documentTypes || [];
+  };
+  /* Clasa de identitate cromatică a unei verticale (.va-<culoare>) —
+     culoarea se alege în HQ la crearea/editarea verticalei. */
+  window.scripticaVerticalAccentClass = function (v) {
+    return 'va-' + ((v && v.color) || 'mov');
   };
   window.scripticaDocTypeById = function (id) {
     return window.scripticaDocumentTypes().find(function (t) { return t.id === id; }) || null;

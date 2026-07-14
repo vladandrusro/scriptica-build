@@ -36,6 +36,16 @@
   --color-chat-left: #F7F7F7;
   --color-chat-right: #F4F0FF;
 
+  /* --- Colors — Identitatea verticalelor (culoarea aleasă în HQ → Fluxuri) ---
+     Perechi accent / suprafață, consumate prin clasele .va-* din components.css.
+     Accentul are contrast ≥ 4.5:1 pe suprafața pereche (text pe pill). */
+  --vertical-mov: #47386A;         --vertical-mov-surface: #F0EBFA;
+  --vertical-albastru: #2B4E9E;    --vertical-albastru-surface: #E8EEFB;
+  --vertical-verde: #1E6B2E;       --vertical-verde-surface: #E6F5E9;
+  --vertical-auriu: #8A6A00;       --vertical-auriu-surface: #FBF1CE;
+  --vertical-portocaliu: #A14E0B;  --vertical-portocaliu-surface: #FDEEDF;
+  --vertical-roz: #A81D5B;         --vertical-roz-surface: #FBE7F0;
+
   /* Button hover states */
   --color-important-hover: #E5A800;
   --color-purple-hover: #3C2F59;

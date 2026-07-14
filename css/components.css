@@ -5522,3 +5522,21 @@ body:not(.body--client) [data-client-only] {
   margin-left: var(--space-1); font-size: var(--font-size-small);
   font-weight: var(--font-weight-bold); color: var(--color-text-secondary);
 }
+
+/* ============================================================
+   Identitatea de culoare a verticalelor (aleasă în HQ → Fluxuri).
+   Fiecare clasă setează perechea accent/suprafață din tokens.css;
+   componentele consumă variabilele --va / --va-surface.
+   ============================================================ */
+.va-mov        { --va: var(--vertical-mov);        --va-surface: var(--vertical-mov-surface); }
+.va-albastru   { --va: var(--vertical-albastru);   --va-surface: var(--vertical-albastru-surface); }
+.va-verde      { --va: var(--vertical-verde);      --va-surface: var(--vertical-verde-surface); }
+.va-auriu      { --va: var(--vertical-auriu);      --va-surface: var(--vertical-auriu-surface); }
+.va-portocaliu { --va: var(--vertical-portocaliu); --va-surface: var(--vertical-portocaliu-surface); }
+.va-roz        { --va: var(--vertical-roz);        --va-surface: var(--vertical-roz-surface); }
+
+/* Pill în culoarea verticalei (se combină cu o clasă .va-*). */
+.pill--va { background: var(--va-surface, var(--color-surface-1)); color: var(--va, var(--color-text-secondary)); }
+
+/* Pictogramă în culoarea verticalei (se combină cu o clasă .va-*). */
+.region-card__header .material-symbols-outlined.va-ico { color: var(--va, var(--color-default-highlight)); }

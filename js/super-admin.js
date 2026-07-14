@@ -178,6 +178,31 @@
     var b = root.querySelector('.sa-iconpick__btn.is-selected');
     return b ? b.getAttribute('data-icon') : fallback;
   }
+
+  /* Paleta de identitate a verticalelor — perechile accent/suprafață din tokens.css. */
+  var VERTICAL_COLORS = [
+    { id: 'mov', label: 'Mov' }, { id: 'albastru', label: 'Albastru' }, { id: 'verde', label: 'Verde' },
+    { id: 'auriu', label: 'Auriu' }, { id: 'portocaliu', label: 'Portocaliu' }, { id: 'roz', label: 'Roz' }
+  ];
+  function colorPickerHtml(selected) {
+    return '<div class="sa-colorpick">' + VERTICAL_COLORS.map(function (c) {
+      return '<button type="button" class="sa-colorpick__btn va-' + c.id + (c.id === selected ? ' is-selected' : '') + '" data-color="' + c.id + '" title="' + c.label + '" aria-label="Culoare ' + c.label + '">' +
+        '<span class="sa-colorpick__dot" aria-hidden="true"></span></button>';
+    }).join('') + '</div>';
+  }
+  function bindColorPicker(root) {
+    root.querySelectorAll('.sa-colorpick__btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        root.querySelectorAll('.sa-colorpick__btn').forEach(function (x) { x.classList.remove('is-selected'); });
+        b.classList.add('is-selected');
+      });
+    });
+  }
+  function pickedColor(root, fallback) {
+    var b = root.querySelector('.sa-colorpick__btn.is-selected');
+    return b ? b.getAttribute('data-color') : fallback;
+  }
+  function vaClass(v) { return window.scripticaVerticalAccentClass ? scripticaVerticalAccentClass(v) : 'va-mov'; }
   function fval(root, name) {
     var el = root.querySelector('[data-f="' + name + '"]');
     return el ? el.value.trim() : '';
@@ -556,7 +581,7 @@
     var listHref = v.builtin ? ((v.pages && v.pages.list) || '#') : ('flux.html?vertical=' + encodeURIComponent(v.id));
     return '<div class="sa-card sa-flow-card">' +
       '<div class="sa-flow-head">' +
-        '<div class="sa-flow-ico"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span></div>' +
+        '<div class="sa-flow-ico sa-flow-ico--va ' + vaClass(v) + '"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span></div>' +
         '<div class="sa-flow-title"><div class="sa-panel__title">' + esc(v.name) + ' ' + badge + '</div>' +
           '<div class="sa-panel__sub">Domeniu: <code>' + esc(v.domain) + '</code> · element de lucru: ' + esc(v.itemLabel || '—') + (v.description ? ' · ' + esc(v.description) : '') + '</div></div>' +
         '<div class="sa-flow-actions">' + actions + '</div>' +
@@ -592,6 +617,7 @@
         fieldHtml('Element de lucru (plural)', '<input type="text" class="input" data-f="itemLabelPlural" value="' + esc(v ? v.itemLabelPlural || '' : '') + '" placeholder="ex. Dosare">') +
       '</div>' +
       fieldHtml('Pictogramă', iconPickerHtml(VERTICAL_ICONS, v ? v.icon : VERTICAL_ICONS[0])) +
+      fieldHtml('Culoare', colorPickerHtml(v && v.color ? v.color : 'mov') + '<span class="form-helper">Identitatea vizuală a verticalei — colorează pill-urile și pictogramele ei în aplicație.</span>') +
       fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(v ? v.description || '' : '') + '</textarea>') +
       '<div class="form-field" data-field="etape">' +
         '<label class="form-label">Etapele ciclului de viață</label>' +
@@ -608,6 +634,7 @@
       submitLabel: v ? 'Salvează modificările' : 'Creează verticala',
       onOpen: function (m) {
         bindIconPicker(m);
+        bindColorPicker(m);
         m.querySelector('[data-lc-add]').addEventListener('click', function () {
           var rows = m.querySelector('[data-lc-rows]');
           rows.insertAdjacentHTML('beforeend', lcRowHtml('', rows.children.length));
@@ -636,6 +663,7 @@
           status: v ? (v.status || 'activ') : 'activ',
           name: name,
           icon: pickedIcon(m, 'account_tree'),
+          color: pickedColor(m, v && v.color ? v.color : 'mov'),
           itemLabel: itemLabel,
           itemLabelPlural: fval(m, 'itemLabelPlural') || itemLabel,
           description: fval(m, 'description'),
@@ -944,13 +972,62 @@
   }
 
   function renderClientTypes(root) {
+    var state = root._ctState || (root._ctState = { q: '', vert: '', sort: 'nume-asc' });
+    var all = clientTypesAll();
+    var totalClients = all.reduce(function (a, t) { return a + clientsOfType(t.id).length; }, 0);
+    var vertOptions = verticals().filter(function (v) { return v.status === 'activ'; }).map(function (v) {
+      return '<option value="' + esc(v.id) + '"' + (state.vert === v.id ? ' selected' : '') + '>' + esc(v.name) + '</option>';
+    }).join('');
+    var sortOptions = [['nume-asc', 'Nume A–Z'], ['nume-desc', 'Nume Z–A'], ['clienti-desc', 'Cei mai mulți clienți']].map(function (o) {
+      return '<option value="' + o[0] + '"' + (state.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+
     root.innerHTML =
       '<header class="page-header"><h1 class="page-header__title">Tipuri de clienți</h1>' +
         '<button class="btn btn--primary" type="button" data-new-ct>Tip de client nou' +
           '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</header>' +
       '<p class="sa-subtitle">Fiecare tip definește verticalele și șabloanele de flux primite implicit la înrolare — copiate în workspace-ul clientului, apoi adaptabile din Administrare. Un client are un singur tip.</p>' +
-      '<div class="sa-ct-grid">' + clientTypesAll().map(ctCardHtml).join('') + '</div>';
+      '<div class="sa-ct-topbar">' +
+        '<div class="sa-ct-stats">' +
+          '<div class="sa-ct-stat"><span class="material-symbols-outlined" aria-hidden="true">category</span><b>' + all.length + '</b><span>tipuri</span></div>' +
+          '<div class="sa-ct-stat"><span class="material-symbols-outlined" aria-hidden="true">apartment</span><b>' + totalClients + '</b><span>clienți folosind aceste tipuri</span></div>' +
+        '</div>' +
+        '<div class="sa-ct-toolbar">' +
+          '<div class="filter-input-search sa-ct-toolbar__search"><span class="material-symbols-outlined" aria-hidden="true">search</span>' +
+            '<label class="sr-only" for="ct-search">Caută tip de client</label>' +
+            '<input id="ct-search" class="input" type="search" placeholder="Caută tip de client..." autocomplete="off" value="' + esc(state.q) + '">' +
+          '</div>' +
+          '<label class="sr-only" for="ct-vert">Filtrează după verticală</label>' +
+          '<select id="ct-vert" class="select"><option value="">Toate verticalele</option>' + vertOptions + '</select>' +
+          '<label class="sr-only" for="ct-sort">Sortează după</label>' +
+          '<select id="ct-sort" class="select">' + sortOptions + '</select>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sa-ct-grid" data-ct-grid></div>';
+
+    var grid = root.querySelector('[data-ct-grid]');
+    function visibleTypes() {
+      var q = state.q.trim().toLowerCase();
+      var list = clientTypesAll().filter(function (t) {
+        if (state.vert && (t.verticalIds || []).indexOf(state.vert) === -1) return false;
+        if (q && (t.name + ' ' + (t.description || '')).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+      if (state.sort === 'nume-desc') list.sort(function (a, b) { return b.name.localeCompare(a.name, 'ro'); });
+      else if (state.sort === 'clienti-desc') list.sort(function (a, b) { return clientsOfType(b.id).length - clientsOfType(a.id).length || a.name.localeCompare(b.name, 'ro'); });
+      else list.sort(function (a, b) { return a.name.localeCompare(b.name, 'ro'); });
+      return list;
+    }
+    function redraw() {
+      var list = visibleTypes();
+      grid.innerHTML = list.map(ctCardHtml).join('') ||
+        '<div class="sa-ct-empty"><span class="material-symbols-outlined" aria-hidden="true">search_off</span>Niciun tip de client nu corespunde filtrelor.</div>';
+    }
+    redraw();
+    root.querySelector('#ct-search').addEventListener('input', function () { state.q = this.value; redraw(); });
+    root.querySelector('#ct-vert').addEventListener('change', function () { state.vert = this.value; redraw(); });
+    root.querySelector('#ct-sort').addEventListener('change', function () { state.sort = this.value; redraw(); });
 
     if (!root._ctBound) {
       root._ctBound = true;
@@ -960,27 +1037,44 @@
         else if ((b = e.target.closest('[data-edit-ct]'))) openClientTypeModal(root, clientTypeById(b.getAttribute('data-edit-ct')));
         else if ((b = e.target.closest('[data-del-ct]'))) confirmDeleteClientType(root, clientTypeById(b.getAttribute('data-del-ct')));
         else if ((b = e.target.closest('[data-arch-ct]'))) openArchiveModal(root, clientTypeById(b.getAttribute('data-arch-ct')));
+        else if ((b = e.target.closest('[data-tpl-toggle]'))) {
+          var card = b.closest('.sa-ct-card');
+          var expanded = b.getAttribute('data-expanded') === '1';
+          Array.prototype.forEach.call(card.querySelectorAll('.sa-ct-tpl--extra'), function (li) { li.hidden = expanded; });
+          b.setAttribute('data-expanded', expanded ? '0' : '1');
+          b.innerHTML = (expanded ? 'Vezi toate șabloanele (' + b.getAttribute('data-count') + ')' : 'Arată mai puține') +
+            '<span class="material-symbols-outlined" aria-hidden="true">' + (expanded ? 'arrow_forward' : 'expand_less') + '</span>';
+        }
       });
     }
   }
+
+  var CT_TPL_VISIBLE = 4; /* șabloane afișate implicit pe card; restul sub „Vezi toate" */
 
   function ctCardHtml(t) {
     var vs = (t.verticalIds || []).map(verticalById).filter(Boolean);
     var tpls = (t.defaultTemplateIds || []).map(templateById).filter(Boolean);
     var n = clientsOfType(t.id).length;
+    var primaryVa = vs.length ? vaClass(vs[0]) : 'va-mov';
     var vertPills = vs.map(function (v) {
-      return '<span class="pill pill--neutral sa-ct-vert"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(v.name) + '</span>';
+      return '<span class="pill pill--va sa-ct-vert ' + vaClass(v) + '"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(v.name) + '</span>';
     }).join('') || '<span class="admin-table__muted">Nicio verticală</span>';
-    var tplList = tpls.map(function (x) {
+    var tplList = tpls.map(function (x, i) {
       var v = verticalById(x.verticalId);
-      return '<li>' + esc(x.name) + ' <small>· ' + esc(v ? v.name : '') + '</small></li>';
+      return '<li' + (i >= CT_TPL_VISIBLE ? ' class="sa-ct-tpl--extra" hidden' : '') + '>' +
+        '<span class="material-symbols-outlined" aria-hidden="true">description</span>' +
+        '<span class="sa-ct-tpl__name">' + esc(x.name) + '</span> <small>· ' + esc(v ? v.name : '') + '</small></li>';
     }).join('');
+    var tplToggle = tpls.length > CT_TPL_VISIBLE
+      ? '<button type="button" class="sa-ct-tpltoggle" data-tpl-toggle data-count="' + tpls.length + '" data-expanded="0">' +
+          'Vezi toate șabloanele (' + tpls.length + ')<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>'
+      : '';
     var delBtn = n === 0
       ? '<button class="sa-mini-btn sa-mini-btn--danger" type="button" data-del-ct="' + esc(t.id) + '" title="Șterge tipul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>'
       : '';
     return '<div class="sa-card sa-ct-card">' +
       '<div class="sa-flow-head">' +
-        '<div class="sa-flow-ico"><span class="material-symbols-outlined" aria-hidden="true">' + esc(t.icon || 'category') + '</span></div>' +
+        '<div class="sa-flow-ico sa-flow-ico--va ' + primaryVa + '"><span class="material-symbols-outlined" aria-hidden="true">' + esc(t.icon || 'category') + '</span></div>' +
         '<div class="sa-flow-title"><div class="sa-panel__title">' + esc(t.name) + '</div>' +
           '<div class="sa-panel__sub">' + esc(t.description || '') + '</div></div>' +
         '<div class="sa-flow-actions">' +
@@ -989,27 +1083,28 @@
         '</div>' +
       '</div>' +
       '<div class="sa-ct-sec">Verticale</div><div class="sa-ct-verts">' + vertPills + '</div>' +
-      '<div class="sa-ct-sec">Șabloane implicite (' + tpls.length + ')</div><ul class="sa-ct-tpllist">' + tplList + '</ul>' +
+      '<div class="sa-ct-sec">Șabloane implicite (' + tpls.length + ')</div>' +
+      '<ul class="sa-ct-tpllist">' + tplList + '</ul>' + tplToggle +
       '<div class="sa-ct-cfg">' +
-        '<div class="sa-ct-cfg__row">' +
+        '<button class="sa-ct-cfg__row" type="button" data-arch-ct="' + esc(t.id) + '">' +
           '<span class="material-symbols-outlined sa-ct-cfg__ico" aria-hidden="true">folder_open</span>' +
-          '<div class="sa-ct-cfg__text">' +
-            '<div class="sa-ct-cfg__label">Structură arhivă' +
-              (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') + '</div>' +
-            '<div class="sa-ct-cfg__meta">' + countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.</div>' +
-          '</div>' +
-          '<button class="btn btn--secondary sa-ct-cfg__btn" type="button" data-arch-ct="' + esc(t.id) + '" aria-label="Editează structura arhivei">Editează</button>' +
-        '</div>' +
-        '<div class="sa-ct-cfg__row">' +
+          '<span class="sa-ct-cfg__text">' +
+            '<span class="sa-ct-cfg__label">Structură arhivă' +
+              (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') + '</span>' +
+            '<span class="sa-ct-cfg__meta">' + countArchFolders(t.archiveTree) + ' foldere · sortare automată A.I.</span>' +
+          '</span>' +
+          '<span class="material-symbols-outlined sa-ct-cfg__go" aria-hidden="true">arrow_forward</span>' +
+        '</button>' +
+        '<a class="sa-ct-cfg__row" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
+          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">' +
           '<span class="material-symbols-outlined sa-ct-cfg__ico" aria-hidden="true">space_dashboard</span>' +
-          '<div class="sa-ct-cfg__text">' +
-            '<div class="sa-ct-cfg__label">Ecranul Acasă' +
-              (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') + '</div>' +
-            '<div class="sa-ct-cfg__meta">' + ((t.dashboardLayout || []).length) + ' widget-uri · „' + esc(t.clientLabel || 'Client') + '"</div>' +
-          '</div>' +
-          '<a class="btn btn--secondary sa-ct-cfg__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
-            (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '" aria-label="Configurează ecranul Acasă">Configurează<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
-        '</div>' +
+          '<span class="sa-ct-cfg__text">' +
+            '<span class="sa-ct-cfg__label">Ecranul Acasă' +
+              (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') + '</span>' +
+            '<span class="sa-ct-cfg__meta">' + ((t.dashboardLayout || []).length) + ' widget-uri · „' + esc(t.clientLabel || 'Client') + '"</span>' +
+          '</span>' +
+          '<span class="material-symbols-outlined sa-ct-cfg__go" aria-hidden="true">arrow_forward</span>' +
+        '</a>' +
       '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';

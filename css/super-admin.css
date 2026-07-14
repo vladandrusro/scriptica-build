@@ -353,8 +353,48 @@
 .sa-modal-note { color: var(--color-text-secondary); line-height: 1.5; }
 
 /* grila tipurilor de clienți */
+/* ---- topbar Tipuri de clienți: statistici + căutare/filtru/sortare ---- */
+.sa-ct-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-5);
+}
+.sa-ct-stats { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.sa-ct-stat {
+  display: flex; align-items: center; gap: var(--space-2);
+  background: var(--color-surface-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-small); color: var(--color-text-secondary);
+}
+.sa-ct-stat .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+.sa-ct-stat b { font-size: var(--font-size-headline-3); color: var(--color-text-primary); }
+.sa-ct-toolbar { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.sa-ct-toolbar .select { width: auto; min-width: 170px; }
+.sa-ct-toolbar__search { min-width: 240px; }
+
 .sa-ct-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--space-4); }
 .sa-ct-card { display: flex; flex-direction: column; margin-bottom: 0; }
+.sa-ct-empty {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: center;
+  gap: var(--space-2); padding: var(--space-7); color: var(--color-text-muted);
+  background: var(--color-surface-white); border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg); font-size: var(--font-size-body);
+}
+
+/* ---- pictogramă în culoarea verticalei (carduri Fluxuri + Tipuri de clienți) ---- */
+.sa-flow-ico--va { background: var(--va-surface, var(--color-surface-1)); }
+.sa-flow-ico--va .material-symbols-outlined { color: var(--va, var(--color-default-highlight)); }
+
+/* ---- alegerea culorii verticalei (modalul „Verticală nouă") ---- */
+.sa-colorpick { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.sa-colorpick__btn {
+  width: 40px; height: 32px; border-radius: var(--radius-sm);
+  border: 2px solid var(--color-border); cursor: pointer;
+  background: var(--va-surface); display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color var(--transition-fast);
+}
+.sa-colorpick__btn:hover { border-color: var(--va); }
+.sa-colorpick__btn.is-selected { border-color: var(--va); box-shadow: 0 0 0 2px var(--color-surface-white), 0 0 0 4px var(--va); }
+.sa-colorpick__dot { width: 14px; height: 14px; border-radius: 999px; background: var(--va); }
 .sa-ct-sec {
   font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
   color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em;
@@ -363,9 +403,20 @@
 .sa-ct-verts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .sa-ct-vert, .sa-ct-pill { display: inline-flex; align-items: center; gap: var(--space-1); }
 .sa-ct-vert .material-symbols-outlined, .sa-ct-pill .material-symbols-outlined { font-size: 16px; }
-.sa-ct-tpllist { margin: 0; padding-left: var(--space-4); color: var(--color-text-secondary); }
-.sa-ct-tpllist li { margin-bottom: var(--space-1); }
+.sa-ct-tpllist { margin: 0; padding: 0; list-style: none; color: var(--color-text-secondary); }
+.sa-ct-tpllist li { display: flex; align-items: baseline; gap: var(--space-2); margin-bottom: var(--space-1); }
+.sa-ct-tpllist li[hidden] { display: none; }
+.sa-ct-tpllist li .material-symbols-outlined { font-size: 15px; color: var(--color-default); flex-shrink: 0; align-self: center; }
+.sa-ct-tpl__name { font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
 .sa-ct-tpllist small { color: var(--color-text-muted); }
+.sa-ct-tpltoggle {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  margin-top: var(--space-1); padding: 0; border: none; background: none; cursor: pointer;
+  font-family: var(--font-family-base); font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold); color: var(--color-default-highlight);
+}
+.sa-ct-tpltoggle:hover { text-decoration: underline; }
+.sa-ct-tpltoggle .material-symbols-outlined { font-size: 16px; }
 .sa-ct-foot {
   display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
   padding-top: var(--space-3); border-top: 1px solid var(--color-border);
@@ -412,20 +463,36 @@
   flex-direction: column;
   gap: var(--space-2);
 }
+/* Rând clicabil în întregime (button sau anchor), cu chevron la dreapta. */
 .sa-ct-cfg__row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
   background: var(--color-surface-1);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  font-family: var(--font-family-base);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.sa-ct-cfg__row:hover { background: var(--color-surface-white); border-color: var(--color-border-strong); }
+.sa-ct-cfg__row:hover .sa-ct-cfg__go { color: var(--color-default-highlight); transform: translateX(2px); }
+.sa-ct-cfg__go {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-default);
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 .sa-ct-cfg__ico {
   flex-shrink: 0;
   font-size: 20px;
   color: var(--color-default-highlight);
 }
-.sa-ct-cfg__text { flex: 1; min-width: 0; }
+.sa-ct-cfg__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .sa-ct-cfg__label {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-bold);
@@ -440,13 +507,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sa-ct-cfg__btn {
-  flex-shrink: 0;
-  white-space: nowrap;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-small);
-}
-.sa-ct-cfg__btn .material-symbols-outlined { font-size: 16px; }
 
 .sa-arch-note {
   display: flex; gap: var(--space-2); align-items: flex-start;

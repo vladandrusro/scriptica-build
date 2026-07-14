@@ -75,3 +75,7 @@
   background: var(--color-surface-2); border-radius: var(--radius-md); padding: var(--space-3);
 }
 .fx-about__note .material-symbols-outlined { font-size: 18px; flex: none; color: var(--color-default-highlight); }
+
+/* Pictograma paginii în culoarea verticalei (aleasă în HQ). */
+.fx-head__ico--va { background: var(--va-surface, var(--color-surface-1)); }
+.fx-head__ico--va .material-symbols-outlined { color: var(--va, var(--color-default-highlight)); }

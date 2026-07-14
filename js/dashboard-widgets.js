@@ -403,9 +403,15 @@
 
   function cardHtml(item, ct) {
     var r = render(item, ct);
+    /* Widgetul unei verticale preia culoarea ei de identitate (aleasă în HQ). */
+    var vaCls = '';
+    if (item.widget === 'flow_summary' && item.params && window.scripticaVerticalAccentClass) {
+      var vv = window.scripticaVerticalById(item.params.verticalId);
+      if (vv) vaCls = ' va-ico ' + scripticaVerticalAccentClass(vv);
+    }
     return '<section class="region-card dw-card dw-card--' + (item.size === 'full' ? 'full' : 'half') + '" data-dw-id="' + esc(item.id) + '">' +
       '<header class="region-card__header">' +
-        '<span class="material-symbols-outlined" aria-hidden="true">' + esc(r.icon) + '</span>' +
+        '<span class="material-symbols-outlined' + vaCls + '" aria-hidden="true">' + esc(r.icon) + '</span>' +
         '<h2 class="region-card__title">' + esc(r.title) + '</h2>' +
         '<span class="pill pill--count">(' + r.count + ')</span>' +
       '</header>' +
