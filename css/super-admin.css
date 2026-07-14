@@ -7,6 +7,26 @@
    din restul aplicației (NU 8px din prototip; vezi raportul).
    ============================================================ */
 
+/* ---- sidebar HQ: grup „Configurare" + stub-uri estompate ---- */
+.sidebar__group-label {
+  display: none;
+  margin: var(--space-4) 0 var(--space-1);
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.sidebar--expanded .sidebar__group-label { display: block; }
+
+/* Secțiuni nefuncționale în prototip: foarte estompate, ne-clicabile. */
+.nav-item--stub {
+  opacity: 0.35;
+  pointer-events: none;
+  cursor: default;
+}
+
 /* ---- page header (reuse .page-header + subtitle) ---- */
 .sa-subtitle {
   font-size: var(--font-size-small);

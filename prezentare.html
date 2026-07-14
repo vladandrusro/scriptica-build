@@ -12,13 +12,13 @@
 
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/prezentare.css?v=2">
+  <link rel="stylesheet" href="css/prezentare.css?v=3">
 </head>
 <body class="prez-body">
 
   <div class="prez-deck" role="region" aria-label="Prezentare Scriptica">
 
-    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 6">
+    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-1.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -28,7 +28,7 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 6">
+    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-2.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -38,7 +38,7 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 6">
+    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-3.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -48,7 +48,7 @@
       </div>
     </section>
 
-    <section class="prez-slide prez-slide--content" data-slide="4" aria-label="Slide 4 din 6">
+    <section class="prez-slide prez-slide--content" data-slide="4" aria-label="Slide 4 din 7">
       <div class="prez-content">
         <div class="prez-content__head">
           <span class="prez-num">04</span>
@@ -129,7 +129,7 @@
       </div>
     </section>
 
-    <section class="prez-slide prez-slide--content prez-slide--dense" data-slide="5" aria-label="Slide 5 din 6">
+    <section class="prez-slide prez-slide--content prez-slide--dense" data-slide="5" aria-label="Slide 5 din 7">
       <div class="prez-content prez-content--dense">
         <div class="prez-content__head">
           <span class="prez-num">05</span>
@@ -236,10 +236,97 @@
       </div>
     </section>
 
-    <section class="prez-slide prez-slide--content" data-slide="6" aria-label="Slide 6 din 6">
-      <div class="prez-content">
+    <section class="prez-slide prez-slide--content prez-slide--dense" data-slide="6" aria-label="Slide 6 din 7">
+      <div class="prez-content prez-content--dense">
         <div class="prez-content__head">
           <span class="prez-num">06</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Fluxul în centru</h2>
+            <p class="prez-subtitle">Fiecare suprafață a aplicației se generează din informațiile fluxului.</p>
+          </div>
+        </div>
+
+        <div class="prez-map" role="img" aria-label="Hartă mentală: fluxul în centru, conectat la meniu, dashboard, tabel, chat, anexe, A.I.-ul local și arhivă">
+          <svg class="prez-map__lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="50" y1="50" x2="50" y2="10"></line>
+            <line x1="50" y1="50" x2="16" y2="18"></line>
+            <line x1="50" y1="50" x2="84" y2="18"></line>
+            <line x1="50" y1="50" x2="11" y2="58"></line>
+            <line x1="50" y1="50" x2="89" y2="58"></line>
+            <line x1="50" y1="50" x2="27" y2="90"></line>
+            <line x1="50" y1="50" x2="73" y2="90"></line>
+          </svg>
+
+          <div class="prez-map__center">
+            <span class="material-symbols-outlined" aria-hidden="true">conversion_path</span>
+            <div class="prez-map__center-name">Fluxul</div>
+            <div class="prez-map__center-desc">pași · sarcini · termene · documente</div>
+            <div class="prez-map__center-ex">ex. Raport Lunar Martie 2026 — Canvas S.R.L.</div>
+          </div>
+
+          <article class="prez-map__node prez-map__node--top">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">dashboard</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Dashboard</div>
+              <div class="prez-map__desc">Widgetul fluxului pe Acasă — se deschide spre lista lui.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--topleft">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">menu</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Meniu</div>
+              <div class="prez-map__desc">Verticala fluxului apare automat în navigație.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--topright">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">table_chart</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Tabel</div>
+              <div class="prez-map__desc">Coloanele listei — definite per verticală, în HQ.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--left">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">chat</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Chat propriu</div>
+              <div class="prez-map__desc">Mesageria fluxului: echipă, evenimente, mesaje automate A.I.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--right">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">description</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Anexe &amp; formule</div>
+              <div class="prez-map__desc">Formulare pe pașii fluxului; formulele leagă câmpuri între anexe.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--bottomleft">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">smart_toy</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">A.I. local</div>
+              <div class="prez-map__desc">Etichetează documentele care intră prin flux (tip + încredere + observație).</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--bottomright">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">folder_open</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Arhivă</div>
+              <div class="prez-map__desc">Se generează din informațiile fluxului; documentele rămân legate de el („Proveniență”).</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content" data-slide="7" aria-label="Slide 7 din 7">
+      <div class="prez-content">
+        <div class="prez-content__head">
+          <span class="prez-num">07</span>
           <div class="prez-content__head-text">
             <h2 class="prez-title">Cum lansezi un nou tip de business</h2>
             <p class="prez-subtitle">Șapte pași în zona Super Admin — fără cod, fără pagini noi.</p>
@@ -297,8 +384,8 @@
             <article class="prez-step">
               <span class="prez-step__num">6</span>
               <div class="prez-step__body">
-                <div class="prez-step__title">Dashboard-ul Acasă</div>
-                <div class="prez-step__desc">„Deschide builderul”: paletă de widgeturi (doar ce acoperă verticalele tipului) + previzualizare live.</div>
+                <div class="prez-step__title">Ecranul Acasă</div>
+                <div class="prez-step__desc">„Configurează ecranul Acasă”: paletă de widgeturi (doar ce acoperă verticalele tipului) + previzualizare live.</div>
               </div>
             </article>
           </div>
@@ -333,7 +420,7 @@
       <button type="button" class="prez-nav-arrow prez-nav-arrow--disabled" data-prez-prev aria-label="Slide-ul anterior">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
       </button>
-      <span class="prez-nav-indicator" data-prez-indicator>1 / 6</span>
+      <span class="prez-nav-indicator" data-prez-indicator>1 / 7</span>
       <button type="button" class="prez-nav-arrow" data-prez-next aria-label="Slide-ul următor">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
       </button>
@@ -341,6 +428,6 @@
 
   </div>
 
-  <script src="js/prezentare.js?v=2"></script>
+  <script src="js/prezentare.js?v=3"></script>
 </body>
 </html>

@@ -661,10 +661,10 @@ window.SCRIPTICA_MOCK = {
         ]
       },
       {
-        id: "ct_mixt", name: "Cabinet mixt (contabilitate + audit)", icon: "diversity_2", builtin: true,
-        description: "Firme care oferă și contabilitate, și audit — primesc ambele verticale cu toate șabloanele standard.",
-        verticalIds: ["vert_contabil", "vert_audit"],
-        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim", "ft_audit_regularitate", "ft_audit_risc"],
+        id: "ct_mixt", name: "Cabinet mixt (servicii multiple)", icon: "diversity_2", builtin: true,
+        description: "Firme care oferă mai multe servicii — contabilitate, audit și consultanță fiscală — primesc toate verticalele active cu șabloanele standard.",
+        verticalIds: ["vert_contabil", "vert_audit", "vert_consultanta"],
+        defaultTemplateIds: ["ft_raport_lunar", "ft_jurnal_tva", "ft_salarizari", "ft_declaratii_trim", "ft_audit_regularitate", "ft_audit_risc", "ft_consult_opinie", "ft_consult_retainer"],
         clientLabel: "Client", clientLabelPlural: "Clienți",
         dashboardLayout: [
           { id: "dw_ct3_1", widget: "situatii_noi", size: "half" },

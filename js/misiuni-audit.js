@@ -189,7 +189,7 @@
   function populateFilterOptions() {
     var tip = $('#f-tip');
     if (tip) {
-      tip.innerHTML = '<option value="">Toate tipurile</option>' +
+      tip.innerHTML = '<option value="">Toate șabloanele</option>' +
         auditTypes().map(function (t) {
           return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
         }).join('');
@@ -284,7 +284,7 @@
       : '<tr>' +
         '<th style="width:44px;"></th>' +
         '<th>Misiune</th>' +
-        '<th style="width:240px;">Tip Misiune</th>' +
+        '<th style="width:240px;">Șablon</th>' +
         '<th style="width:110px;">Termen</th>' +
         '<th style="width:160px;">Responsabili</th>' +
         '<th style="width:180px;">Status</th>' +
@@ -665,7 +665,7 @@
 
     function validate() {
       var ok = true;
-      setError('tip', !typeSelect.value, 'Selectează tipul misiunii.');
+      setError('tip', !typeSelect.value, 'Selectează șablonul misiunii.');
       if (!typeSelect.value) ok = false;
 
       var validEntity = comboHidden.value && entities.some(function (c) {

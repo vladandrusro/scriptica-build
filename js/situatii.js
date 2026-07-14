@@ -104,7 +104,7 @@
   function populateFilterOptions() {
     var tip = $('#f-tip');
     if (tip) {
-      tip.innerHTML = '<option value="">Toate tipurile</option>' +
+      tip.innerHTML = '<option value="">Toate șabloanele</option>' +
         MOCK.situationTypes.filter(function (t) {
           /* Doar tipuri contabile — misiunile de audit au tabul lor. */
           return (t.domain || 'contabil') === 'contabil';

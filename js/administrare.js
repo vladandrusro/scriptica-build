@@ -43,18 +43,18 @@ try {
   /* Etichete condiționate pe domeniu pentru modalul de tip (reutilizat). */
   var DOMAIN_LABELS = {
     contabil: {
-      modalTitle: 'Tip de situație contabilă',
+      modalTitle: 'Șablon de situație contabilă',
       freqLabel: 'Frecvență*',
       freqPlaceholder: 'Selectează frecvența...',
       freqError: 'Selectează frecvența.',
-      saveToast: 'Tipul de situație a fost salvat.'
+      saveToast: 'Șablonul de situație a fost salvat.'
     },
     audit: {
-      modalTitle: 'Tip de misiune de audit',
+      modalTitle: 'Șablon de misiune de audit',
       freqLabel: 'Periodicitate planificare*',
       freqPlaceholder: 'Selectează periodicitatea...',
       freqError: 'Selectează periodicitatea.',
-      saveToast: 'Tipul de misiune de audit a fost salvat.'
+      saveToast: 'Șablonul de misiune de audit a fost salvat.'
     }
   };
 
@@ -1100,19 +1100,19 @@ try {
   function confirmDeleteType(type) {
     var used = (MOCK.situations || []).some(function (s) { return s.typeId === type.id; });
     if (used) {
-      toast('error', 'Tipul este folosit de situații existente și nu poate fi șters.');
+      toast('error', 'Șablonul este folosit de situații existente și nu poate fi șters.');
       return;
     }
     openConfirm({
-      title: 'Ștergere tip de situație',
-      body: '„' + type.name + '” va fi eliminat din lista de tipuri disponibile la crearea unei situații noi.',
+      title: 'Ștergere șablon',
+      body: '„' + type.name + '” va fi eliminat din lista de șabloane disponibile la crearea unei situații noi.',
       confirmLabel: 'Șterge',
       onConfirm: function () {
         var idx = MOCK.situationTypes.indexOf(type);
         if (idx !== -1) MOCK.situationTypes.splice(idx, 1);
         writeMapEntry(TYPES_KEY, type.id, { id: type.id, deleted: true });
         renderTypes(type.domain || 'contabil');
-        toast('success', 'Tipul de situație a fost șters.');
+        toast('success', 'Șablonul a fost șters.');
       }
     });
   }

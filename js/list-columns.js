@@ -50,9 +50,12 @@
     if (!n.deadlineIso) return '—';
     var days = daysDiff(n.deadlineIso);
     if (days == null) return '—';
-    if (days < 0)   return '<span class="termen--overdue">' + days + '</span>';
-    if (days === 0) return '<span class="termen--today">0</span>';
-    if (days <= 3)  return '<span class="termen--soon">' + days + ' zile</span>';
+    if (days < 0) {
+      var late = Math.abs(days);
+      return '<span class="termen--overdue">' + late + (late === 1 ? ' zi întârziere' : ' zile întârziere') + '</span>';
+    }
+    if (days === 0) return '<span class="termen--today">azi</span>';
+    if (days <= 3)  return '<span class="termen--soon">' + days + (days === 1 ? ' zi' : ' zile') + '</span>';
     return '<span class="termen--ok">' + days + ' zile</span>';
   }
   function statusCell(n) {
@@ -101,8 +104,8 @@
       desc: 'Partea externă (client / entitate / beneficiar).',
       render: function (n) { return esc(n.party || '—'); } },
     { id: 'tip', icon: 'category',            width: 220,   domains: null,
-      label: function (v) { return v.domain === 'contabil' ? 'Denumire Raport' : (v.domain === 'audit' ? 'Tip Misiune' : 'Șablon'); },
-      desc: 'Tipul sau șablonul de flux al elementului.',
+      label: function (v) { return v.domain === 'contabil' ? 'Denumire Raport' : 'Șablon'; },
+      desc: 'Șablonul de flux din care e creat elementul.',
       render: function (n) { return esc(n.typeName || '—'); } },
     { id: 'termen', icon: 'schedule',         width: 110,   domains: null,
       label: function () { return 'Termen'; },

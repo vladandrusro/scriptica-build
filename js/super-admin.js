@@ -997,13 +997,13 @@
         (t.needsReview && t.needsReview.archive ? ' <span class="pill pill--pending">de configurat</span>' : '') +
         '<button class="btn btn--ghost sa-ct-arch__btn" type="button" data-arch-ct="' + esc(t.id) + '">Editează structura</button>' +
       '</div>' +
-      '<div class="sa-ct-sec">Acasă (dashboard)</div>' +
+      '<div class="sa-ct-sec">Ecranul Acasă</div>' +
       '<div class="sa-ct-arch">' +
         '<span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
         ((t.dashboardLayout || []).length) + ' widget-uri · denumire: „' + esc(t.clientLabel || 'Client') + '"' +
         (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') +
         '<a class="sa-flow-open sa-ct-arch__btn" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
-          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Deschide builderul<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
+          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">Configurează ecranul Acasă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' +
       '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';
@@ -1395,11 +1395,11 @@
     }
 
     root.innerHTML =
-      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti.html' + vq() + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' · Dashboard</div>' +
-      '<header class="page-header"><h1 class="page-header__title">Dashboard — ' + esc(ct.name) + '</h1>' +
+      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti.html' + vq() + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' › Ecranul Acasă</div>' +
+      '<header class="page-header"><h1 class="page-header__title">Ecranul Acasă — ' + esc(ct.name) + '</h1>' +
         '<button class="btn btn--primary" type="button" id="dwb-save">Salvează layout-ul<span class="material-symbols-outlined" aria-hidden="true">save</span></button>' +
       '</header>' +
-      '<p class="sa-subtitle">Adaugă widget-uri din paletă și aranjează-le prin tragere sau cu săgețile. Clienții de tip „' + esc(ct.name) + '" primesc acest dashboard pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
+      '<p class="sa-subtitle">Adaugă widget-uri din paletă și aranjează-le prin tragere sau cu săgețile. Clienții de tip „' + esc(ct.name) + '" primesc acest ecran pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
       '<div class="sa-dwb">' +
         '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Widget-uri disponibile</div><div data-dwb-palette></div></aside>' +
         '<div class="sa-dwb-preview"><div class="dw-grid" data-dwb-grid></div></div>' +
@@ -1413,7 +1413,7 @@
       scripticaFlowSave('clientType', upd);
       savedSnapshot = JSON.stringify(layout);
       markDirty();
-      toast('success', 'Layout-ul de dashboard pentru „' + ct.name + '" a fost salvat.');
+      toast('success', 'Ecranul Acasă pentru „' + ct.name + '" a fost salvat.');
     });
 
     root.addEventListener('click', function (e) {

@@ -603,7 +603,7 @@
     function validate() {
       var ok = true;
       // Type
-      setError('tip', !typeSelect.value, 'Selectează tipul situației.');
+      setError('tip', !typeSelect.value, 'Selectează șablonul situației.');
       if (!typeSelect.value) ok = false;
 
       // Client

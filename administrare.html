@@ -91,8 +91,8 @@
       <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Secțiuni de administrare">
         <button type="button" class="admin-tab" id="tab-utilizatori-interni" role="tab" data-tab="utilizatori-interni" aria-selected="false" aria-controls="panel-utilizatori-interni">Utilizatori interni</button>
         <button type="button" class="admin-tab" id="tab-utilizatori-externi" role="tab" data-tab="utilizatori-externi" aria-selected="false" aria-controls="panel-utilizatori-externi">Utilizatori externi</button>
-        <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Tipuri de Situații Contabile</button>
-        <button type="button" class="admin-tab" id="tab-tipuri-audit" role="tab" data-tab="tipuri-audit" aria-selected="false" aria-controls="panel-tipuri-audit">Tipuri de Misiuni de Audit</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Șabloane de Situații Contabile</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-audit" role="tab" data-tab="tipuri-audit" aria-selected="false" aria-controls="panel-tipuri-audit">Șabloane de Misiuni de Audit</button>
         <button type="button" class="admin-tab admin-tab--disabled" id="tab-solicitari-interne" role="tab" data-tab="solicitari-interne" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Tipuri de solicitări interne</button>
         <button type="button" class="admin-tab" id="tab-tipuri-anexe" role="tab" data-tab="tipuri-anexe" aria-selected="false" aria-controls="panel-tipuri-anexe">Tipuri de Anexe</button>
         <button type="button" class="admin-tab" id="tab-taguri" role="tab" data-tab="taguri" aria-selected="false" aria-controls="panel-taguri">Taguri</button>
@@ -178,7 +178,7 @@
         <div class="admin-toolbar">
           <div class="filter-input-search">
             <span class="material-symbols-outlined" aria-hidden="true">search</span>
-            <label for="ts-search" class="sr-only">Caută tip de situație</label>
+            <label for="ts-search" class="sr-only">Caută șablon de situație</label>
             <input id="ts-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
           </div>
           <label for="ts-status" class="sr-only">Status</label>
@@ -218,7 +218,7 @@
         </div>
         <div class="table-empty table-wrap" id="ts-empty" role="status">
           <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
-          <p>Niciun tip de situație nu corespunde filtrelor selectate.</p>
+          <p>Niciun șablon de situație nu corespunde filtrelor selectate.</p>
         </div>
       </section>
 
@@ -227,7 +227,7 @@
         <div class="admin-toolbar">
           <div class="filter-input-search">
             <span class="material-symbols-outlined" aria-hidden="true">search</span>
-            <label for="tma-search" class="sr-only">Caută tip de misiune de audit</label>
+            <label for="tma-search" class="sr-only">Caută șablon de misiune de audit</label>
             <input id="tma-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
           </div>
           <label for="tma-status" class="sr-only">Status</label>
@@ -269,7 +269,7 @@
         </div>
         <div class="table-empty table-wrap" id="tma-empty" role="status">
           <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
-          <p>Niciun tip de misiune de audit nu corespunde filtrelor selectate.</p>
+          <p>Niciun șablon de misiune de audit nu corespunde filtrelor selectate.</p>
         </div>
       </section>
 
@@ -444,7 +444,7 @@
       </button>
 
       <header class="modal__header">
-        <h2 class="modal__title" id="mt-title">Tip de situație contabilă</h2>
+        <h2 class="modal__title" id="mt-title">Șablon de situație contabilă</h2>
       </header>
 
       <form class="modal__body" novalidate>
@@ -631,9 +631,9 @@
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/shell.js?v=29"></script>
-  <script src="js/mock-data.js?v=31"></script>
+  <script src="js/mock-data.js?v=32"></script>
   <script src="js/timer.js?v=28"></script>
-  <script src="js/dashboard.js?v=28"></script>
-  <script src="js/administrare.js?v=28"></script>
+  <script src="js/dashboard.js?v=30"></script>
+  <script src="js/administrare.js?v=29"></script>
 </body>
 </html>

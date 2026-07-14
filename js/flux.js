@@ -542,6 +542,9 @@
           '<p class="fx-about">' + esc(v.description || '') + '</p>' +
           '<div class="fx-about__note"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
             'Structura acestui flux este gestionată de administratorul platformei pentru profilul firmei tale.</div>' +
+          '<div class="fx-about__note"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>' +
+            'Orice verticală nouă definită în registru primește automat această formă standard: etape, termene și status. ' +
+            'Modulele avansate — documente, mesagerie, anexe — se activează per verticală, ca la Situații Contabile și Misiuni de Audit.</div>' +
         '</div>' +
       '</div>';
 
