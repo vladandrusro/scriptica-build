@@ -595,7 +595,7 @@
       fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(v ? v.description || '' : '') + '</textarea>') +
       '<div class="form-field" data-field="etape">' +
         '<label class="form-label">Etapele ciclului de viață</label>' +
-        '<span class="form-helper">Forma fluxului: fiecare element trece prin aceste etape, în ordine. Termenele per etapă se stabilesc pe șabloane.</span>' +
+        '<span class="form-helper">Forma fluxului: fiecare element trece prin aceste etape, în ordine. Termenele per etapă se stabilesc pe șabloane. O singură etapă e suficientă pentru lucrul de tip „proiect".</span>' +
         '<div class="sa-lc-rows" data-lc-rows>' + lc.map(lcRowHtml).join('') + '</div>' +
         '<button type="button" class="btn btn--ghost" data-lc-add>Adaugă etapă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
         '<span class="form-error" role="alert"></span>' +
@@ -616,7 +616,7 @@
           var del = e.target.closest('[data-lc-del]');
           if (!del) return;
           var rows = m.querySelector('[data-lc-rows]');
-          if (rows.children.length <= 2) { toast('error', 'O verticală are minimum două etape.'); return; }
+          if (rows.children.length <= 1) { toast('error', 'O verticală are minimum o etapă.'); return; }
           del.closest('.sa-lc-row').remove();
           Array.prototype.forEach.call(rows.querySelectorAll('.sa-lc-row__n'), function (n, i) { n.textContent = i + 1; });
         });
@@ -626,8 +626,8 @@
         var name = fval(m, 'name');
         var lcNames = Array.prototype.map.call(m.querySelectorAll('[data-lc-name]'), function (i) { return i.value.trim(); }).filter(Boolean);
         setFieldError(m, 'nume', name ? '' : 'Denumirea verticalei este obligatorie.');
-        setFieldError(m, 'etape', lcNames.length >= 2 ? '' : 'Definește cel puțin două etape ale ciclului de viață.');
-        if (!name || lcNames.length < 2) return;
+        setFieldError(m, 'etape', lcNames.length >= 1 ? '' : 'Definește cel puțin o etapă a ciclului de viață.');
+        if (!name || lcNames.length < 1) return;
         var itemLabel = fval(m, 'itemLabel') || 'Element';
         var rec = {
           id: v ? v.id : uid('vert', name, verticals()),

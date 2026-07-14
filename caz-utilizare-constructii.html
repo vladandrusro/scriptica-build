@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scriptica pentru Construcții — caz de utilizare</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css">
+
+  <style>
+    /* Document de lucru intern — folosește doar token-i din tokens.css. */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-family-base);
+      background: var(--color-surface-2);
+      color: var(--color-text-primary);
+      line-height: var(--line-height-normal);
+    }
+    .doc { max-width: 980px; margin: 0 auto; padding: var(--space-7) var(--space-5) var(--space-8); }
+
+    /* ---- hero ---- */
+    .doc-kicker {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+      text-transform: uppercase; letter-spacing: .08em; color: var(--color-default-highlight);
+      background: var(--color-surface-white); border: 1px solid var(--color-border);
+      border-radius: var(--radius-pill); padding: var(--space-1) var(--space-3);
+    }
+    h1 {
+      margin: var(--space-3) 0 var(--space-2);
+      font-size: var(--font-size-headline-1); font-weight: var(--font-weight-black);
+      color: var(--color-default-highlight); line-height: var(--line-height-tight);
+    }
+    .doc-lead { font-size: var(--font-size-subtitle); color: var(--color-text-secondary); max-width: 46em; margin: 0; }
+
+    /* ---- secțiuni ---- */
+    .sec { margin-top: var(--space-7); }
+    .sec-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .sec-num {
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      background: var(--color-default-highlight); color: var(--color-surface-white);
+      font-weight: var(--font-weight-black); font-size: var(--font-size-headline-3);
+    }
+    h2 { margin: 0; font-size: var(--font-size-headline-2); font-weight: var(--font-weight-black); color: var(--color-default-highlight); }
+    h3 { margin: var(--space-5) 0 var(--space-2); font-size: var(--font-size-headline-3); font-weight: var(--font-weight-black); color: var(--color-text-primary); text-transform: uppercase; letter-spacing: .04em; }
+
+    .card {
+      background: var(--color-surface-white); border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+      padding: var(--space-5);
+    }
+    .card + .card { margin-top: var(--space-4); }
+    p { margin: 0 0 var(--space-3); }
+    p:last-child { margin-bottom: 0; }
+    b { color: var(--color-default-highlight); }
+    .muted { color: var(--color-text-muted); }
+    .small { font-size: var(--font-size-small); }
+
+    .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    @media (max-width: 760px) { .cols-2 { grid-template-columns: 1fr; } }
+
+    /* ---- pill-uri ---- */
+    .pill {
+      display: inline-flex; align-items: center; gap: var(--space-1);
+      font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+      border-radius: var(--radius-pill); padding: 2px 10px; white-space: nowrap;
+    }
+    .pill--purple { background: var(--color-chat-right); color: var(--color-default-highlight); border: 1px solid var(--color-border-strong); }
+    .pill--neutral { background: var(--color-surface-1); color: var(--color-text-secondary); }
+    .pill--green { background: #E8F7E7; color: var(--color-success); }
+    .pill--gold { background: var(--color-important-highlight); color: var(--color-default-highlight); }
+    .pill .material-symbols-outlined { font-size: 15px; }
+
+    /* ---- anatomia pasului unic ---- */
+    .flow-box {
+      border: 2px solid var(--color-default-highlight); border-radius: var(--radius-lg);
+      background: var(--color-surface-white); padding: var(--space-5); box-shadow: var(--shadow-md);
+    }
+    .flow-box__title {
+      display: flex; align-items: center; gap: var(--space-2);
+      font-weight: var(--font-weight-black); color: var(--color-default-highlight);
+      text-transform: uppercase; letter-spacing: .05em; font-size: var(--font-size-headline-3);
+      margin-bottom: var(--space-1);
+    }
+    .flow-box__sub { color: var(--color-text-muted); font-size: var(--font-size-small); margin-bottom: var(--space-4); }
+    .mod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+    @media (max-width: 760px) { .mod-grid { grid-template-columns: 1fr; } }
+    .mod {
+      background: var(--color-surface-1); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+      display: flex; gap: var(--space-2); align-items: flex-start;
+    }
+    .mod .material-symbols-outlined { font-size: 20px; color: var(--color-default-highlight); flex-shrink: 0; margin-top: 1px; }
+    .mod b { display: block; font-size: var(--font-size-body); }
+    .mod span.desc { font-size: var(--font-size-small); color: var(--color-text-secondary); }
+    .flow-gate {
+      margin-top: var(--space-4); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+      background: var(--color-chat-right); border: 1px solid var(--color-default-highlight);
+      border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+      font-size: var(--font-size-small); color: var(--color-text-primary);
+    }
+    .flow-gate .fakebtn {
+      background: var(--color-important); color: var(--color-default-highlight);
+      font-weight: var(--font-weight-bold); border-radius: var(--radius-sm);
+      padding: var(--space-1) var(--space-3); font-size: var(--font-size-small); white-space: nowrap;
+    }
+    .flow-after {
+      display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3);
+      color: var(--color-text-secondary); font-size: var(--font-size-small);
+    }
+    .flow-after .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+
+    /* ---- carduri de șablon ---- */
+    .tpl {
+      border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+      background: var(--color-surface-white); padding: var(--space-4) var(--space-5);
+    }
+    .tpl + .tpl { margin-top: var(--space-3); }
+    .tpl__head { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-2); }
+    .tpl__name { font-weight: var(--font-weight-black); font-size: var(--font-size-headline-3); color: var(--color-default-highlight); }
+    .tpl__row { display: flex; gap: var(--space-2); align-items: flex-start; font-size: var(--font-size-small); color: var(--color-text-secondary); margin-top: var(--space-1); }
+    .tpl__row .material-symbols-outlined { font-size: 16px; color: var(--color-default-highlight); flex-shrink: 0; margin-top: 1px; }
+
+    /* ---- tabele ---- */
+    table { width: 100%; border-collapse: collapse; font-size: var(--font-size-body); }
+    th {
+      text-align: left; font-size: var(--font-size-small); text-transform: uppercase; letter-spacing: .04em;
+      color: var(--color-text-muted); font-weight: var(--font-weight-bold);
+      padding: var(--space-2) var(--space-3); border-bottom: 2px solid var(--color-border);
+    }
+    td { padding: var(--space-3); border-bottom: 1px solid var(--color-border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    td .material-symbols-outlined { font-size: 16px; vertical-align: -3px; color: var(--color-default-highlight); }
+
+    /* ---- drumul dual al documentului ---- */
+    .dual { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    @media (max-width: 760px) { .dual { grid-template-columns: 1fr; } }
+    .dual .lane { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); background: var(--color-surface-white); }
+    .lane__title { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--font-weight-black); color: var(--color-default-highlight); margin-bottom: var(--space-3); }
+    .lane__title .material-symbols-outlined { font-size: 20px; }
+    .lane ol { margin: 0; padding-left: var(--space-5); color: var(--color-text-secondary); font-size: var(--font-size-body); }
+    .lane li { margin-bottom: var(--space-2); }
+    .dual-meet {
+      grid-column: 1 / -1; text-align: center; background: var(--color-chat-right);
+      border: 1px solid var(--color-default-highlight); border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4); font-size: var(--font-size-body);
+    }
+
+    .foot {
+      margin-top: var(--space-8); padding-top: var(--space-4);
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text-muted); font-size: var(--font-size-small);
+      display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap;
+    }
+    a { color: var(--color-default-highlight); }
+  </style>
+</head>
+<body>
+  <main class="doc">
+
+    <span class="doc-kicker"><span class="material-symbols-outlined" style="font-size:16px" aria-hidden="true">construction</span>Caz de utilizare · document intern</span>
+    <h1>Scriptica pentru Construcții:<br>fluxul cu un singur pas</h1>
+    <p class="doc-lead">Unii clienți nu au nevoie de lanțuri de pași — au nevoie de <b>proiecte</b> în care introduc informații, generează sau încarcă documente și bifează lucrul făcut. Acest document arată, pe cazul concret „Construcții", că exact același motor de fluxuri acoperă și acest mod de lucru: <b>un flux cu un singur pas rămâne un produs complet</b> — anexe, documente, sarcini, chat, termen, arhivare automată.</p>
+
+    <!-- 1. Îngrijorarea vs teza -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">1</span><h2>Îngrijorarea echipei — și răspunsul</h2></div>
+      <div class="cols-2">
+        <div class="card">
+          <h3 style="margin-top:0">Îngrijorarea</h3>
+          <p>„Anumiți clienți nu au ce face cu fluxurile. Ei doar introduc niște informații într-un proiect. Modelul nostru — pași, etape, termene — pare prea mult pentru ei."</p>
+        </div>
+        <div class="card" style="border-color: var(--color-default-highlight); border-left-width: 4px;">
+          <h3 style="margin-top:0">Teza</h3>
+          <p>Pasul nu este birocrație — este <b>containerul</b> care ține împreună anexele, documentele, sarcinile și conversația unui proiect. Cu <b>un singur pas</b>, „fluxul" devine exact ce vor acești clienți: <b>o mapă de proiect vie</b>, care se arhivează singură. Nimic din produs nu se pierde; doar secvența dispare.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Anatomia -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">2</span><h2>Anatomia unui flux cu un singur pas</h2></div>
+      <div class="flow-box">
+        <div class="flow-box__title"><span class="material-symbols-outlined" aria-hidden="true">conversion_path</span>Proiect: „Reabilitare acoperiș — Hala B" <span class="pill pill--neutral">1 pas</span></div>
+        <div class="flow-box__sub">Tot ce oferă un flux de 3 pași, într-un singur pas de lucru:</div>
+        <div class="mod-grid">
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">description</span><div><b>Anexe</b><span class="desc">Formulare generate din Bibliotecă: PV de recepție, notă de fundamentare…</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span><div><b>Documente</b><span class="desc">Încărcate manual sau primite pe e-mail/WhatsApp; A.I.-ul local le etichetează.</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><div><b>Sarcini</b><span class="desc">Checklist-ul proiectului, cu responsabili și time-tracking.</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">chat</span><div><b>Chat propriu</b><span class="desc">Echipa + beneficiarul + mesajele automate A.I., pe proiect.</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">schedule</span><div><b>Termen</b><span class="desc">Data-limită a proiectului, vizibilă în listă și pe Acasă.</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span><div><b>Închidere controlată</b><span class="desc">Proiectul nu se închide cu sarcini sau anexe incomplete.</span></div></div>
+        </div>
+        <div class="flow-gate">
+          <span class="fakebtn">Finalizează proiectul</span>
+          <span>activ doar când sarcinile și anexele obligatorii sunt complete — aceeași disciplină ca la fluxurile lungi, fără pași intermediari.</span>
+        </div>
+        <div class="flow-after">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+          La închidere, toate documentele proiectului sunt deja în <b>Bibliotecă</b>, sortate automat pe foldere, fiecare cu link „Proveniență" înapoi la proiect.
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Configurarea tipului -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">3</span><h2>Tipul de client „Construcții" — configurarea HQ</h2></div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Verticala „Proiecte"</h3>
+        <p><span class="pill pill--purple"><span class="material-symbols-outlined" aria-hidden="true">construction</span>Proiecte</span>&nbsp;
+        element de lucru: <b>„Proiect"</b> · partea externă: <b>„Beneficiar / Beneficiari"</b> (nu „Client" — vocabularul domeniului). Navigația firmei devine exact cea cerută: <b>Proiecte</b> (lista verticalei) · <b>Clienții mei</b> (beneficiarii) · <b>Biblioteca</b> (arhiva + formularele).</p>
+        <p class="small muted">Ciclul de viață al verticalei: <b>o singură etapă — „Lucru"</b>. Builderul HQ permite de acum verticale cu o singură etapă (constrângerea „minimum două etape" a fost eliminată).</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Șabloanele — „fluxuri posibile în funcție de stadiu"</h3>
+        <p class="small muted" style="margin-bottom: var(--space-4)">Exact formularea echipei: fiecare stadiu e un șablon de sine stătător, cu un singur pas. Un beneficiar care are nevoie doar de ofertare primește un proiect de ofertare — nu un lanț din care folosește o treime. Cine vrea tot lanțul are și varianta completă.</p>
+
+        <div class="tpl">
+          <div class="tpl__head"><span class="tpl__name">Ofertare licitație publică</span><span class="pill pill--neutral">1 pas</span><span class="pill pill--neutral">Stadiul 1 · precontractare</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">description</span><span><b>Anexe:</b> Propunere tehnică · Ofertă financiară — generate din Bibliotecă; la proiecte complexe se încarcă manual varianta proprie.</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><span><b>Sarcini:</b> studiul caietului de sarcini · vizită amplasament · calcul deviz · depunere ofertă.</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span><span><b>Documente:</b> caiet de sarcini, clarificări, dovada depunerii — etichetate de A.I.</span></div>
+        </div>
+
+        <div class="tpl">
+          <div class="tpl__head"><span class="tpl__name">Contractare</span><span class="pill pill--neutral">1 pas</span><span class="pill pill--neutral">Stadiul 2</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">description</span><span><b>Anexe:</b> Contract de execuție — generat în aplicație <i>sau</i> încărcat semnat.</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><span><b>Sarcini:</b> negociere clauze · constituire garanție · semnare.</span></div>
+        </div>
+
+        <div class="tpl">
+          <div class="tpl__head"><span class="tpl__name">Execuție lucrări</span><span class="pill pill--neutral">1 pas</span><span class="pill pill--neutral">Stadiul 3</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">description</span><span><b>Anexe:</b> Proces verbal de recepție · Proces verbal de constatare a neregulilor · Notă de fundamentare pentru refacerea devizului — generate la nevoie, oricâte, pe parcurs.</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><span><b>Sarcini:</b> etapele de lucrare prestabilite prin contract, bifate pe măsură ce se execută.</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span><span><b>Documente:</b> situații de lucrări, fotografii, dispoziții de șantier — încărcate manual când beneficiarul nu vrea generare automată.</span></div>
+        </div>
+
+        <div class="tpl" style="border-style: dashed;">
+          <div class="tpl__head"><span class="tpl__name">Licitație publică — proiect complet</span><span class="pill pill--purple">3 pași</span><span class="pill pill--neutral">opțional, tot lanțul</span></div>
+          <div class="tpl__row"><span class="material-symbols-outlined" aria-hidden="true">conversion_path</span><span>Precontractare → Contractare → Execuție, cu anexele de mai sus distribuite pe pași. Același motor: cine vrea secvența o are; cine nu, folosește șabloanele de 1 pas.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">„Biblioteca" = biblioteca de anexe + arhiva cu sortare A.I.</h3>
+        <p>Formularele domeniului se construiesc o singură dată în <b>Constructorul de Anexe</b> (câmpuri tipizate, tabele de cantități, formule între anexe — ex. devizul recalculat automat din notele de fundamentare). Arhiva tipului „Construcții" primește structura:</p>
+        <table>
+          <thead><tr><th>Folder</th><th>Tipuri de documente rutate automat de A.I.</th></tr></thead>
+          <tbody>
+            <tr><td><span class="material-symbols-outlined" aria-hidden="true">folder_open</span> Documentație licitație</td><td>Propunere tehnică · Ofertă financiară · Caiet de sarcini · Clarificări</td></tr>
+            <tr><td><span class="material-symbols-outlined" aria-hidden="true">folder_open</span> Contracte</td><td>Contract de execuție · Act adițional · Garanții</td></tr>
+            <tr><td><span class="material-symbols-outlined" aria-hidden="true">folder_open</span> Execuție</td><td>PV de recepție · PV de constatare a neregulilor · Notă de fundamentare · Situație de lucrări · Deviz</td></tr>
+            <tr><td><span class="material-symbols-outlined" aria-hidden="true">folder_open</span> Corespondență</td><td>E-mail de transmitere</td></tr>
+            <tr><td><span class="material-symbols-outlined" aria-hidden="true">inbox</span> Necategorisit <span class="pill pill--neutral">sistem</span></td><td>tot ce A.I.-ul nu recunoaște — nimic nu se pierde</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cols-2" style="margin-top: var(--space-4)">
+        <div class="card">
+          <h3 style="margin-top:0">Ecranul Acasă</h3>
+          <p class="small">Compus în HQ din widget-uri: <b>Proiecte active</b> (widgetul verticalei, se deschide spre listă) · <b>Termene apropiate</b> · <b>Beneficiari</b> · <b>Bibliotecă — recente</b> · <b>Echipa</b>. Firma deschide aplicația și vede proiectele, nu un dashboard contabil.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Tabelul proiectelor</h3>
+          <p class="small">Coloanele verticalei, configurate în HQ: <b>Proiect</b> · <b>Beneficiar</b> · <b>Șablon</b> (stadiul) · <b>Termen</b> („3 zile" / „2 zile întârziere") · <b>Responsabili</b> · <b>Status</b>. Filtre pe șablon = filtre pe stadiu.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Generat vs manual -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">4</span><h2>Generat de aplicație sau încărcat manual — ambele, mereu</h2></div>
+      <p class="muted" style="margin-bottom: var(--space-4)">Cerința critică a echipei: la fiecare stadiu, dacă aplicația nu poate genera documentul (sau beneficiarul nu vrea), firma îl încarcă manual. În Scriptica cele două drumuri există nativ și se termină în același loc:</p>
+      <div class="dual">
+        <div class="lane">
+          <div class="lane__title"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>Generat în aplicație</div>
+          <ol>
+            <li>Din proiect, echipa deschide anexa (ex. „PV de recepție") — formular construit în Constructor.</li>
+            <li>Câmpurile tipizate + formulele completează automat ce se poate (deviz, totaluri).</li>
+            <li>Anexa completată intră în gating: proiectul nu se închide fără ea.</li>
+          </ol>
+        </div>
+        <div class="lane">
+          <div class="lane__title"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span>Încărcat manual</div>
+          <ol>
+            <li>Firma încarcă PDF-ul propriu (sau îl trimite pe e-mail/WhatsApp) direct în proiect.</li>
+            <li><b>A.I.-ul local</b> îl etichetează: tip de document + încredere + observație.</li>
+            <li>Documentul e rutat automat în folderul care îi declară tipul.</li>
+          </ol>
+        </div>
+        <div class="dual-meet"><b>Același rezultat:</b> documentul ajunge în Bibliotecă, în folderul corect, legat de proiect prin „Proveniență" — indiferent pe ce drum a intrat.</div>
+      </div>
+    </section>
+
+    <!-- 5. Maparea 1:1 -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">5</span><h2>Cerința echipei, mapată 1:1</h2></div>
+      <div class="card" style="padding: var(--space-3) var(--space-5)">
+        <table>
+          <thead><tr><th style="width:44%">Cerința (formularea echipei)</th><th>În Scriptica</th></tr></thead>
+          <tbody>
+            <tr><td>„Tip client nou: Construcții"</td><td>Tip de client <b>„Firmă de construcții"</b> în HQ — pachet: verticala Proiecte + șabloanele pe stadii + Biblioteca + Ecranul Acasă.</td></tr>
+            <tr><td>„Proiecte"</td><td>Verticala <b>„Proiecte"</b> (element de lucru „Proiect") — apare automat în meniu, cu listă, pagini de detaliu și widget pe Acasă.</td></tr>
+            <tr><td>„Clienții mei"</td><td>Partea externă a tipului, denumită <b>„Beneficiari"</b> — aceeași mecanică precum „Clienți" la contabilitate și „Instituții" la audit.</td></tr>
+            <tr><td>„Biblioteca"</td><td><b>Biblioteca de anexe</b> (formularele domeniului, în Constructor) + <b>Arhiva</b> cu foldere per tip și sortare automată A.I.</td></tr>
+            <tr><td>„Fluxuri posibile în funcție de stadiu"</td><td>Un <b>șablon per stadiu, cu 1 pas</b>: Ofertare · Contractare · Execuție — plus varianta completă în 3 pași pentru cine o vrea.</td></tr>
+            <tr><td>„Se generează anexe specifice… Propunere tehnică, Ofertă financiară, Contract, PV-uri, Notă de fundamentare"</td><td>Anexe construite în <b>Constructorul de Anexe</b>, atașate pașilor șabloanelor; generate la un click din proiect.</td></tr>
+            <tr><td>„…trebuie să aibă posibilitatea de a le încărca manual"</td><td>Secțiunea de <b>documente</b> a fiecărui proiect: upload / e-mail / WhatsApp, cu etichetare A.I. și rutare automată în Bibliotecă.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. Status -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">6</span><h2>Ce e deja demonstrat în prototip</h2></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Bloc</th><th>Status</th><th>Unde se vede azi</th></tr></thead>
+          <tbody>
+            <tr><td>Verticală nouă, navigabilă instant (meniu · listă · detaliu · widget)</td><td><span class="pill pill--green">live</span></td><td>HQ → Fluxuri → „Verticală nouă" (demo: Consultanță Fiscală, Construcții)</td></tr>
+            <tr><td>Verticale cu <b>o singură etapă</b></td><td><span class="pill pill--green">live</span></td><td><b>tipul „Construcții" e deja în prototip</b>: meniul „Proiecte" (5 proiecte demo, un pas fiecare), HQ → Tipuri de clienți → „Firmă de construcții", biblioteca cu 4 formulare</td></tr>
+            <tr><td>Anexe pe pași + gating „Finalizează" + formule între anexe</td><td><span class="pill pill--green">live</span></td><td>Situații Contabile & Misiuni de Audit (același motor)</td></tr>
+            <tr><td>Documente cu etichetare A.I. + rutare în arhivă + „Proveniență"</td><td><span class="pill pill--green">live</span></td><td>orice situație/misiune → Arhivă</td></tr>
+            <tr><td>Arhivă, Ecran Acasă și coloane de tabel configurabile per tip de client</td><td><span class="pill pill--green">live</span></td><td>HQ → Tipuri de clienți</td></tr>
+            <tr><td>Anexe + documente + sarcini <b>pe verticalele generice</b></td><td><span class="pill pill--gold">de activat</span></td><td>modulele există și rulează pe verticalele standard; se activează per verticală — nu se construiesc de la zero</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted" style="margin-top: var(--space-3)">Cu alte cuvinte: pentru „Construcții" nu proiectăm un produs nou — <b>compunem module deja demonstrate</b>, pe o verticală cu un singur pas.</p>
+      </div>
+    </section>
+
+    <!-- 7. Concluzie -->
+    <section class="sec">
+      <div class="sec-head"><span class="sec-num">7</span><h2>Concluzia</h2></div>
+      <div class="card" style="background: var(--color-chat-right); border-color: var(--color-default-highlight); border-left-width: 4px;">
+        <p style="font-size: var(--font-size-subtitle);"><b>Un pas nu înseamnă mai puțin produs.</b> Pentru clienții „doar cu proiecte", fluxul cu un singur pas livrează tot ce contează pentru ei — formulare generate sau încărcate, sarcini, conversație, termen și o arhivă care se organizează singură — și tot ce contează pentru noi: același motor, aceeași configurare HQ, zero pagini noi.</p>
+      </div>
+    </section>
+
+    <div class="foot">
+      <span>Scriptica · document de lucru intern — caz de utilizare „Construcții"</span>
+      <span>iulie 2026</span>
+    </div>
+
+  </main>
+</body>
+</html>

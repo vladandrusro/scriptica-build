@@ -494,6 +494,24 @@ window.SCRIPTICA_MOCK = {
         downtime: { incidents: [
           { cauza: "ai_limit", minutes: 18, day: 26 }
         ] }
+      },
+      {
+        id: "cli_constructa", name: "ConstructA Group S.R.L.", domain: "Firmă de construcții", clientTypeId: "ct_constructii",
+        instance: "constructa.scriptica.ro", users: 5, enrolled: "10.06.2026",
+        tier: "plus", contract: "activ", aiLoad: 21,
+        commercial: { plan: "Plus", renew: "10.06.2027", billing: "Anual · 4.800 RON", lastPay: "10.06.2026" },
+        flags: [
+          { name: "Sortare automată A.I.", tier: "Plus", on: true },
+          { name: "Mesaje smart", tier: "Plus", on: true },
+          { name: "Constructor de Anexe", tier: "Standard", on: true },
+          { name: "Vertical Audit", tier: "Enterprise", on: false },
+          { name: "Backup local", tier: "Plus · add-on", on: false }
+        ],
+        technical: {
+          vmLoad: [18, 24, 30, 26, 44, 36, 22, 16], vmPeakIdx: 4,
+          aiPerMonth: "310", docsStored: "1.4k", uptime30: 99.97, lastIncident: "acum 12 zile"
+        },
+        downtime: { incidents: [] }
       }
     ],
 
@@ -534,6 +552,13 @@ window.SCRIPTICA_MOCK = {
         itemLabel: "Dosar", itemLabelPlural: "Dosare",
         description: "Dosare de consultanță fiscală: analiza solicitării, documentare, opinie scrisă și livrare.",
         lifecycle: ["Analiza solicitării", "Documentare și redactare opinie", "Livrare și follow-up"]
+      },
+      {
+        id: "vert_constructii", domain: "constructii", builtin: false, status: "activ",
+        name: "Proiecte", icon: "construction",
+        itemLabel: "Proiect", itemLabelPlural: "Proiecte",
+        description: "Proiecte de construcții — fiecare stadiu (ofertare, contractare, execuție) e un flux de sine stătător, cu un singur pas de lucru.",
+        lifecycle: ["Lucru"]
       }
     ],
 
@@ -596,6 +621,22 @@ window.SCRIPTICA_MOCK = {
           { name: "Analiza solicitării", offsetDays: 5 },
           { name: "Documentare și redactare opinie", offsetDays: 18 },
           { name: "Livrare și follow-up", offsetDays: 25 }
+        ] },
+      /* — construcții (verticală custom cu O SINGURĂ etapă — proiecte per stadiu) — */
+      { id: "ft_constr_ofertare", verticalId: "vert_constructii", name: "Ofertare licitație publică", frequency: "punctual", status: "activ",
+        description: "Stadiul 1 — precontractare: propunere tehnică și ofertă financiară, generate din bibliotecă sau încărcate manual.",
+        steps: [
+          { name: "Lucru", offsetDays: 20 }
+        ] },
+      { id: "ft_constr_contractare", verticalId: "vert_constructii", name: "Contractare", frequency: "punctual", status: "activ",
+        description: "Stadiul 2 — semnarea contractului după câștigarea licitației: generat în aplicație sau încărcat semnat.",
+        steps: [
+          { name: "Lucru", offsetDays: 15 }
+        ] },
+      { id: "ft_constr_executie", verticalId: "vert_constructii", name: "Execuție lucrări", frequency: "punctual", status: "activ",
+        description: "Stadiul 3 — desfășurarea lucrărilor: PV-uri de recepție, constatare nereguli și note de fundamentare, pe măsura execuției.",
+        steps: [
+          { name: "Lucru", offsetDays: 90 }
         ] }
     ],
 
@@ -709,6 +750,27 @@ window.SCRIPTICA_MOCK = {
           { id: "af_ct4_suport", name: "Documente suport", docTypeIds: ["dt_contract"], children: [] },
           { id: "af_ct4_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
         ]
+      },
+      {
+        id: "ct_constructii", name: "Firmă de construcții", icon: "apartment", builtin: false,
+        description: "Firme de construcții — lucrează pe proiecte cu un singur pas: ofertare, contractare sau execuție, cu anexe generate ori încărcate manual.",
+        verticalIds: ["vert_constructii"],
+        defaultTemplateIds: ["ft_constr_ofertare", "ft_constr_contractare", "ft_constr_executie"],
+        clientLabel: "Beneficiar", clientLabelPlural: "Beneficiari",
+        dashboardLayout: [
+          { id: "dw_ct5_1", widget: "flow_summary", params: { verticalId: "vert_constructii" }, size: "half" },
+          { id: "dw_ct5_2", widget: "termene", size: "half" },
+          { id: "dw_ct5_3", widget: "clienti", size: "full" },
+          { id: "dw_ct5_4", widget: "arhiva_recente", params: {}, size: "half" },
+          { id: "dw_ct5_5", widget: "echipa", size: "half" }
+        ],
+        archiveTree: [
+          { id: "af_ct5_licitatie", name: "Documentație licitație", docTypeIds: ["dt_propunere_tehnica", "dt_oferta_financiara", "dt_caiet_sarcini"], children: [] },
+          { id: "af_ct5_contracte", name: "Contracte", docTypeIds: ["dt_contract_executie"], children: [] },
+          { id: "af_ct5_executie", name: "Execuție", docTypeIds: ["dt_pv_receptie", "dt_pv_nereguli", "dt_nota_fundamentare", "dt_situatie_lucrari", "dt_deviz"], children: [] },
+          { id: "af_ct5_coresp", name: "Corespondență", docTypeIds: ["dt_corespondenta"], children: [] },
+          { id: "af_ct5_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
+        ]
       }
     ]
   },
@@ -740,6 +802,15 @@ window.SCRIPTICA_MOCK = {
     { id: "dt_fcri", name: "FCRI", domain: "audit" },
     { id: "dt_raport_audit", name: "Raport de audit", domain: "audit" },
     { id: "dt_opinie_fiscala", name: "Opinie fiscală", domain: "consultanta" },
+    { id: "dt_propunere_tehnica", name: "Propunere tehnică", domain: "constructii" },
+    { id: "dt_oferta_financiara", name: "Ofertă financiară", domain: "constructii" },
+    { id: "dt_caiet_sarcini", name: "Caiet de sarcini", domain: "constructii" },
+    { id: "dt_contract_executie", name: "Contract de execuție", domain: "constructii" },
+    { id: "dt_pv_receptie", name: "Proces verbal de recepție", domain: "constructii" },
+    { id: "dt_pv_nereguli", name: "Proces verbal de constatare a neregulilor", domain: "constructii" },
+    { id: "dt_nota_fundamentare", name: "Notă de fundamentare", domain: "constructii" },
+    { id: "dt_situatie_lucrari", name: "Situație de lucrări", domain: "constructii" },
+    { id: "dt_deviz", name: "Deviz", domain: "constructii" },
     { id: "dt_contract", name: "Contract", domain: null },
     { id: "dt_corespondenta", name: "E-mail de transmitere", domain: null },
     { id: "dt_document_multiplu", name: "Document multiplu", domain: null },
@@ -782,6 +853,47 @@ window.SCRIPTICA_MOCK = {
       templateId: "ft_consult_retainer", templateName: "Consultanță lunară (retainer)",
       startDate: "2026-03-01", currentStep: 3, stepsCompleted: 3,
       status: "finalizat", responsibleIds: [6, 2]
+    },
+    /* — construcții: proiecte cu un singur pas, per stadiu — */
+    {
+      id: "fi_0005", verticalId: "vert_constructii", domain: "constructii",
+      name: "Ofertare — Reabilitare școală gimnazială nr. 4",
+      clientName: "Primăria Orașului Otopeni",
+      templateId: "ft_constr_ofertare", templateName: "Ofertare licitație publică",
+      startDate: "2026-04-12", currentStep: 1, stepsCompleted: 0,
+      status: "analiza", responsibleIds: [2, 3]
+    },
+    {
+      id: "fi_0006", verticalId: "vert_constructii", domain: "constructii",
+      name: "Contractare — Hală logistică Chitila",
+      clientName: "Logistic Park S.R.L.",
+      templateId: "ft_constr_contractare", templateName: "Contractare",
+      startDate: "2026-04-10", currentStep: 1, stepsCompleted: 0,
+      status: "in_verificare", responsibleIds: [2]
+    },
+    {
+      id: "fi_0007", verticalId: "vert_constructii", domain: "constructii",
+      name: "Execuție — Reabilitare acoperiș Hala B",
+      clientName: "Industrial Est S.A.",
+      templateId: "ft_constr_executie", templateName: "Execuție lucrări",
+      startDate: "2026-03-01", currentStep: 1, stepsCompleted: 0,
+      status: "analiza", responsibleIds: [3, 4]
+    },
+    {
+      id: "fi_0008", verticalId: "vert_constructii", domain: "constructii",
+      name: "Execuție — Bloc de locuințe Str. Teiului 12",
+      clientName: "Rezidențial Nord S.R.L.",
+      templateId: "ft_constr_executie", templateName: "Execuție lucrări",
+      startDate: "2026-01-05", currentStep: 1, stepsCompleted: 0,
+      status: "in_verificare", responsibleIds: [2, 4]
+    },
+    {
+      id: "fi_0009", verticalId: "vert_constructii", domain: "constructii",
+      name: "Ofertare — Extindere sediu administrativ",
+      clientName: "Consiliul Local Măgurele",
+      templateId: "ft_constr_ofertare", templateName: "Ofertare licitație publică",
+      startDate: "2026-03-10", currentStep: 1, stepsCompleted: 1,
+      status: "finalizat", responsibleIds: [3]
     }
   ],
 
@@ -803,6 +915,79 @@ window.SCRIPTICA_MOCK = {
      in the admin editor. `schema.fields` uses the module types of the
      constructor (see js/constructor-anexe.js). */
   anexeTypes: [
+    /* — construcții: biblioteca de formulare a domeniului — */
+    {
+      id: "anx_constr_propunere",
+      name: "Propunere tehnică (licitație)",
+      status: "activ",
+      updatedAt: "2026-04-15",
+      categories: ["constructii"],
+      schema: { fields: [
+        { type: "section_title", text: "Date licitație" },
+        { type: "text_short", label: "Denumirea procedurii", required: true, help: "", maxLength: 120 },
+        { type: "text_short", label: "Autoritatea contractantă", required: true, help: "", maxLength: 120 },
+        { type: "date", label: "Termen de depunere", required: true, help: "" },
+        { type: "divider" },
+        { type: "section_title", text: "Soluția tehnică" },
+        { type: "text_long", label: "Descrierea soluției tehnice", required: true, help: "" },
+        { type: "text_long", label: "Metodologia de execuție", required: false, help: "" },
+        { type: "number", label: "Durata de execuție (zile)", required: true, help: "" },
+        { type: "file_upload", label: "Planșe / schițe anexate", required: false, help: "", multi: true, maxSizeMB: 10, allowedTypes: "PDF, JPG, PNG, DWG" }
+      ] }
+    },
+    {
+      id: "anx_constr_contract",
+      name: "Contract de execuție lucrări",
+      status: "activ",
+      updatedAt: "2026-04-15",
+      categories: ["constructii"],
+      schema: { fields: [
+        { type: "section_title", text: "Părțile contractante" },
+        { type: "text_short", label: "Beneficiar", required: true, help: "", maxLength: 120 },
+        { type: "text_short", label: "Executant", required: true, help: "", maxLength: 120 },
+        { type: "date", label: "Data semnării", required: true, help: "" },
+        { type: "divider" },
+        { type: "section_title", text: "Obiectul și valoarea" },
+        { type: "text_long", label: "Obiectul contractului", required: true, help: "" },
+        { type: "currency", label: "Valoarea contractului (fără TVA)", required: true, currency: "RON", help: "" },
+        { type: "number", label: "Durata de execuție (luni)", required: false, help: "" },
+        { type: "boolean", label: "Garanție de bună execuție constituită", required: false, help: "" }
+      ] }
+    },
+    {
+      id: "anx_constr_pv_receptie",
+      name: "Proces verbal de recepție",
+      status: "activ",
+      updatedAt: "2026-04-15",
+      categories: ["constructii"],
+      schema: { fields: [
+        { type: "section_title", text: "Identificarea lucrării" },
+        { type: "text_short", label: "Obiectivul / lucrarea", required: true, help: "", maxLength: 120 },
+        { type: "date", label: "Data recepției", required: true, help: "" },
+        { type: "text_long", label: "Comisia de recepție (membri)", required: false, help: "" },
+        { type: "divider" },
+        { type: "dropdown", label: "Rezultatul recepției", required: true, help: "", options: ["Admisă", "Admisă cu obiecții", "Amânată", "Respinsă"] },
+        { type: "text_long", label: "Observații / obiecții", required: false, help: "" },
+        { type: "file_upload", label: "Documente atașate (foto, măsurători)", required: false, help: "", multi: true, maxSizeMB: 10, allowedTypes: "PDF, JPG, PNG" }
+      ] }
+    },
+    {
+      id: "anx_constr_nota_fundamentare",
+      name: "Notă de fundamentare — refacere deviz",
+      status: "activ",
+      updatedAt: "2026-04-15",
+      categories: ["constructii"],
+      schema: { fields: [
+        { type: "section_title", text: "Lucrarea" },
+        { type: "text_short", label: "Lucrarea / obiectivul", required: true, help: "", maxLength: 120 },
+        { type: "text_long", label: "Motivul refacerii devizului de cantități", required: true, help: "" },
+        { type: "divider" },
+        { type: "section_title", text: "Impact" },
+        { type: "currency", label: "Valoare deviz inițial", required: true, currency: "RON", help: "" },
+        { type: "currency", label: "Valoare deviz refăcut", required: true, currency: "RON", help: "" },
+        { type: "text_long", label: "Impact asupra termenului de execuție", required: false, help: "" }
+      ] }
+    },
     {
       id: "anx_1",
       name: "Anexă verificare corelație D300 ↔ D394",
@@ -1203,7 +1388,8 @@ window.SCRIPTICA_MOCK = {
     { id: "contabilitate", label: "Contabilitate" },
     { id: "audit", label: "Audit" },
     { id: "salarizare", label: "Salarizare" },
-    { id: "fiscal", label: "Fiscal" }
+    { id: "fiscal", label: "Fiscal" },
+    { id: "constructii", label: "Construcții" }
   ],
 
   clients: [
