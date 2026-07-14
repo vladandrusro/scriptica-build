@@ -1063,7 +1063,7 @@
       var v = verticalById(x.verticalId);
       return '<li' + (i >= CT_TPL_VISIBLE ? ' class="sa-ct-tpl--extra" hidden' : '') + '>' +
         '<span class="material-symbols-outlined" aria-hidden="true">description</span>' +
-        '<span class="sa-ct-tpl__name">' + esc(x.name) + '</span> <small>· ' + esc(v ? v.name : '') + '</small></li>';
+        '<span class="sa-ct-tpl__line"><span class="sa-ct-tpl__name">' + esc(x.name) + '</span> <small>· ' + esc(v ? v.name : '') + '</small></span></li>';
     }).join('');
     var tplToggle = tpls.length > CT_TPL_VISIBLE
       ? '<button type="button" class="sa-ct-tpltoggle" data-tpl-toggle data-count="' + tpls.length + '" data-expanded="0">' +
@@ -1073,15 +1073,15 @@
       ? '<button class="sa-mini-btn sa-mini-btn--danger" type="button" data-del-ct="' + esc(t.id) + '" title="Șterge tipul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>'
       : '';
     return '<div class="sa-card sa-ct-card">' +
-      '<div class="sa-flow-head">' +
+      '<div class="sa-flow-head sa-ct-head">' +
         '<div class="sa-flow-ico sa-flow-ico--va ' + primaryVa + '"><span class="material-symbols-outlined" aria-hidden="true">' + esc(t.icon || 'category') + '</span></div>' +
-        '<div class="sa-flow-title"><div class="sa-panel__title">' + esc(t.name) + '</div>' +
-          '<div class="sa-panel__sub">' + esc(t.description || '') + '</div></div>' +
+        '<div class="sa-flow-title"><div class="sa-panel__title">' + esc(t.name) + '</div></div>' +
         '<div class="sa-flow-actions">' +
           '<button class="sa-mini-btn" type="button" data-edit-ct="' + esc(t.id) + '" title="Editează tipul"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>' +
           delBtn +
         '</div>' +
       '</div>' +
+      '<p class="sa-ct-desc">' + esc(t.description || '') + '</p>' +
       '<div class="sa-ct-sec">Verticale</div><div class="sa-ct-verts">' + vertPills + '</div>' +
       '<div class="sa-ct-sec">Șabloane implicite (' + tpls.length + ')</div>' +
       '<ul class="sa-ct-tpllist">' + tplList + '</ul>' + tplToggle +

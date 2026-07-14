@@ -395,18 +395,32 @@
 .sa-colorpick__btn:hover { border-color: var(--va); }
 .sa-colorpick__btn.is-selected { border-color: var(--va); box-shadow: 0 0 0 2px var(--color-surface-white), 0 0 0 4px var(--va); }
 .sa-colorpick__dot { width: 14px; height: 14px; border-radius: 999px; background: var(--va); }
+/* Antetul cardului: pictogramă + titlu + acțiuni pe un rând (fără descriere). */
+.sa-ct-head { align-items: center; }
+
+/* Descrierea tipului — pe toată lățimea cardului, sub antet; rezervă
+   ~2 rânduri ca secțiunile următoare să se alinieze între carduri. */
+.sa-ct-desc {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+  min-height: calc(var(--font-size-small) * var(--line-height-relaxed) * 2);
+}
+
 .sa-ct-sec {
-  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
-  color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em;
-  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--font-size-tiny); font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .08em;
+  margin: var(--space-5) 0 var(--space-3);
 }
 .sa-ct-verts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .sa-ct-vert, .sa-ct-pill { display: inline-flex; align-items: center; gap: var(--space-1); }
 .sa-ct-vert .material-symbols-outlined, .sa-ct-pill .material-symbols-outlined { font-size: 16px; }
 .sa-ct-tpllist { margin: 0; padding: 0; list-style: none; color: var(--color-text-secondary); }
-.sa-ct-tpllist li { display: flex; align-items: baseline; gap: var(--space-2); margin-bottom: var(--space-1); }
+.sa-ct-tpllist li { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
 .sa-ct-tpllist li[hidden] { display: none; }
-.sa-ct-tpllist li .material-symbols-outlined { font-size: 15px; color: var(--color-default); flex-shrink: 0; align-self: center; }
+.sa-ct-tpllist li .material-symbols-outlined { font-size: 15px; color: var(--color-default); flex-shrink: 0; }
+.sa-ct-tpl__line { line-height: var(--line-height-normal); min-width: 0; }
 .sa-ct-tpl__name { font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
 .sa-ct-tpllist small { color: var(--color-text-muted); }
 .sa-ct-tpltoggle {
