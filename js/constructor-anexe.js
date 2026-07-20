@@ -7,9 +7,36 @@
    ('scriptica.anexe'). Today is pinned to 2026-04-20.
    ============================================================ */
 
-/* View bootstrap — at script evaluation time, so shell.js renders
-   the admin context (user menu + nav item Administrare). */
-try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore */ }
+/* View bootstrap — constructorul este comun administratorului local și HQ.
+   Parametrul explicit `view=superadmin` păstrează contextul Super Admin. */
+var _isSuperAdminAnexeBuilder = (typeof window.getCurrentView === 'function') && window.getCurrentView() === 'superadmin';
+try {
+  if (!_isSuperAdminAnexeBuilder) localStorage.setItem('scriptica.view', 'admin');
+} catch (e) { /* ignore */ }
+
+if (_isSuperAdminAnexeBuilder) {
+  var _builderSuperAdminNav = document.querySelector('.sidebar__nav');
+  var _builderSuperAdminAside = document.querySelector('.sidebar');
+  var _builderBack = document.querySelector('.builder__back');
+  var _builderBreadcrumb = document.getElementById('builder-breadcrumb');
+  document.title = 'Constructor Anexe — Super Admin — Scriptica';
+  document.body.setAttribute('data-page', 'super-admin-anexe-builder');
+  if (_builderSuperAdminAside) _builderSuperAdminAside.setAttribute('aria-label', 'Navigație Super Admin');
+  if (_builderBack) _builderBack.href = 'administrare.html?view=superadmin#tipuri-anexe';
+  if (_builderBreadcrumb) _builderBreadcrumb.textContent = 'Super Admin · Anexe';
+  if (_builderSuperAdminNav) {
+    _builderSuperAdminNav.innerHTML =
+      '<a class="nav-item" href="super-admin.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">monitoring</span><span class="nav-item__label">Dashboard</span></a>' +
+      '<a class="nav-item" href="super-admin-clienti.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">apartment</span><span class="nav-item__label">Clienți</span></a>' +
+      '<div class="sidebar__group-label" aria-hidden="true">Configurare</div>' +
+      '<a class="nav-item" href="super-admin-fluxuri-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">account_tree</span><span class="nav-item__label">Fluxuri</span></a>' +
+      '<a class="nav-item nav-item--active" data-nav="super-admin-anexe" href="administrare.html?view=superadmin#tipuri-anexe"><span class="material-symbols-outlined nav-item__icon filled" aria-hidden="true">description</span><span class="nav-item__label">Anexe</span></a>' +
+      '<a class="nav-item" href="super-admin-tipuri-clienti-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">category</span><span class="nav-item__label">Tipuri de clienți</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">dns</span><span class="nav-item__label">Infrastructură</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">receipt_long</span><span class="nav-item__label">Facturare</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">settings</span><span class="nav-item__label">Setări</span></a>';
+  }
+}
 
 (function () {
   'use strict';
@@ -18,6 +45,12 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
 
   var ANEXE_KEY = 'scriptica.anexe';
   var TODAY_ISO = '2026-04-20';
+
+  function anexeRegistryUrl() {
+    return _isSuperAdminAnexeBuilder
+      ? 'administrare.html?view=superadmin#tipuri-anexe'
+      : 'administrare.html#tipuri-anexe';
+  }
 
   /* ============================================================
      FIELD TYPE DEFINITIONS — data contract with mock-data.js
@@ -314,7 +347,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         '<div class="builder__error">' +
           '<span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
           '<p>Anexa nu a fost găsită.</p>' +
-          '<a href="administrare.html#tipuri-anexe">Înapoi la Tipuri de Anexe</a>' +
+          '<a href="' + anexeRegistryUrl() + '">Înapoi la Tipuri de Anexe</a>' +
         '</div>';
       return;
     }
@@ -1377,7 +1410,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     if (!anexaId) {
       anexaId = 'anx_' + Date.now();
       try {
-        history.replaceState(null, '', 'constructor-anexe.html?id=' + encodeURIComponent(anexaId));
+        history.replaceState(null, '', 'constructor-anexe.html?id=' + encodeURIComponent(anexaId) + (_isSuperAdminAnexeBuilder ? '&view=superadmin' : ''));
       } catch (e) { /* ignore */ }
     }
 
@@ -1450,7 +1483,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
      NAV — marchează Administrare ca activ (injectat de shell.js)
      ============================================================ */
   function markAdminNavActive() {
-    var item = document.querySelector('[data-nav="administrare"]');
+    var item = document.querySelector(_isSuperAdminAnexeBuilder ? '[data-nav="super-admin-anexe"]' : '[data-nav="administrare"]');
     if (!item) return;
     item.classList.add('nav-item--active');
     var icon = item.querySelector('.material-symbols-outlined');

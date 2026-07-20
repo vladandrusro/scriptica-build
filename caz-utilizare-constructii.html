@@ -190,7 +190,7 @@
         <div class="flow-box__title"><span class="material-symbols-outlined" aria-hidden="true">conversion_path</span>Proiect: „Reabilitare acoperiș — Hala B" <span class="pill pill--neutral">1 pas</span></div>
         <div class="flow-box__sub">Tot ce oferă un flux de 3 pași, într-un singur pas de lucru:</div>
         <div class="mod-grid">
-          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">description</span><div><b>Anexe</b><span class="desc">Formulare generate din Bibliotecă: PV de recepție, notă de fundamentare…</span></div></div>
+          <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">description</span><div><b>Anexe</b><span class="desc">Anexe generate din Bibliotecă: PV de recepție, notă de fundamentare…</span></div></div>
           <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span><div><b>Documente</b><span class="desc">Încărcate manual sau primite pe e-mail/WhatsApp; A.I.-ul local le etichetează.</span></div></div>
           <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><div><b>Sarcini</b><span class="desc">Checklist-ul proiectului, cu responsabili și time-tracking.</span></div></div>
           <div class="mod"><span class="material-symbols-outlined" aria-hidden="true">chat</span><div><b>Chat propriu</b><span class="desc">Echipa + beneficiarul + mesajele automate A.I., pe proiect.</span></div></div>
@@ -215,7 +215,7 @@
       <div class="card">
         <h3 style="margin-top:0">Verticala „Proiecte"</h3>
         <p><span class="pill pill--purple"><span class="material-symbols-outlined" aria-hidden="true">construction</span>Proiecte</span>&nbsp;
-        element de lucru: <b>„Proiect"</b> · partea externă: <b>„Beneficiar / Beneficiari"</b> (nu „Client" — vocabularul domeniului). Navigația firmei devine exact cea cerută: <b>Proiecte</b> (lista verticalei) · <b>Clienții mei</b> (beneficiarii) · <b>Biblioteca</b> (arhiva + formularele).</p>
+        element de lucru: <b>„Proiect"</b> · partea externă: <b>„Beneficiar / Beneficiari"</b> (nu „Client" — vocabularul domeniului). Navigația firmei devine exact cea cerută: <b>Proiecte</b> (lista verticalei) · <b>Clienții mei</b> (beneficiarii) · <b>Biblioteca</b> (arhiva + anexele).</p>
         <p class="small muted">Ciclul de viață al verticalei: <b>o singură etapă — „Lucru"</b>. Builderul HQ permite de acum verticale cu o singură etapă (constrângerea „minimum două etape" a fost eliminată).</p>
       </div>
 
@@ -251,7 +251,7 @@
 
       <div class="card">
         <h3 style="margin-top:0">„Biblioteca" = biblioteca de anexe + arhiva cu sortare A.I.</h3>
-        <p>Formularele domeniului se construiesc o singură dată în <b>Constructorul de Anexe</b> (câmpuri tipizate, tabele de cantități, formule între anexe — ex. devizul recalculat automat din notele de fundamentare). Arhiva tipului „Construcții" primește structura:</p>
+        <p>Anexele domeniului se construiesc o singură dată în <b>Constructorul de Anexe</b> (câmpuri tipizate, tabele de cantități, formule între anexe — ex. devizul recalculat automat din notele de fundamentare). Arhiva tipului „Construcții" primește structura:</p>
         <table>
           <thead><tr><th>Folder</th><th>Tipuri de documente rutate automat de A.I.</th></tr></thead>
           <tbody>
@@ -284,7 +284,7 @@
         <div class="lane">
           <div class="lane__title"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>Generat în aplicație</div>
           <ol>
-            <li>Din proiect, echipa deschide anexa (ex. „PV de recepție") — formular construit în Constructor.</li>
+            <li>Din proiect, echipa deschide anexa (ex. „PV de recepție") — anexă construită în Constructor.</li>
             <li>Câmpurile tipizate + formulele completează automat ce se poate (deviz, totaluri).</li>
             <li>Anexa completată intră în gating: proiectul nu se închide fără ea.</li>
           </ol>
@@ -311,7 +311,7 @@
             <tr><td>„Tip client nou: Construcții"</td><td>Tip de client <b>„Firmă de construcții"</b> în HQ — pachet: verticala Proiecte + șabloanele pe stadii + Biblioteca + Ecranul Acasă.</td></tr>
             <tr><td>„Proiecte"</td><td>Verticala <b>„Proiecte"</b> (element de lucru „Proiect") — apare automat în meniu, cu listă, pagini de detaliu și widget pe Acasă.</td></tr>
             <tr><td>„Clienții mei"</td><td>Partea externă a tipului, denumită <b>„Beneficiari"</b> — aceeași mecanică precum „Clienți" la contabilitate și „Instituții" la audit.</td></tr>
-            <tr><td>„Biblioteca"</td><td><b>Biblioteca de anexe</b> (formularele domeniului, în Constructor) + <b>Arhiva</b> cu foldere per tip și sortare automată A.I.</td></tr>
+            <tr><td>„Biblioteca"</td><td><b>Biblioteca de anexe</b> (anexele domeniului, în Constructor) + <b>Arhiva</b> cu foldere per tip și sortare automată A.I.</td></tr>
             <tr><td>„Fluxuri posibile în funcție de stadiu"</td><td>Un <b>șablon per stadiu, cu 1 pas</b>: Ofertare · Contractare · Execuție — plus varianta completă în 3 pași pentru cine o vrea.</td></tr>
             <tr><td>„Se generează anexe specifice… Propunere tehnică, Ofertă financiară, Contract, PV-uri, Notă de fundamentare"</td><td>Anexe construite în <b>Constructorul de Anexe</b>, atașate pașilor șabloanelor; generate la un click din proiect.</td></tr>
             <tr><td>„…trebuie să aibă posibilitatea de a le încărca manual"</td><td>Secțiunea de <b>documente</b> a fiecărui proiect: upload / e-mail / WhatsApp, cu etichetare A.I. și rutare automată în Bibliotecă.</td></tr>
@@ -328,7 +328,7 @@
           <thead><tr><th>Bloc</th><th>Status</th><th>Unde se vede azi</th></tr></thead>
           <tbody>
             <tr><td>Verticală nouă, navigabilă instant (meniu · listă · detaliu · widget)</td><td><span class="pill pill--green">live</span></td><td>HQ → Fluxuri → „Verticală nouă" (demo: Consultanță Fiscală, Construcții)</td></tr>
-            <tr><td>Verticale cu <b>o singură etapă</b></td><td><span class="pill pill--green">live</span></td><td><b>tipul „Construcții" e deja în prototip</b>: meniul „Proiecte" (5 proiecte demo, un pas fiecare), HQ → Tipuri de clienți → „Firmă de construcții", biblioteca cu 4 formulare</td></tr>
+            <tr><td>Verticale cu <b>o singură etapă</b></td><td><span class="pill pill--green">live</span></td><td><b>tipul „Construcții" e deja în prototip</b>: meniul „Proiecte" (5 proiecte demo, un pas fiecare), HQ → Tipuri de clienți → „Firmă de construcții", biblioteca cu 4 anexe</td></tr>
             <tr><td>Anexe pe pași + gating „Finalizează" + formule între anexe</td><td><span class="pill pill--green">live</span></td><td>Situații Contabile & Misiuni de Audit (același motor)</td></tr>
             <tr><td>Documente cu etichetare A.I. + rutare în arhivă + „Proveniență"</td><td><span class="pill pill--green">live</span></td><td>orice situație/misiune → Arhivă</td></tr>
             <tr><td>Arhivă, Ecran Acasă și coloane de tabel configurabile per tip de client</td><td><span class="pill pill--green">live</span></td><td>HQ → Tipuri de clienți</td></tr>
@@ -343,7 +343,7 @@
     <section class="sec">
       <div class="sec-head"><span class="sec-num">7</span><h2>Concluzia</h2></div>
       <div class="card" style="background: var(--color-chat-right); border-color: var(--color-default-highlight); border-left-width: 4px;">
-        <p style="font-size: var(--font-size-subtitle);"><b>Un pas nu înseamnă mai puțin produs.</b> Pentru clienții „doar cu proiecte", fluxul cu un singur pas livrează tot ce contează pentru ei — formulare generate sau încărcate, sarcini, conversație, termen și o arhivă care se organizează singură — și tot ce contează pentru noi: același motor, aceeași configurare HQ, zero pagini noi.</p>
+        <p style="font-size: var(--font-size-subtitle);"><b>Un pas nu înseamnă mai puțin produs.</b> Pentru clienții „doar cu proiecte", fluxul cu un singur pas livrează tot ce contează pentru ei — anexe generate sau încărcate, sarcini, conversație, termen și o arhivă care se organizează singură — și tot ce contează pentru noi: același motor, aceeași configurare HQ, zero pagini noi.</p>
       </div>
     </section>
 

@@ -16,8 +16,39 @@
    în persona 'admin' după un click pe nav-ul Administrare. */
 try {
   var _v = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : null;
-  if (_v !== 'complet') localStorage.setItem('scriptica.view', 'admin');
+  if (_v !== 'complet' && _v !== 'superadmin') localStorage.setItem('scriptica.view', 'admin');
 } catch (e) { /* ignore */ }
+
+/* Super Admin reutilizează registrul matur de anexe, fără a fi mutat în
+   persona administratorului local. Pagina păstrează doar suprafața relevantă
+   și navigația HQ; restul DOM-ului rămâne disponibil pentru codul comun. */
+var _isSuperAdminAnexe = (typeof window.getCurrentView === 'function') && window.getCurrentView() === 'superadmin';
+if (_isSuperAdminAnexe) {
+  var _superAdminNav = document.querySelector('.sidebar__nav');
+  var _superAdminAside = document.querySelector('.sidebar');
+  var _adminTitle = document.querySelector('.page-header__title');
+  var _adminTabs = document.getElementById('admin-tabs');
+  document.title = 'Anexe — Super Admin — Scriptica';
+  document.body.setAttribute('data-page', 'super-admin-anexe');
+  if (_superAdminAside) _superAdminAside.setAttribute('aria-label', 'Navigație Super Admin');
+  if (_adminTitle) _adminTitle.textContent = 'Anexe';
+  if (_adminTabs) {
+    _adminTabs.hidden = true;
+    _adminTabs.style.display = 'none';
+  }
+  if (_superAdminNav) {
+    _superAdminNav.innerHTML =
+      '<a class="nav-item" href="super-admin.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">monitoring</span><span class="nav-item__label">Dashboard</span></a>' +
+      '<a class="nav-item" href="super-admin-clienti.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">apartment</span><span class="nav-item__label">Clienți</span></a>' +
+      '<div class="sidebar__group-label" aria-hidden="true">Configurare</div>' +
+      '<a class="nav-item" href="super-admin-fluxuri-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">account_tree</span><span class="nav-item__label">Fluxuri</span></a>' +
+      '<a class="nav-item nav-item--active" data-nav="super-admin-anexe" href="administrare.html?view=superadmin#tipuri-anexe"><span class="material-symbols-outlined nav-item__icon filled" aria-hidden="true">description</span><span class="nav-item__label">Anexe</span></a>' +
+      '<a class="nav-item" href="super-admin-tipuri-clienti-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">category</span><span class="nav-item__label">Tipuri de clienți</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">dns</span><span class="nav-item__label">Infrastructură</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">receipt_long</span><span class="nav-item__label">Facturare</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">settings</span><span class="nav-item__label">Setări</span></a>';
+  }
+}
 
 (function () {
   'use strict';
@@ -26,8 +57,9 @@ try {
   var TODAY_ISO = '2026-04-20';
   var ANEXE_KEY = 'scriptica.anexe';
   var TYPES_KEY = 'scriptica.situationTypes';
-  var DEFAULT_TAB = 'utilizatori-interni';
-  var ENABLED_TABS = ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-audit', 'tipuri-anexe', 'taguri'];
+  var IS_SUPERADMIN_CONTEXT = _isSuperAdminAnexe;
+  var DEFAULT_TAB = IS_SUPERADMIN_CONTEXT ? 'tipuri-anexe' : 'utilizatori-interni';
+  var ENABLED_TABS = IS_SUPERADMIN_CONTEXT ? ['tipuri-anexe'] : ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-audit', 'tipuri-anexe', 'taguri'];
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   var FREQUENCY_LABELS = {
@@ -120,6 +152,14 @@ try {
     initConfirmModal();
     bindGlobalModalKeys();
     activateFromHash();
+    if (IS_SUPERADMIN_CONTEXT) {
+      var activeAnexeNav = document.querySelector('[data-nav="super-admin-anexe"]');
+      if (activeAnexeNav) {
+        activeAnexeNav.classList.add('nav-item--active');
+        var activeAnexeIcon = activeAnexeNav.querySelector('.material-symbols-outlined');
+        if (activeAnexeIcon) activeAnexeIcon.classList.add('filled');
+      }
+    }
     window.addEventListener('hashchange', activateFromHash);
     /* Întoarcerea din constructor (inclusiv bfcache) re-citește anexele. */
     window.addEventListener('pageshow', function (e) {
@@ -313,7 +353,7 @@ try {
 
     bindAction('ta-tbody', function (action, id) {
       if (action === 'edit') {
-        window.location.href = 'constructor-anexe.html?id=' + encodeURIComponent(id);
+        window.location.href = 'constructor-anexe.html?id=' + encodeURIComponent(id) + (IS_SUPERADMIN_CONTEXT ? '&view=superadmin' : '');
         return;
       }
       var anexa = (MOCK.anexeTypes || []).find(function (a) { return a.id === id; });
@@ -1193,7 +1233,7 @@ try {
     }
     openConfirm({
       title: 'Ștergere anexă',
-      body: '„' + anexa.name + '” nu va mai putea fi atașată pașilor tipurilor de situații. Formularele deja completate rămân în arhivă.',
+      body: '„' + anexa.name + '” nu va mai putea fi atașată pașilor tipurilor de situații. Anexele deja completate rămân în arhivă.',
       confirmLabel: 'Șterge',
       onConfirm: function () {
         var idx = MOCK.anexeTypes.indexOf(anexa);
@@ -1224,7 +1264,7 @@ try {
     var nume = $('ma-nume').value.trim();
     setErr(modal, 'nume', !nume, 'Introdu numele anexei.');
     if (!nume) return;
-    window.location.href = 'constructor-anexe.html?new=1&name=' + encodeURIComponent(nume);
+    window.location.href = 'constructor-anexe.html?new=1&name=' + encodeURIComponent(nume) + (IS_SUPERADMIN_CONTEXT ? '&view=superadmin' : '');
   }
 
   /* =============================================================

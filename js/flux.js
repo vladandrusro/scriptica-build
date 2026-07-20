@@ -3,7 +3,8 @@
    Servește verticalele custom definite de Super Admin în registrul
    de fluxuri (flowVerticals/flowTemplates), fără pagini dedicate:
      flux.html?vertical=<id>   → lista de elemente ale verticalei
-     flux-detaliu.html?id=<id> → workspace-ul unui element (etape)
+   flux-detaliu.html?id=<id> → compatibilitate: redirecționează spre
+   situație-detaliu.html?flowId=<id>, workspace-ul bogat comun
    Verticalele builtin (contabil/audit) NU trec pe aici — au paginile
    lor dedicate; motorul redă doar forma standard a ciclului de viață.
    Datele: MOCK.flowItems (seed) + localStorage prin scripticaFlowSave.
@@ -295,7 +296,7 @@
       '<div class="exp-panel">' +
         '<div class="am-steps" role="list" aria-label="Etape">' + stepsHtml + '</div>' +
         '<div class="exp-footer">' +
-          '<a class="exp-open-link" href="flux-detaliu.html?id=' + esc(it.id) + '">Deschide ' + esc((v.itemLabel || 'elementul').toLowerCase()) + ' →</a>' +
+          '<a class="exp-open-link" href="situatie-detaliu.html?flowId=' + esc(it.id) + '">Deschide ' + esc((v.itemLabel || 'elementul').toLowerCase()) + ' →</a>' +
         '</div>' +
       '</div>' +
     '</td></tr>';
@@ -415,9 +416,7 @@
     function recompute() {
       var t = tpls.find(function (x) { return x.id === tipSel.value; });
       if (!t || !dateInp.value) {
-        dl.innerHTML = (v.lifecycle || []).map(function (nm, i) {
-          return '<div class="deadlines__row"><span class="deadlines__step">Etapa ' + (i + 1) + ' — ' + esc(nm) + '</span><span class="deadlines__date">—</span></div>';
-        }).join('');
+        dl.innerHTML = '<div class="deadlines__row"><span class="deadlines__step">Selectează un flux pentru a vedea pașii lui</span><span class="deadlines__date">—</span></div>';
         return;
       }
       dl.innerHTML = t.steps.map(function (st, i) {
@@ -468,10 +467,22 @@
   }
 
   /* ============================================================
-     DETALIU — flux-detaliu.html?id=<id>
+     DETALIU LEGACY — flux-detaliu.html?id=<id> redirecționează
+     spre workspace-ul bogat comun
      ============================================================ */
 
   function renderDetailPage(root) {
+    /* Compatibilitate pentru linkurile/bookmark-urile vechi. Workspace-ul
+       complet este comun tuturor fluxurilor și trăiește pe suprafața
+       situație-detaliu; flux-detaliu rămâne doar o adresă de redirecționare. */
+    var legacyId = qs('id');
+    if (legacyId) {
+      var next = new URLSearchParams(window.location.search);
+      next.delete('id');
+      next.set('flowId', legacyId);
+      window.location.replace('situatie-detaliu.html?' + next.toString());
+      return;
+    }
     var item = (MOCK.flowItems || []).find(function (i) { return i.id === qs('id'); });
     if (!item) { notFound(root, 'Elementul cerut nu există.'); return; }
     var v = window.scripticaVerticalById(item.verticalId);

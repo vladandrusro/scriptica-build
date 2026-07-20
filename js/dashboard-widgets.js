@@ -171,7 +171,7 @@
         count = items.length;
         listHref = 'flux.html?vertical=' + encodeURIComponent(v.id);
         rows = items.slice(0, 5).map(function (i) {
-          return rowHtml('flux-detaliu.html?id=' + esc(i.id), esc(i.name), esc(i.clientName || ''),
+          return rowHtml('situatie-detaliu.html?flowId=' + esc(i.id), esc(i.name), esc(i.clientName || ''),
             '<span class="dw-status">' + statusDot(i.status) + '</span>');
         });
       }
@@ -250,7 +250,7 @@
           if (!step) return;
           var d = daysDiff(addDaysISO(i.startDate, step.offsetDays));
           if (d == null) return;
-          rows.push({ days: d, title: esc(i.name), sub: esc(i.clientName || ''), href: 'flux-detaliu.html?id=' + esc(i.id) });
+          rows.push({ days: d, title: esc(i.name), sub: esc(i.clientName || ''), href: 'situatie-detaliu.html?flowId=' + esc(i.id) });
         });
       });
       rows.sort(function (a, b) { return a.days - b.days; });

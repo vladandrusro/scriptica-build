@@ -159,6 +159,7 @@
   }
 
   function typeOfSituation(situation) {
+    if (situation && situation.flowDefinition) return situation.flowDefinition;
     return (getMock().situationTypes || []).find(function (t) { return t.id === situation.typeId; }) || null;
   }
   function formulasForType(situation) {
@@ -255,7 +256,7 @@
   function getStepAnexe(situation) {
     var M = getMock();
     if (!situation) return [];
-    var type = (M.situationTypes || []).find(function (t) { return t.id === situation.typeId; });
+    var type = typeOfSituation(situation);
     if (!type || !type.steps) return [];
     var step = type.steps[situation.currentStep - 1];
     if (!step) return [];

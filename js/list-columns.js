@@ -287,7 +287,7 @@
   function syntheticItems(v, count) {
     var label = v.itemLabel || 'Element';
     var tpl = (MOCK().superAdmin.flowTemplates || []).find(function (t) { return t.verticalId === v.id; });
-    var steps = (tpl && tpl.steps) || [{ name: (v.lifecycle || ['Etapa 1'])[0], offsetDays: 10 }];
+    var steps = (tpl && tpl.steps) || [{ name: 'Lucru', offsetDays: 10 }];
     var statuses = ['analiza', 'in_verificare', 'spre_aprobare', 'finalizat'];
     var parties = ['Client Exemplu S.R.L.', 'Beneficiar Demo S.A.', 'Partener Model SRL-D', 'Firma Exemplu S.R.L.'];
     var out = [];

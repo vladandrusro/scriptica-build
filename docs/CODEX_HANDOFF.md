@@ -18,14 +18,16 @@ All ✅ (verified in source this week). In build order:
 4. **Typed fields + cross-anexă formulas** — `ref` codes on numeric fields (Constructor), formulas defined at mission-type level (administrare) with self-ref/cycle/duplicate validation, safe recursive-descent evaluator at fill time with 4 computed-field states + derivation modal; Anexa 9 / HG 1086/2013 risk-chain demo.
 5. **Personas by access-area** — 6 personas + Super Admin, domain scoping (contabil/audit) across nav, page guards, data filters, archive, anexe. Default persona is `complet`.
 6. **Super Admin (Scriptica HQ) zone** — ops dashboard with the downtime-by-cause model (`server`=outage/critical, `ai_vm`=AI-only outage/warn, `ai_limit`=plan-cap throttling = **upsell signal, not an incident**), clients list + enrollment, client detail (commercial/technical/flags).
-7. **Flow registry + generic engine** — HQ-defined verticals (identity colors, ≥1 lifecycle steps) + templates + client types; `flux.html`/`flux-detaliu.html` render any custom vertical; builtins redirect to dedicated pages; per-vertical table columns (`listView` + `SCRIPTICA_LISTVIEW` engine + HQ table builder in a simulated tenant page); per-client-type archive tree (AI doc-routing) and Acasă dashboard builder (palette/preview/drag).
-8. **Construcții client type + one-step flows** — minimum lifecycle steps lowered 2→1; seeded `ct_constructii` showcase; team-facing thesis doc `caz-utilizare-constructii.html`.
+7. **Flow registry + generic engine** — HQ-defined verticals (identity + document vocabulary) + templates (their own steps) + client types; `flux.html`/`flux-detaliu.html` render any custom vertical; builtins redirect to dedicated pages; per-vertical table columns (`listView` + `SCRIPTICA_LISTVIEW` engine + HQ table builder in a simulated tenant page); archive configuration and Acasă dashboard builder (palette/preview/drag).
+8. **Construcții client type + one-step flows** — templates may have a single step; seeded `ct_constructii` showcase; team-facing thesis doc `caz-utilizare-constructii.html`.
 9. **Presentation deck** — 7 slides (3 PNG + 4 live HTML incl. role matrix, "totul este un flux", mind-map, HQ launch journey), two-press exit into the prototype.
 10. **UX pass from colleague feedback + Tipuri de clienți v2** (the most recent commits, 2026-07-14) — vertical identity colors everywhere, redesigned client-type cards with stat chips/search/filter/sort/expander.
+11. **Constructor Fluxuri V2 promoted to the canonical HQ page** (2026-07-19) — per-template steps, individual mandatory tasks, attached anexe, required-field gating preview, long horizontal timelines and independent library/editor scrolling. Ciornele live in `scriptica.prototype.fluxuriV2`; publishing an unused/new flux writes the complete record through `scripticaFlowSave('template', ...)`, so Tipuri de clienți and enrolment read the same central registry. Fluxes already used by an enrolled client remain drafts until the propagation policy is decided.
+12. **Vertical document vocabulary** (2026-07-19) — the vertical is only the category for a set of flows and owns the document categories/types used by local-AI classification. Each document type has one default category; every flow inherits the vocabulary but may hide irrelevant categories; `Necategorisit` is permanent. Archive organization remains separate and follows flow needs rather than duplicating classification categories.
 
 ## What was being worked on (state at handoff)
 
-Nothing is mid-flight. ✅ The last session ended with commit `e1061a1` (client-type page spacing polish) committed AND deployed to production. 🧠 The natural continuation themes discussed but not started: per-template steps within one vertical, and activating anexe/documents/chat modules on generic verticals (see "Unresolved product questions").
+The current local working tree contains the Fluxuri V2 / Tipuri de clienți V2 explorations and the Super Admin Anexe navigation work. Fluxuri V2 is now wired to the canonical registry for new/unused templates, but has not been deployed as part of this update. The remaining product decision is how a newly published template version should affect clients already using that flux; until decided, the UI preserves the draft and blocks that publication without modifying client configuration.
 
 ## Recent important decisions and why
 
@@ -37,7 +39,9 @@ All 🧠 (recorded from prior conversations), with code effects verified ✅:
 - **Formula linking lives at mission-type level, not in the Constructor** — the Constructor only defines `ref` codes; one formula set per type applies to all its missions.
 - **Flow registry semantics chosen by Vlad**: two-layer granularity (vertical + template), seed-then-editable provisioning, ONE client type per client (hybrids get a dedicated mixed type), functional generation (not mock-only).
 - **Table-column editor is a dedicated simulated-tenant page**, not a modal (Vlad's explicit request; the old modal was removed, `?cols=` deep links redirect).
-- **One-step flows allowed** (min lifecycle stages 2→1) to serve "projects-only" businesses like construction — the step is the *container* (anexe/docs/tasks/chat), not bureaucracy.
+- **One-step flows allowed** to serve "projects-only" businesses like construction — the step is the *container* (anexe/docs/tasks/chat), not bureaucracy.
+- **Verticala nu definește pașii** — it groups related flows and defines their document-classification vocabulary. Each template owns its complete sequence of steps.
+- **Clasificare ≠ arhivă** — categories/types belong to the vertical; archive folders follow operational flow needs and remain independently configured.
 - **`main` is frozen as the pre-audit rollback baseline**; all work continues on `audit-vertical` deployed with `--branch=main`. ✅
 
 ## Known incomplete work (stubs by design vs gaps)
@@ -50,7 +54,7 @@ Real gaps to be aware of:
 - **`repeater_block` has no fill renderer** — a saved anexă containing one shows "Tip necunoscut: repeater_block" in the real fill modal; repeaters only work in the Constructor preview. The `calculated` field type is display-only everywhere.
 - **Workspace chat composer (audit) has no send handler**; doc-row actions/checkboxes in the audit workspace are unwired.
 - **Admin edits to internal users and tags are in-memory only** (only anexe + situationTypes persist).
-- **Generic verticals get steps only** — no anexe/documents/chat modules yet ("se activează per verticală" note in flux.js; also flagged "de activat" in caz-utilizare section 6). No edit/cancel/delete for flow items; several statuses unreachable from the UI.
+- **Generic flow instances still lack lifecycle management actions** — no edit/cancel/delete for flow items; several statuses remain unreachable from the UI. The shared workspace now renders the configured tasks, anexe and document vocabulary.
 - **HQ client detail**: feature-flag toggles and pause/cancel/edit-name buttons mutate nothing persistent.
 - **Three admin tabs greyed out**: Solicitări interne, Configurare Arhivă, Conținut Acasă (the latter two now conceptually superseded by the HQ per-client-type editors).
 - 15 audit anexă schemas carry `// STUB: câmpuri de validat vs HG 1086/2013`; FIAP external-signature flow and FCRI 3-day escalation explicitly deferred.
@@ -91,7 +95,7 @@ Simulated AI (setTimeout + seeded confidences, `observatieAI: 'Rezultate AI simu
 ## Unresolved product questions 🧠
 
 1. **Tenant nav shows ALL custom verticals for every client type** (shell.js `injectCustomVerticalNav`) — kept for the instant-demo effect; gating by `clientType.verticalIds` is the coherent alternative. Flagged, awaiting Vlad's call.
-2. **Different steps per template within one vertical** — today the lifecycle is fixed per vertical; Construcții raised the need ("de discutat, NU implementat").
+2. **Propagation of published flow changes** — Fluxuri now supports different steps per template and publishes new/unused templates centrally. Decide whether a later version updates existing customers, affects only future enrolments, or is offered as an explicit per-customer upgrade. Until then, publishing is held when an enrolled client already uses that template.
 3. When/how to **activate anexe/documents/chat on generic verticals** (the "de activat" row in caz-utilizare).
 4. Audit-report scoring: currently seeded mock; the real plan is a local-LLM computation on a paid tier ("fază ulterioară").
 5. ct_mixt archive has no Corespondență folder, so e-mails land in Necategorisit for the complet view — configurable at HQ, deliberately NOT called a bug; decide whether the seed should include it.

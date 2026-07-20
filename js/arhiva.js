@@ -15,12 +15,10 @@
   var RO_MONTHS = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
 
   /* ---------- Foldere din structura de arhivă (per tip de client) ----------
-     Nivelul „categorie" al arborelui = folderele rădăcină din structura
-     configurată de Super Admin pe tipul de client al firmei (Tipuri de
-     clienți → Structură arhivă). Documentele sunt rutate după `tipDocument`
-     (eticheta A.I. a LLM-ului local) către folderul care le declară tipul;
-     subfolderele participă la rutare împreună cu părintele. Ce nu e
-     recunoscut ajunge în folderul de sistem (Necategorisit). */
+     Arhiva este separată de vocabularul de clasificare al verticalei. Pentru
+     fluxurile configurabile, ea urmează direct nevoia de lucru: fiecare flux
+     inclus în tipul de client primește propriul dosar. Structurile istorice
+     de arhivă rămân disponibile pentru domeniile dedicate. */
   function tenantClientTypeId() {
     return (typeof window.scripticaTenantClientTypeId === 'function')
       ? window.scripticaTenantClientTypeId()
@@ -28,6 +26,8 @@
   }
 
   function buildArchiveFolders() {
+    var clientType = typeof window.scripticaClientTypeById === 'function'
+      ? window.scripticaClientTypeById(tenantClientTypeId()) : null;
     var tree = (typeof window.scripticaArchiveTreeFor === 'function')
       ? window.scripticaArchiveTreeFor(tenantClientTypeId()) : [];
     var folders = tree.map(function (f) {
@@ -40,6 +40,15 @@
         (n.children || []).forEach(walk);
       })(f);
       return { key: f.id, label: f.name, system: !!f.system, typeNames: names };
+    });
+    var templateIds = (clientType && clientType.defaultTemplateIds) || [];
+    var customVerticalIds = ((clientType && clientType.verticalIds) || []).filter(function (verticalId) {
+      var vertical = typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
+      return vertical && !vertical.builtin;
+    });
+    ((MOCK.superAdmin && MOCK.superAdmin.flowTemplates) || []).forEach(function (template) {
+      if (templateIds.indexOf(template.id) === -1 || customVerticalIds.indexOf(template.verticalId) === -1) return;
+      folders.push({ key: 'af_flow_' + template.id, label: template.name, system: false, flowTemplateId: template.id, typeNames: [] });
     });
     if (!folders.some(function (f) { return f.system; })) {
       folders.push({ key: 'af_fallback', label: 'Necategorisit', system: true, typeNames: [] });
@@ -58,6 +67,11 @@
   });
 
   function docCategory(doc) {
+    var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
+    if (flowItem) {
+      var flowFolder = ARCH_FOLDERS.find(function (folder) { return folder.flowTemplateId === flowItem.templateId; });
+      return flowFolder ? flowFolder.key : SYSTEM_FOLDER_KEY;
+    }
     for (var i = 0; i < ARCH_FOLDERS.length; i++) {
       if (!ARCH_FOLDERS[i].system && ARCH_FOLDERS[i].typeNames.indexOf(doc.tipDocument) !== -1) {
         return ARCH_FOLDERS[i].key;
@@ -105,6 +119,10 @@
       if (!ent) return null;
       return { id: 'aud_' + ent.id, companyName: ent.name, _audit: true };
     }
+    var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
+    if (flowItem) {
+      return { id: 'flow_' + String(flowItem.clientName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: flowItem.clientName || 'Client flux', _flow: true };
+    }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
     if (!sit) return null;
     return (MOCK.clients || []).find(function (c) { return c.id === sit.clientId; }) || null;
@@ -118,6 +136,13 @@
       var sc = m.status === 'aprobata' ? 'doc-row__source-status--closed' : 'doc-row__source-status--active';
       return '<td><a class="doc-row__source-situation" href="misiune-audit-workspace.html?id=' + esc(m.id) + '">' +
         esc(m.name) + '<span class="doc-row__source-status ' + sc + '">' + sl + '</span></a></td>';
+    }
+    var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === d.situationId; });
+    if (flowItem) {
+      var flowStatus = flowItem.status === 'finalizat' || flowItem.status === 'inchisa' ? 'Finalizat' : 'Activ';
+      var flowStatusClass = flowStatus === 'Finalizat' ? 'doc-row__source-status--closed' : 'doc-row__source-status--active';
+      return '<td><a class="doc-row__source-situation" href="situatie-detaliu.html?flowId=' + esc(flowItem.id) + '">' +
+        esc(flowItem.name) + '<span class="doc-row__source-status ' + flowStatusClass + '">' + flowStatus + '</span></a></td>';
     }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === d.situationId; });
     if (!sit) return '<td><span class="text-muted">—</span></td>';

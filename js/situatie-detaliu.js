@@ -19,6 +19,8 @@
   var currentUserId = MOCK.currentUserId || 1;
   var currentUser = MOCK.employees.find(function (e) { return e.id === currentUserId; }) || MOCK.currentUser;
   var currentSituation = null;
+  var currentWorkspaceKind = 'situatie';
+  var currentVertical = null;
 
   var MOCK_DOC_NAMES = [
     'factura_orange_martie',
@@ -49,6 +51,7 @@
     if (!document.getElementById('detail-main')) return;
     parseUrl();
     if (!currentSituation) return;
+    applyWorkspaceCopy();
     bindAvatarFallback();
     render();
     bindGlobal();
@@ -82,6 +85,23 @@
 
   function parseUrl() {
     var params = new URLSearchParams(window.location.search);
+    var flowId = params.get('flowId');
+    if (flowId) {
+      var item = (MOCK.flowItems || []).find(function (flowItem) { return flowItem.id === flowId; });
+      var vertical = item && typeof window.scripticaVerticalById === 'function'
+        ? window.scripticaVerticalById(item.verticalId) : null;
+      if (!item || !vertical || (typeof window.viewInScope === 'function' && !window.viewInScope(vertical.domain))) {
+        window.location.replace('acasa.html?view=' + encodeURIComponent(typeof window.getCurrentView === 'function' ? window.getCurrentView() : 'complet'));
+        return;
+      }
+      currentWorkspaceKind = 'flux';
+      currentVertical = vertical;
+      currentSituation = prepareFlowWorkspace(item, vertical);
+      document.body.setAttribute('data-workspace-kind', 'flux');
+      document.title = item.name + ' — Scriptica';
+      markFlowNavActive(vertical.id);
+      return;
+    }
     var id = params.get('id');
     var pool = (typeof window.getVisibleSituations === 'function') ? window.getVisibleSituations() : MOCK.situations;
     currentSituation = pool.find(function (s) { return s.id === id; });
@@ -98,6 +118,184 @@
     }
   }
 
+  function flowTemplateById(id) {
+    return (((MOCK.superAdmin || {}).flowTemplates) || []).find(function (template) {
+      return template.id === id;
+    }) || null;
+  }
+
+  function defaultFlowTasks(stepName, index) {
+    var normalized = String(stepName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (/recept|colect|solicit|pregat|evalu/.test(normalized)) {
+      return ['Confirmă informațiile de intrare', 'Verifică documentele primite'];
+    }
+    if (/verific|document|intervent|lucru|analiz/.test(normalized)) {
+      return ['Execută verificările pasului', 'Notează observațiile importante'];
+    }
+    if (/valid|raport|livr|inchid|urmar|ierarh/.test(normalized)) {
+      return ['Revizuiește rezultatul', 'Confirmă livrabilul pasului'];
+    }
+    return index === 0 ? ['Pregătește informațiile necesare'] : ['Finalizează activitatea pasului'];
+  }
+
+  function legacyFlowAnexe(templateId, stepIndex) {
+    var map = {
+      ft_consult_opinie: [
+        ['anx_consult_fisa_speta'],
+        ['anx_consult_analiza', 'anx_consult_proiect_opinie'],
+        ['anx_consult_validare_livrare']
+      ],
+      ft_consult_retainer: [
+        ['anx_consult_fisa_speta'],
+        ['anx_consult_analiza'],
+        ['anx_consult_validare_livrare']
+      ],
+      ft_constr_ofertare: [['anx_constr_propunere']],
+      ft_constr_contractare: [['anx_constr_contract']],
+      ft_constr_executie: [['anx_constr_pv_receptie', 'anx_constr_nota_fundamentare']],
+      ft_constr_complet: [['anx_constr_propunere'], ['anx_constr_contract'], ['anx_constr_pv_receptie', 'anx_constr_nota_fundamentare']]
+    };
+    return map[templateId] && map[templateId][stepIndex] ? map[templateId][stepIndex].slice() : [];
+  }
+
+  function normalizedFlowDefinition(item, vertical) {
+    var source = flowTemplateById(item.templateId) || { id: item.templateId, name: item.templateName, steps: [] };
+    var definition = Object.assign({}, source);
+    definition.steps = (source.steps || []).map(function (step, index) {
+      var stepId = step.id || (source.id + '_step_' + (index + 1));
+      var taskSource = (step.tasks && step.tasks.length) ? step.tasks : defaultFlowTasks(step.name, index);
+      return Object.assign({}, step, {
+        id: stepId,
+        tasks: taskSource.map(function (task, taskIndex) {
+          return {
+            id: (task && task.id) || (stepId + '_task_' + (taskIndex + 1)),
+            label: typeof task === 'string' ? task : (task.label || task.name || ''),
+            required: typeof task === 'string' ? true : task.required !== false
+          };
+        }),
+        anexeIds: Array.isArray(step.anexeIds) ? step.anexeIds.slice() : legacyFlowAnexe(source.id, index)
+      });
+    });
+    if (!definition.steps.length) {
+      var fallbackStepId = source.id + '_step_1';
+      definition.steps = [{
+        id: fallbackStepId,
+        name: 'Lucru',
+        offsetDays: 10,
+        tasks: defaultFlowTasks('Lucru', 0).map(function (label, taskIndex) {
+          return { id: fallbackStepId + '_task_' + (taskIndex + 1), label: label, required: true };
+        }),
+        anexeIds: legacyFlowAnexe(source.id, 0)
+      }];
+    }
+    return definition;
+  }
+
+  function mergeFlowWorkspaceCollection(collectionName, records, situationId) {
+    var collection = MOCK[collectionName] || [];
+    (records || []).forEach(function (record) {
+      var prepared = Object.assign({}, record, { situationId: situationId });
+      var existingIndex = collection.findIndex(function (candidate) {
+        return String(candidate.id) === String(prepared.id);
+      });
+      if (existingIndex >= 0) collection[existingIndex] = Object.assign({}, collection[existingIndex], prepared);
+      else collection.push(prepared);
+    });
+    MOCK[collectionName] = collection;
+  }
+
+  function mergeFlowWorkspaceContent(item) {
+    mergeFlowWorkspaceCollection('documents', item.documents, item.id);
+    mergeFlowWorkspaceCollection('messages', item.messages, item.id);
+  }
+
+  function prepareFlowWorkspace(item, vertical) {
+    var definition = normalizedFlowDefinition(item, vertical);
+    var total = definition.steps.length;
+    item.currentStep = Math.max(1, Math.min(parseInt(item.currentStep, 10) || 1, total));
+    item.totalSteps = total;
+    item.stepsCompleted = Math.max(0, parseInt(item.stepsCompleted, 10) || 0);
+    item.clientCompany = item.clientName || item.clientCompany || '—';
+    item.clientContact = item.clientContact || 'Contact client';
+    item.typeId = item.templateId;
+    item.typeName = item.templateName || definition.name;
+    item.typeLabel = item.name;
+    item.titularId = (item.responsibleIds || [])[0] || currentUserId;
+    var titular = MOCK.employees.find(function (employee) { return employee.id === item.titularId; });
+    item.titularName = titular ? titular.name : (currentUser.fullName || currentUser.name);
+    item.responsibleStepId = item.titularId;
+    item.responsibleStepName = item.titularName;
+    item.activeHelpers = item.activeHelpers || {};
+    item.helperRequests = item.helperRequests || [];
+    item.flowDefinition = definition;
+    item.flowVerticalId = vertical.id;
+    item.flowItemLabel = vertical.itemLabel || 'Flux';
+    item.__isFlowWorkspace = true;
+    mergeFlowWorkspaceContent(item);
+
+    var previousTasks = item.tasks || {};
+    var tasks = {};
+    definition.steps.forEach(function (step, stepIndex) {
+      var key = 'step' + (stepIndex + 1);
+      if (!Array.isArray(item.activeHelpers[key])) item.activeHelpers[key] = [];
+      var previous = previousTasks[key] || [];
+      var allDone = item.status === 'inchisa' || item.status === 'finalizat' || (stepIndex + 1) < item.currentStep;
+      tasks[key] = (step.tasks || []).map(function (task, taskIndex) {
+        var old = previous.find(function (candidate) { return String(candidate.id) === String(task.id); }) || previous[taskIndex] || null;
+        return Object.assign({
+          id: task.id,
+          label: task.label,
+          required: task.required !== false,
+          completed: allDone,
+          assigneeId: allDone ? item.titularId : null,
+          completedAt: allDone ? '2026-04-15T10:00:00' : null,
+          observation: '',
+          needsSeniorAttention: false,
+          attachments: []
+        }, old || {}, { label: task.label, required: task.required !== false });
+      });
+    });
+    item.tasks = tasks;
+    definition.steps.forEach(function (step, index) {
+      item['deadlineStep' + (index + 1)] = addDaysISO(item.startDate, step.offsetDays);
+    });
+    return item;
+  }
+
+  function addDaysISO(iso, days) {
+    var date = new Date(String(iso || '') + 'T00:00:00');
+    if (isNaN(date.getTime())) return '';
+    date.setDate(date.getDate() + (parseInt(days, 10) || 0));
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+
+  function markFlowNavActive(verticalId) {
+    var item = document.querySelector('[data-nav="flux-' + verticalId + '"]');
+    if (!item) return;
+    document.querySelectorAll('.sidebar__nav .nav-item').forEach(function (navItem) {
+      navItem.classList.remove('nav-item--active');
+      var icon = navItem.querySelector('.material-symbols-outlined');
+      if (icon) icon.classList.remove('filled');
+    });
+    item.classList.add('nav-item--active');
+    var activeIcon = item.querySelector('.material-symbols-outlined');
+    if (activeIcon) activeIcon.classList.add('filled');
+  }
+
+  function applyWorkspaceCopy() {
+    if (currentWorkspaceKind !== 'flux') return;
+    var noun = String(currentSituation.flowItemLabel || 'flux').toLowerCase();
+    var definiteNoun = workspaceDefiniteNoun(currentSituation);
+    var cancelTitle = document.getElementById('modal-anulare-title');
+    if (cancelTitle) cancelTitle.textContent = 'Anulare ' + noun;
+    var cancelBody = document.querySelector('#modal-anulare .modal__body > .modal__subtitle');
+    if (cancelBody) cancelBody.textContent = 'Această acțiune va anula permanent ' + definiteNoun + '. Toți utilizatorii implicați vor fi notificați. Anularea nu poate fi revocată.';
+    var cancelSubmit = document.querySelector('#modal-anulare [data-modal-submit]');
+    if (cancelSubmit) cancelSubmit.textContent = 'Anulează ' + definiteNoun;
+    var senior = document.querySelector('#modal-task-complete [name="senior"]');
+    if (senior && senior.parentNode) senior.parentNode.lastChild.textContent = ' Necesită atenția unui responsabil senior la validare';
+  }
+
   /* ---------- Rendering ---------- */
 
   function render() {
@@ -110,6 +308,46 @@
     renderChat();
     renderComposer();
     renderDebugBar();
+  }
+
+  function isClosedStatus(s) {
+    return !!s && (s.status === 'anulata' || s.status === 'inchisa' || s.status === 'finalizat');
+  }
+
+  function workDefinition(s) {
+    if (s && s.flowDefinition) return s.flowDefinition;
+    return (MOCK.situationTypes || []).find(function (type) { return type.id === s.typeId; }) || null;
+  }
+
+  function workspaceNoun(s) {
+    return currentWorkspaceKind === 'flux'
+      ? String((s && s.flowItemLabel) || 'flux').toLowerCase()
+      : 'situație';
+  }
+
+  function workspaceDefiniteNoun(s) {
+    var noun = workspaceNoun(s);
+    var labels = {
+      dosar: 'dosarul',
+      proiect: 'proiectul',
+      flux: 'fluxul',
+      situație: 'situația',
+      misiune: 'misiunea',
+      cerere: 'cererea',
+      lucrare: 'lucrarea',
+      element: 'elementul'
+    };
+    return labels[noun] || noun;
+  }
+
+  function persistFlowWorkspace() {
+    if (currentWorkspaceKind !== 'flux' || typeof window.scripticaFlowSave !== 'function') return;
+    var record = Object.assign({}, currentSituation);
+    delete record.flowDefinition;
+    delete record.__isFlowWorkspace;
+    delete record.flowItemLabel;
+    delete record.flowVerticalId;
+    window.scripticaFlowSave('flowItem', record);
   }
 
   function getClientFacingStatus(s) {
@@ -207,6 +445,10 @@
     var backBtn = document.getElementById('btn-back');
     if (!backBtn) return;
     backBtn.addEventListener('click', function () {
+      if (currentWorkspaceKind === 'flux') {
+        window.location.href = 'flux.html?vertical=' + encodeURIComponent(s.flowVerticalId);
+        return;
+      }
       if (isClient) {
         window.location.href = 'acasa.html?view=client';
         return;
@@ -238,7 +480,7 @@
     el.innerHTML =
       '<span class="material-symbols-outlined cancelled-banner__icon filled">cancel</span>' +
       '<div>' +
-        '<div class="cancelled-banner__title">Această situație a fost anulată.</div>' +
+        '<div class="cancelled-banner__title">' + (currentWorkspaceKind === 'flux' ? 'Acest flux a fost anulat.' : 'Această situație a fost anulată.') + '</div>' +
         '<div class="cancelled-banner__reason">Motiv: ' + esc(s.cancellationReason || '—') + '</div>' +
       '</div>';
   }
@@ -250,7 +492,7 @@
     var pending = (s.helperRequests || []).find(function (r) {
       return r.helperId === currentUserId && r.status === 'pending';
     });
-    if (!pending || s.status === 'anulata' || s.status === 'inchisa') {
+    if (!pending || isClosedStatus(s)) {
       el.style.display = 'none';
       el.innerHTML = '';
       return;
@@ -281,7 +523,7 @@
     if (!el) return;
     var s = currentSituation;
 
-    el.classList.toggle('is-disabled', s.status === 'anulata' || s.status === 'inchisa');
+    el.classList.toggle('is-disabled', isClosedStatus(s));
 
     // Client-view: show a simplified status + deadline, no step mechanics.
     if (typeof getCurrentView === 'function' && getCurrentView() === 'client') {
@@ -297,15 +539,23 @@
     var stepInfo = { name: currentStepName(s), number: s.currentStep };
     var stepKey = 'step' + s.currentStep;
 
-    // Responsible person
-    var resp = MOCK.employees.find(function (u) { return u.id === s.responsibleStepId; });
-    var avatarsHtml = resp ? avatarHtml(resp, 'avatar') : '';
+    // Responsible person / team
+    var responsiblePeople = currentWorkspaceKind === 'flux'
+      ? (s.responsibleIds || []).map(function (id) {
+          return MOCK.employees.find(function (employee) { return employee.id === id; });
+        }).filter(Boolean)
+      : [MOCK.employees.find(function (u) { return u.id === s.responsibleStepId; })].filter(Boolean);
+    var avatarsHtml = responsiblePeople.map(function (person, index) {
+      return avatarHtml(person, index === 0 ? 'avatar' : 'avatar avatar--sm');
+    }).join('');
 
     // Helpers (active on current step)
     var helpers = ((s.activeHelpers || {})[stepKey] || [])
       .map(function (uid) { return MOCK.employees.find(function (u) { return u.id === uid; }); })
       .filter(Boolean);
-    helpers.forEach(function (h) {
+    helpers.filter(function (helper) {
+      return !responsiblePeople.some(function (person) { return person.id === helper.id; });
+    }).forEach(function (h) {
       avatarsHtml += avatarHtml(h, 'avatar avatar--sm');
     });
 
@@ -362,7 +612,7 @@
     var tasks = (s.tasks && s.tasks[stepKey]) ? s.tasks[stepKey] : [];
     var role = currentUserRole();
 
-    var readonly = s.status === 'anulata' || s.status === 'inchisa' || role === 'viewer';
+    var readonly = isClosedStatus(s) || role === 'viewer';
     el.classList.toggle('is-readonly', readonly);
 
     var anexeHtml = '<div class="task-panel__anexe" id="anexe-cards"></div>';
@@ -373,7 +623,7 @@
 
     var canAct = (role === 'responsible') && !readonly;
 
-    var allDone = tasks.every(function (t) { return t.completed; });
+    var allDone = tasks.filter(function (t) { return t.required !== false; }).every(function (t) { return t.completed; });
 
     var stepAnexe = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.getStepAnexe(s) : [];
     var anexeOk = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.allComplete(s) : true;
@@ -387,7 +637,7 @@
         (canAct ?
           '<button type="button" class="btn btn--critical" id="btn-anulare">' +
             '<span class="material-symbols-outlined" aria-hidden="true">cancel</span>' +
-            'Anulează situația' +
+            'Anulează ' + esc(workspaceDefiniteNoun(s)) +
           '</button>' : '<span></span>') +
         (canAct ?
           '<div class="step-actions__center">' +
@@ -478,9 +728,10 @@
       }
     }
 
-    return '<label class="task-detail-row" data-task-id="' + t.id + '">' +
+    return '<label class="task-detail-row" data-task-id="' + esc(t.id) + '">' +
       '<input type="checkbox" data-task-toggle ' + (t.completed ? 'checked' : '') + '>' +
-      '<span class="task-detail-row__label' + (t.completed ? ' is-done' : '') + '">' + esc(t.label) + '</span>' +
+      '<span class="task-detail-row__label' + (t.completed ? ' is-done' : '') + '">' + esc(t.label) +
+        (t.required === false ? ' <span class="pill pill--neutral">Opțional</span>' : '') + '</span>' +
       timeBlock +
       indicators +
       assigneeBlock +
@@ -507,7 +758,7 @@
     }
 
     if (!msgs.length) {
-      listEl.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">inbox</span><p>Nu ai mesaje pentru această situație.</p></div>';
+      listEl.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">inbox</span><p>Nu ai mesaje pentru acest ' + esc(workspaceNoun(currentSituation)) + '.</p></div>';
       return;
     }
 
@@ -713,24 +964,34 @@
 
     function handleAttachUpload(file) {
       close();
-      showToast('info', 'Documentul „' + file.name + '" este în procesare...');
+      showToast('info', 'Documentul „' + file.name + '” este în procesare...');
       setTimeout(function () {
+        var verticalId = currentSituation.verticalId || 'vert_contabil';
+        var categories = typeof window.scripticaDocumentCategoriesForVertical === 'function'
+          ? window.scripticaDocumentCategoriesForVertical(verticalId) : [];
+        var template = (MOCK.superAdmin.flowTemplates || []).find(function (item) { return item.id === currentSituation.templateId; });
+        var visibleIds = (template && template.documentCategoryIds) || categories.map(function (category) { return category.id; });
+        var initialCategory = categories.find(function (category) {
+          return !category.system && visibleIds.indexOf(category.id) !== -1 && (category.documentTypes || []).length;
+        }) || { id: 'necategorisit', documentTypes: [] };
+        var initialType = initialCategory.documentTypes[0] ? initialCategory.documentTypes[0].name : 'Altele';
         var newDoc = {
           id: 'doc_upload_' + Date.now(),
           situationId: currentSituation.id,
+          domain: currentSituation.domain || 'contabil',
           filename: file.name,
           uploadedAt: new Date().toISOString(),
           source: 'upload',
           pagesCount: 1,
           multiDoc: false, multiDocConfidence: null,
-          tipDocument: 'Factură furnizor',
+          tipDocument: initialType,
           emitent: 'În analiză',
           numarDocument: null,
           dataEmiterii: null,
           perioadaFiscala: null,
           valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: 'RON',
-          categoriePropusa: 'Factură furnizor',
-          broadCategory: 'intrare',
+          categoriePropusa: initialType,
+          broadCategory: initialCategory.id,
           subFilter: null,
           confidenceExtraction: 92,
           confidenceCategorization: 94,
@@ -766,6 +1027,11 @@
   function renderDebugBar() {
     var el = document.getElementById('debug-bar');
     if (!el) return;
+    if (currentWorkspaceKind === 'flux') {
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
     // Find a situation where the current user has a pending help request
     var helperTarget = MOCK.situations.find(function (s) {
       return s.id !== currentSituation.id && (s.helperRequests || []).some(function (r) {
@@ -836,7 +1102,7 @@
     return '<article class="message-card message-card--system-cancelled">' +
       '<div class="message-card__sys-head">' +
         '<span class="material-symbols-outlined filled" aria-hidden="true">cancel</span>' +
-        'Situația a fost anulată de ' + esc(m.cancelledBy) +
+        (currentWorkspaceKind === 'flux' ? 'Fluxul' : 'Situația') + ' a fost anulat' + (currentWorkspaceKind === 'flux' ? '' : 'ă') + ' de ' + esc(m.cancelledBy) +
       '</div>' +
       '<div class="message-card__body">Motiv: ' + esc(m.reason) + '</div>' +
       '<div class="message-card__contact">' + formatDate(m.date) + '</div>' +
@@ -902,12 +1168,12 @@
 
   function onTaskToggle(e, cb) {
     var s = currentSituation;
-    if (s.status === 'anulata' || s.status === 'inchisa') { cb.checked = !cb.checked; return; }
+    if (isClosedStatus(s)) { cb.checked = !cb.checked; return; }
 
     var row = cb.closest('[data-task-id]');
-    var taskId = parseInt(row.getAttribute('data-task-id'), 10);
+    var taskId = row.getAttribute('data-task-id');
     var stepKey = 'step' + s.currentStep;
-    var task = s.tasks[stepKey].find(function (t) { return t.id === taskId; });
+    var task = s.tasks[stepKey].find(function (t) { return String(t.id) === taskId; });
     if (!task) return;
 
     if (cb.checked) {
@@ -920,6 +1186,7 @@
           task.observation = result.observation;
           task.needsSeniorAttention = result.needsSeniorAttention;
           task.attachments = result.attachments;
+          persistFlowWorkspace();
           showToast('success', 'Task finalizat.');
         } else {
           cb.checked = false;
@@ -932,6 +1199,7 @@
       task.completed = false;
       task.assigneeId = null;
       task.completedAt = null;
+      persistFlowWorkspace();
       renderTaskPanel();
     }
   }
@@ -1163,6 +1431,7 @@
         read: true
       });
 
+      persistFlowWorkspace();
       cleanup();
       showToast('success', 'Cererea de asistență a fost trimisă către ' + helper.name + '.');
       renderChat();
@@ -1220,8 +1489,9 @@
         reason: reason,
         read: true
       });
+      persistFlowWorkspace();
       cleanup();
-      showToast('info', 'Situația a fost anulată.');
+      showToast('info', currentWorkspaceKind === 'flux' ? 'Fluxul a fost anulat.' : 'Situația a fost anulată.');
       render();
     };
     modal.addEventListener('click', onBackdrop);
@@ -1237,7 +1507,7 @@
   function onFinalizeStep() {
     var s = currentSituation;
     var stepKey = 'step' + s.currentStep;
-    var allDone = s.tasks[stepKey].every(function (t) { return t.completed; });
+    var allDone = s.tasks[stepKey].filter(function (t) { return t.required !== false; }).every(function (t) { return t.completed; });
     if (!allDone) return;
     if (window.SCRIPTICA_ANEXE && !window.SCRIPTICA_ANEXE.allComplete(s)) return;
 
@@ -1265,12 +1535,13 @@
       s.status = 'inchisa';
       s.totalSteps = total;
       s.stepsCompleted = total;
-      showToast('success', 'Situația a fost finalizată și închisă.');
+      showToast('success', currentWorkspaceKind === 'flux' ? 'Fluxul a fost finalizat și închis.' : 'Situația a fost finalizată și închisă.');
     } else {
       s.currentStep = completedStep + 1;
       s.stepsCompleted = completedStep;
       showToast('success', 'Pasul ' + completedStep + ' a fost finalizat.');
     }
+    persistFlowWorkspace();
     render();
   }
 
@@ -1292,6 +1563,7 @@
       accepted: true,
       read: true
     });
+    persistFlowWorkspace();
     showToast('success', 'Ai acceptat cererea de asistență.');
     render();
   }
@@ -1308,6 +1580,7 @@
       accepted: false,
       read: true
     });
+    persistFlowWorkspace();
     showToast('info', 'Ai refuzat cererea de asistență.');
     render();
   }
@@ -1344,7 +1617,7 @@
      with the legacy standardSteps as fallback. */
 
   function currentStepName(s) {
-    var type = MOCK.situationTypes.find(function (t) { return t.id === s.typeId; });
+    var type = workDefinition(s);
     var typeStep = (type && type.steps) ? type.steps[s.currentStep - 1] : null;
     if (typeStep && typeStep.name) return typeStep.name;
     var std = MOCK.standardSteps['step' + s.currentStep];
@@ -1355,7 +1628,7 @@
      cu s.totalSteps drept fallback pentru tipuri fără steps — astfel
      editările de pași din admin se reflectă la randare și finalizare. */
   function totalStepsFor(s) {
-    var type = MOCK.situationTypes.find(function (t) { return t.id === s.typeId; });
+    var type = workDefinition(s);
     if (type && type.steps && type.steps.length) return type.steps.length;
     return s.totalSteps;
   }
@@ -1364,6 +1637,10 @@
 
   function currentUserRole() {
     var s = currentSituation;
+    if (currentWorkspaceKind === 'flux') {
+      var view = typeof window.getCurrentView === 'function' ? window.getCurrentView() : 'complet';
+      if ((s.responsibleIds || []).indexOf(currentUserId) !== -1 || view === 'complet' || view === 'admin') return 'responsible';
+    }
     if (s.responsibleStepId === currentUserId) return 'responsible';
     var stepKey = 'step' + s.currentStep;
     if ((s.activeHelpers[stepKey] || []).indexOf(currentUserId) !== -1) return 'helper';
@@ -1506,16 +1783,17 @@
         return;
       }
       listEl.innerHTML = visible.map(function (t) {
-        var id = 'tp-task-' + t.id;
-        var checked = selected.has(t.id) ? ' checked' : '';
+        var taskKey = String(t.id);
+        var id = 'tp-task-' + taskKey.replace(/[^a-zA-Z0-9_-]/g, '-');
+        var checked = selected.has(taskKey) ? ' checked' : '';
         return '<label class="picker-item" for="' + id + '">' +
-          '<input type="checkbox" id="' + id + '" data-task="' + t.id + '"' + checked + '>' +
+          '<input type="checkbox" id="' + id + '" data-task="' + esc(taskKey) + '"' + checked + '>' +
           '<span class="picker-item__label">' + esc(t.label) + '</span>' +
         '</label>';
       }).join('');
       listEl.querySelectorAll('[data-task]').forEach(function (cb) {
         cb.addEventListener('change', function () {
-          var id = parseInt(cb.getAttribute('data-task'), 10);
+          var id = cb.getAttribute('data-task');
           if (cb.checked) selected.add(id); else selected.delete(id);
           updateCount();
         });
@@ -1546,13 +1824,16 @@
     cancelBtn.onclick = cleanup;
     submitBtn.onclick = function () {
       if (!selected.size) return;
-      var picked = tasks.filter(function (t) { return selected.has(t.id); });
+      var picked = tasks.filter(function (t) { return selected.has(String(t.id)); });
       window.ScripticaTimer.start({
         situationId: s.id,
         clientCompany: s.clientCompany,
         typeLabel: s.typeLabel,
         taskIds: picked.map(function (t) { return t.id; }),
-        taskLabels: picked.map(function (t) { return t.label; })
+        taskLabels: picked.map(function (t) { return t.label; }),
+        detailUrl: currentWorkspaceKind === 'flux'
+          ? 'situatie-detaliu.html?flowId=' + encodeURIComponent(s.id)
+          : 'situatie-detaliu.html?id=' + encodeURIComponent(s.id)
       });
       cleanup();
       showToast('success', 'Cronometrul a pornit.');

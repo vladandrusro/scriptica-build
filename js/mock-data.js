@@ -517,8 +517,9 @@ window.SCRIPTICA_MOCK = {
 
     /* ============================================================
        Registrul de fluxuri (HQ) — două straturi:
-       1. flowVerticals — verticale (module de lucru) cu forma ciclului
-          de viață. Cele `builtin` sunt Situații Contabile și Misiuni de
+       1. flowVerticals — verticale (categorii de fluxuri) care definesc
+          vocabularul de categorii și tipuri de documente. Pașii aparțin
+          exclusiv șabloanelor de flux. Cele `builtin` sunt Situații Contabile și Misiuni de
           Audit — au pagini dedicate; cele custom sunt servite de motorul
           generic (flux.html / flux-detaliu.html).
        2. flowTemplates — șabloane concrete de flux în interiorul unei
@@ -534,31 +535,86 @@ window.SCRIPTICA_MOCK = {
         id: "vert_contabil", domain: "contabil", builtin: true, status: "activ", color: "albastru",
         name: "Situații Contabile", icon: "fact_check",
         itemLabel: "Situație", itemLabelPlural: "Situații",
-        description: "Verticala contabilă: situații recurente pe pași standard (recepție → verificare → validare).",
-        lifecycle: ["Recepție documente", "Verificare documente", "Validare și închidere"],
+        description: "Categoria fluxurilor contabile recurente și vocabularul documentelor folosite în ele.",
+        documentFilters: [{ id: "bonuri", label: "Bonuri" }, { id: "ue", label: "UE" }, { id: "non-ue", label: "Non-UE" }],
+        defaultDocumentCategoryIds: ["intrare", "iesire", "salarizare", "necategorisit"],
+        documentCategories: [
+          { id: "intrare", name: "Intrare", documentTypes: [
+            { id: "dt_factura_furnizor", name: "Factură furnizor" }, { id: "dt_bon_fiscal", name: "Bon fiscal" },
+            { id: "dt_nir", name: "NIR" }, { id: "dt_aviz_pv", name: "Aviz / Proces verbal" },
+            { id: "dt_extras_cont", name: "Extras de cont" }, { id: "dt_registru_casa", name: "Registru de casă" }
+          ] },
+          { id: "iesire", name: "Ieșire", documentTypes: [
+            { id: "dt_factura_emisa", name: "Factură emisă" }, { id: "dt_foaie_parcurs", name: "Foaie de parcurs" }
+          ] },
+          { id: "salarizare", name: "Salarizare", documentTypes: [
+            { id: "dt_stat_salarii", name: "Ștat de salarii" }, { id: "dt_document_hr", name: "Document HR" }
+          ] },
+          { id: "documentatie_contabila", name: "Documentație contabilă", documentTypes: [
+            { id: "dt_declaratie_fiscala", name: "Declarație fiscală" }, { id: "dt_balanta", name: "Balanță de verificare" },
+            { id: "dt_registru_imobilizari", name: "Registru imobilizări" }, { id: "dt_situatia_stocurilor", name: "Situația stocurilor" }
+          ] },
+          { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
+        ],
         pages: { list: "situatii.html" }
       },
       {
         id: "vert_audit", domain: "audit", builtin: true, status: "activ", color: "auriu",
         name: "Misiuni de Audit", icon: "verified_user",
         itemLabel: "Misiune", itemLabelPlural: "Misiuni",
-        description: "Verticala de audit public intern: misiuni pe etapele legale, cu planificare multianuală și rapoarte.",
-        lifecycle: ["Pregătirea misiunii", "Intervenția la fața locului", "Raportarea rezultatelor", "Urmărirea recomandărilor"],
+        description: "Categoria misiunilor de audit public intern și vocabularul documentelor de audit.",
+        documentFilters: [],
+        documentCategories: [
+          { id: "planificare_audit", name: "Planificare", documentTypes: [
+            { id: "dt_ordin_serviciu", name: "Ordin de serviciu" }, { id: "dt_notificare_audit", name: "Notificare misiune" },
+            { id: "dt_program_misiune", name: "Program de misiune" }
+          ] },
+          { id: "documente_lucru", name: "Documente de lucru", documentTypes: [
+            { id: "dt_minuta", name: "Minută" }, { id: "dt_fiap", name: "FIAP" }, { id: "dt_fcri", name: "FCRI" }
+          ] },
+          { id: "rapoarte_audit", name: "Rapoarte", documentTypes: [{ id: "dt_raport_audit", name: "Raport de audit" }] },
+          { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
+        ],
         pages: { list: "misiuni-audit.html" }
       },
       {
         id: "vert_consultanta", domain: "consultanta", builtin: false, status: "activ", color: "verde",
         name: "Consultanță Fiscală", icon: "balance",
         itemLabel: "Dosar", itemLabelPlural: "Dosare",
-        description: "Dosare de consultanță fiscală: analiza solicitării, documentare, opinie scrisă și livrare.",
-        lifecycle: ["Analiza solicitării", "Documentare și redactare opinie", "Livrare și follow-up"]
+        description: "Categoria dosarelor de consultanță fiscală și vocabularul documentelor folosite în ele.",
+        documentFilters: [{ id: "ue", label: "UE" }, { id: "non-ue", label: "Non-UE" }],
+        documentCategories: [
+          { id: "primite", name: "Primite de la client", documentTypes: [
+            { id: "dt_solicitare_client", name: "Solicitare client" }, { id: "dt_contract", name: "Contract" },
+            { id: "dt_factura_servicii", name: "Factură servicii" }, { id: "dt_corespondenta", name: "E-mail de transmitere" }
+          ] },
+          { id: "documentare", name: "Documentare", documentTypes: [
+            { id: "dt_legislatie", name: "Legislație și practică" }, { id: "dt_document_suport", name: "Document suport" }
+          ] },
+          { id: "livrabile", name: "Livrabile", documentTypes: [{ id: "dt_opinie_fiscala", name: "Opinie fiscală" }] },
+          { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
+        ]
       },
       {
         id: "vert_constructii", domain: "constructii", builtin: false, status: "activ", color: "portocaliu",
         name: "Proiecte", icon: "construction",
         itemLabel: "Proiect", itemLabelPlural: "Proiecte",
-        description: "Proiecte de construcții — fiecare stadiu (ofertare, contractare, execuție) e un flux de sine stătător, cu un singur pas de lucru.",
-        lifecycle: ["Lucru"]
+        description: "Categoria proiectelor de construcții și vocabularul documentelor folosite în fluxurile lor.",
+        documentFilters: [],
+        documentCategories: [
+          { id: "licitatie", name: "Licitație", documentTypes: [
+            { id: "dt_propunere_tehnica", name: "Propunere tehnică" }, { id: "dt_oferta_financiara", name: "Ofertă financiară" },
+            { id: "dt_caiet_sarcini", name: "Caiet de sarcini" }
+          ] },
+          { id: "contracte", name: "Contracte", documentTypes: [{ id: "dt_contract_executie", name: "Contract de execuție" }] },
+          { id: "executie", name: "Execuție", documentTypes: [
+            { id: "dt_pv_receptie", name: "Proces verbal de recepție" }, { id: "dt_pv_nereguli", name: "Proces verbal de constatare a neregulilor" },
+            { id: "dt_nota_fundamentare", name: "Notă de fundamentare" }, { id: "dt_situatie_lucrari", name: "Situație de lucrări" },
+            { id: "dt_deviz", name: "Deviz" }
+          ] },
+          { id: "corespondenta", name: "Corespondență", documentTypes: [{ id: "dt_corespondenta", name: "E-mail de transmitere" }] },
+          { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
+        ]
       }
     ],
 
@@ -566,6 +622,7 @@ window.SCRIPTICA_MOCK = {
       /* — contabil (oglinda șabloanelor standard provisionate la clienți) — */
       { id: "ft_raport_lunar", verticalId: "vert_contabil", name: "Raport Lunar", frequency: "lunar", status: "activ",
         description: "Raport contabil lunar complet: înregistrare documente, închidere balanță și rapoarte.",
+        documentCategoryIds: ["intrare", "iesire", "salarizare", "documentatie_contabila", "necategorisit"],
         steps: [
           { name: "Recepție documente", offsetDays: 10 },
           { name: "Verificare documente", offsetDays: 20 },
@@ -573,6 +630,7 @@ window.SCRIPTICA_MOCK = {
         ] },
       { id: "ft_jurnal_tva", verticalId: "vert_contabil", name: "Jurnal TVA", frequency: "lunar", status: "activ",
         description: "Jurnal de TVA cu verificarea corelațiilor D300 ↔ D394.",
+        documentCategoryIds: ["intrare", "iesire", "documentatie_contabila", "necategorisit"],
         steps: [
           { name: "Recepție documente", offsetDays: 7 },
           { name: "Verificare documente", offsetDays: 14 },
@@ -580,6 +638,7 @@ window.SCRIPTICA_MOCK = {
         ] },
       { id: "ft_salarizari", verticalId: "vert_contabil", name: "Salarizări", frequency: "lunar", status: "activ",
         description: "Calcul salarii, ștat de plată și declarația D112.",
+        documentCategoryIds: ["intrare", "salarizare", "documentatie_contabila", "necategorisit"],
         steps: [
           { name: "Recepție documente", offsetDays: 5 },
           { name: "Verificare documente", offsetDays: 10 },
@@ -587,6 +646,7 @@ window.SCRIPTICA_MOCK = {
         ] },
       { id: "ft_declaratii_trim", verticalId: "vert_contabil", name: "Declarații Trimestriale", frequency: "trimestrial", status: "activ",
         description: "Declarații fiscale trimestriale (D100, D101).",
+        documentCategoryIds: ["intrare", "documentatie_contabila", "necategorisit"],
         steps: [
           { name: "Recepție documente", offsetDays: 30 },
           { name: "Verificare documente", offsetDays: 60 },
@@ -595,6 +655,7 @@ window.SCRIPTICA_MOCK = {
       /* — audit — */
       { id: "ft_audit_regularitate", verticalId: "vert_audit", name: "Misiune de audit de regularitate", frequency: "anual", status: "activ",
         description: "Misiune de audit public intern de regularitate, structurată pe etapele legale ale misiunii.",
+        documentCategoryIds: ["planificare_audit", "documente_lucru", "rapoarte_audit", "necategorisit"],
         steps: [
           { name: "Pregătirea misiunii", offsetDays: 15 },
           { name: "Intervenția la fața locului", offsetDays: 45 },
@@ -603,6 +664,7 @@ window.SCRIPTICA_MOCK = {
         ] },
       { id: "ft_audit_risc", verticalId: "vert_audit", name: "Evaluarea riscurilor (Anexa 9)", frequency: "anual", status: "activ",
         description: "Evaluarea riscurilor cu punctaj derivat automat (Probabilitate × Impact × Pondere).",
+        documentCategoryIds: ["planificare_audit", "documente_lucru", "rapoarte_audit", "necategorisit"],
         steps: [
           { name: "Evaluarea riscurilor", offsetDays: 20 },
           { name: "Ierarhizare și raport", offsetDays: 40 }
@@ -610,33 +672,84 @@ window.SCRIPTICA_MOCK = {
       /* — consultanță fiscală (verticală custom, motor generic) — */
       { id: "ft_consult_opinie", verticalId: "vert_consultanta", name: "Opinie fiscală punctuală", frequency: "punctual", status: "activ",
         description: "Opinie scrisă pe o speță fiscală punctuală, cu documentare și livrare către client.",
+        documentCategoryIds: ["primite", "documentare", "livrabile", "necategorisit"],
         steps: [
-          { name: "Analiza solicitării", offsetDays: 3 },
-          { name: "Documentare și redactare opinie", offsetDays: 10 },
-          { name: "Livrare și follow-up", offsetDays: 15 }
+          { id: "ft_consult_opinie_step_1", name: "Analiza solicitării", offsetDays: 3,
+            tasks: [
+              { id: "ft_consult_opinie_step_1_task_1", label: "Înregistrează întrebarea fiscală", required: true },
+              { id: "ft_consult_opinie_step_1_task_2", label: "Confirmă obiectivul și perioada analizată", required: true },
+              { id: "ft_consult_opinie_step_1_task_3", label: "Solicită documentele lipsă", required: false }
+            ],
+            anexeIds: ["anx_consult_fisa_speta"] },
+          { id: "ft_consult_opinie_step_2", name: "Documentare și redactare opinie", offsetDays: 10,
+            tasks: [
+              { id: "ft_consult_opinie_step_2_task_1", label: "Verifică legislația și practica relevante", required: true },
+              { id: "ft_consult_opinie_step_2_task_2", label: "Analizează documentele justificative", required: true },
+              { id: "ft_consult_opinie_step_2_task_3", label: "Redactează proiectul opiniei", required: true },
+              { id: "ft_consult_opinie_step_2_task_4", label: "Solicită revizie internă", required: false }
+            ],
+            anexeIds: ["anx_consult_analiza", "anx_consult_proiect_opinie"] },
+          { id: "ft_consult_opinie_step_3", name: "Livrare și follow-up", offsetDays: 15,
+            tasks: [
+              { id: "ft_consult_opinie_step_3_task_1", label: "Validează opinia finală", required: true },
+              { id: "ft_consult_opinie_step_3_task_2", label: "Transmite opinia clientului", required: true },
+              { id: "ft_consult_opinie_step_3_task_3", label: "Înregistrează întrebările de follow-up", required: false }
+            ],
+            anexeIds: ["anx_consult_validare_livrare"] }
         ] },
       { id: "ft_consult_retainer", verticalId: "vert_consultanta", name: "Consultanță lunară (retainer)", frequency: "lunar", status: "activ",
         description: "Pachet lunar de consultanță: colectarea spețelor, răspunsuri consolidate și sinteză de final de lună.",
+        documentCategoryIds: ["primite", "documentare", "livrabile", "necategorisit"],
         steps: [
-          { name: "Analiza solicitării", offsetDays: 5 },
-          { name: "Documentare și redactare opinie", offsetDays: 18 },
-          { name: "Livrare și follow-up", offsetDays: 25 }
+          { id: "ft_consult_retainer_step_1", name: "Analiza solicitării", offsetDays: 5,
+            tasks: [
+              { id: "ft_consult_retainer_step_1_task_1", label: "Centralizează solicitările lunii", required: true },
+              { id: "ft_consult_retainer_step_1_task_2", label: "Prioritizează spețele urgente", required: true }
+            ], anexeIds: ["anx_consult_fisa_speta"] },
+          { id: "ft_consult_retainer_step_2", name: "Documentare și redactare opinie", offsetDays: 18,
+            tasks: [
+              { id: "ft_consult_retainer_step_2_task_1", label: "Documentează fiecare speță", required: true },
+              { id: "ft_consult_retainer_step_2_task_2", label: "Redactează răspunsurile consolidate", required: true },
+              { id: "ft_consult_retainer_step_2_task_3", label: "Solicită revizie internă", required: false }
+            ], anexeIds: ["anx_consult_analiza"] },
+          { id: "ft_consult_retainer_step_3", name: "Livrare și follow-up", offsetDays: 25,
+            tasks: [
+              { id: "ft_consult_retainer_step_3_task_1", label: "Transmite sinteza lunară", required: true },
+              { id: "ft_consult_retainer_step_3_task_2", label: "Confirmă închiderea solicitărilor", required: true }
+            ], anexeIds: ["anx_consult_validare_livrare"] }
         ] },
       /* — construcții (verticală custom cu O SINGURĂ etapă — proiecte per stadiu) — */
       { id: "ft_constr_ofertare", verticalId: "vert_constructii", name: "Ofertare licitație publică", frequency: "punctual", status: "activ",
         description: "Stadiul 1 — precontractare: propunere tehnică și ofertă financiară, generate din bibliotecă sau încărcate manual.",
+        documentCategoryIds: ["licitatie", "corespondenta", "necategorisit"],
         steps: [
-          { name: "Lucru", offsetDays: 20 }
+          { id: "ft_constr_ofertare_step_1", name: "Lucru", offsetDays: 20,
+            tasks: [
+              { id: "ft_constr_ofertare_step_1_task_1", label: "Verifică documentația de atribuire", required: true },
+              { id: "ft_constr_ofertare_step_1_task_2", label: "Pregătește propunerea tehnică", required: true },
+              { id: "ft_constr_ofertare_step_1_task_3", label: "Validează oferta financiară", required: true }
+            ], anexeIds: ["anx_constr_propunere"] }
         ] },
       { id: "ft_constr_contractare", verticalId: "vert_constructii", name: "Contractare", frequency: "punctual", status: "activ",
         description: "Stadiul 2 — semnarea contractului după câștigarea licitației: generat în aplicație sau încărcat semnat.",
+        documentCategoryIds: ["contracte", "corespondenta", "necategorisit"],
         steps: [
-          { name: "Lucru", offsetDays: 15 }
+          { id: "ft_constr_contractare_step_1", name: "Lucru", offsetDays: 15,
+            tasks: [
+              { id: "ft_constr_contractare_step_1_task_1", label: "Verifică forma finală a contractului", required: true },
+              { id: "ft_constr_contractare_step_1_task_2", label: "Obține semnăturile părților", required: true }
+            ], anexeIds: ["anx_constr_contract"] }
         ] },
       { id: "ft_constr_executie", verticalId: "vert_constructii", name: "Execuție lucrări", frequency: "punctual", status: "activ",
         description: "Stadiul 3 — desfășurarea lucrărilor: PV-uri de recepție, constatare nereguli și note de fundamentare, pe măsura execuției.",
+        documentCategoryIds: ["executie", "corespondenta", "necategorisit"],
         steps: [
-          { name: "Lucru", offsetDays: 90 }
+          { id: "ft_constr_executie_step_1", name: "Lucru", offsetDays: 90,
+            tasks: [
+              { id: "ft_constr_executie_step_1_task_1", label: "Actualizează stadiul lucrărilor", required: true },
+              { id: "ft_constr_executie_step_1_task_2", label: "Înregistrează procesele-verbale", required: true },
+              { id: "ft_constr_executie_step_1_task_3", label: "Documentează abaterile și justificările", required: false }
+            ], anexeIds: ["anx_constr_pv_receptie", "anx_constr_nota_fundamentare"] }
         ] }
     ],
 
@@ -775,10 +888,9 @@ window.SCRIPTICA_MOCK = {
     ]
   },
 
-  /* Tipuri de documente — vocabularul cu care A.I. (LLM-ul local)
-     etichetează documentele intrate (câmpul `tipDocument` de pe document).
-     Sursa dropdown-ului din editorul de structură de arhivă; `domain`
-     leagă tipul de verticala din care provine (null = generic). */
+  /* Catalog de compatibilitate pentru structurile de arhivă istorice.
+     Sursa canonică a vocabularului A.I. este acum `flowVerticals[].documentCategories`;
+     lista plată rămâne pentru id-urile deja salvate în `archiveTree`. */
   documentTypes: [
     { id: "dt_factura_furnizor", name: "Factură furnizor", domain: "contabil" },
     { id: "dt_factura_emisa", name: "Factură emisă", domain: "contabil" },
@@ -828,7 +940,8 @@ window.SCRIPTICA_MOCK = {
       clientName: "Electro Distrib S.R.L.",
       templateId: "ft_consult_opinie", templateName: "Opinie fiscală punctuală",
       startDate: "2026-04-08", currentStep: 2, stepsCompleted: 1,
-      status: "in_verificare", responsibleIds: [6, 2]
+      status: "in_verificare", responsibleIds: [6, 2],
+      clientContact: "Radu Stan"
     },
     {
       id: "fi_0002", verticalId: "vert_consultanta", domain: "consultanta",
@@ -915,6 +1028,63 @@ window.SCRIPTICA_MOCK = {
      in the admin editor. `schema.fields` uses the module types of the
      constructor (see js/constructor-anexe.js). */
   anexeTypes: [
+    /* — consultanță fiscală: anexe configurate pe pașii fluxului — */
+    {
+      id: "anx_consult_fisa_speta",
+      name: "Fișă de încadrare a speței fiscale",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      categories: ["consultanta"],
+      schema: { fields: [
+        { type: "section_title", text: "Solicitarea clientului" },
+        { type: "text_short", label: "Întrebarea fiscală", required: true, help: "Formulează clar problema care trebuie analizată.", maxLength: 180 },
+        { type: "text_long", label: "Context și situație de fapt", required: true, help: "", rows: 4 },
+        { type: "date", label: "Data de referință a analizei", required: true, help: "" },
+        { type: "document_picker", label: "Documente inițiale", required: false, help: "", multi: true, source: "current_situation", filterCategory: "all" }
+      ] }
+    },
+    {
+      id: "anx_consult_analiza",
+      name: "Fișă de analiză fiscală",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      categories: ["consultanta"],
+      schema: { fields: [
+        { type: "section_title", text: "Analiza speței" },
+        { type: "dropdown", label: "Domeniu fiscal", required: true, help: "", options: ["TVA", "Impozit pe profit", "Impozit pe venit", "Accize", "Procedură fiscală"] },
+        { type: "text_long", label: "Situația de fapt verificată", required: true, help: "", rows: 4 },
+        { type: "text_long", label: "Temeiuri legale aplicabile", required: true, help: "", rows: 4 },
+        { type: "checkboxes", label: "Surse consultate", required: true, help: "", options: ["Codul fiscal", "Norme metodologice", "Jurisprudență", "Ghiduri ANAF", "Documentele clientului"] },
+        { type: "text_long", label: "Riscuri și interpretări alternative", required: false, help: "", rows: 3 }
+      ] }
+    },
+    {
+      id: "anx_consult_proiect_opinie",
+      name: "Proiectul opiniei fiscale",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      categories: ["consultanta"],
+      schema: { fields: [
+        { type: "section_title", text: "Concluzia consultantului" },
+        { type: "text_long", label: "Concluzie recomandată", required: true, help: "", rows: 4 },
+        { type: "text_long", label: "Argumentație", required: true, help: "", rows: 6 },
+        { type: "radio", label: "Revizie internă", required: true, help: "", options: ["De revizuit", "Revizuită — fără observații", "Revizuită — cu observații integrate"] },
+        { type: "file_upload", label: "Document de lucru", required: false, help: "", multi: false, maxSizeMB: 10, allowedTypes: "PDF, DOCX" }
+      ] }
+    },
+    {
+      id: "anx_consult_validare_livrare",
+      name: "Validare și livrare opinie",
+      status: "activ",
+      updatedAt: "2026-04-20",
+      categories: ["consultanta"],
+      schema: { fields: [
+        { type: "banner", variant: "info", text: "Confirmă forma finală și transmiterea opiniei către client." },
+        { type: "boolean", label: "Opinia finală a fost validată", required: true, help: "" },
+        { type: "date", label: "Data transmiterii către client", required: true, help: "" },
+        { type: "text_long", label: "Întrebări de follow-up", required: false, help: "", rows: 3 }
+      ] }
+    },
     /* — construcții: biblioteca de formulare a domeniului — */
     {
       id: "anx_constr_propunere",
@@ -1372,6 +1542,27 @@ window.SCRIPTICA_MOCK = {
       updatedAt: "2026-04-19",
       completedByName: null
     },
+    /* Dosarul demonstrativ de consultanță: analiza este completă,
+       proiectul opiniei rămâne intenționat incomplet pentru gating. */
+    "fi_0001::anx_consult_analiza": {
+      values: {
+        "1": "TVA",
+        "2": "Electro Distrib S.R.L. achiziționează servicii de consultanță de la un furnizor stabilit în afara României.",
+        "3": "Art. 278 alin. (2) și art. 307 alin. (2) din Codul fiscal; regulile privind taxarea inversă.",
+        "4": ["Codul fiscal", "Norme metodologice", "Documentele clientului"],
+        "5": "De confirmat locul prestării pentru serviciile accesorii."
+      },
+      updatedAt: "2026-04-19",
+      completedByName: "Pavel Romanovici"
+    },
+    "fi_0001::anx_consult_proiect_opinie": {
+      values: {
+        "1": "Serviciile sunt impozabile în România prin mecanismul taxării inverse.",
+        "2": "Beneficiarul român evidențiază TVA colectată și deductibilă, cu respectarea condițiilor generale de deducere."
+      },
+      updatedAt: "2026-04-20",
+      completedByName: null
+    },
     /* Lanțul de risc — sursele (PROB/IMP/PONDERE) seedate pe misiunea demo.
        Deschiderea anexei „Stabilirea punctajului" arată PUNCTAJ = 2×3×1,5 = 9,
        calculat automat. Câmpurile sunt indexate: PROB=2, IMP=3, PONDERE=4. */
@@ -1389,6 +1580,7 @@ window.SCRIPTICA_MOCK = {
     { id: "audit", label: "Audit" },
     { id: "salarizare", label: "Salarizare" },
     { id: "fiscal", label: "Fiscal" },
+    { id: "consultanta", label: "Consultanță fiscală" },
     { id: "constructii", label: "Construcții" }
   ],
 
@@ -1672,6 +1864,60 @@ window.SCRIPTICA_MOCK = {
   ],
 
   messages: [
+    /* ---- Conversația dosarului demonstrativ de consultanță ---- */
+    {
+      id: 201,
+      situationId: "fi_0001",
+      clientCompany: "Electro Distrib S.R.L.",
+      clientContact: "Radu Stan",
+      sender: "client",
+      senderName: "Radu Stan",
+      date: "2026-04-14",
+      body: "Vă trimit contractul și factura furnizorului extern. Avem nevoie să confirmăm tratamentul TVA înainte de depunerea decontului.",
+      attachments: [ { count: 2, label: "documente la opinia fiscală" } ],
+      chips: [ { label: "2x Primite", style: "neutral" } ],
+      read: true
+    },
+    {
+      id: 202,
+      situationId: "fi_0001",
+      clientCompany: "Electro Distrib S.R.L.",
+      clientContact: "Radu Stan",
+      sender: "system", subtype: "step_completion",
+      date: "2026-04-15",
+      stepCompleted: 1, stepName: "Analiza solicitării",
+      completedBy: "Pavel Romanovici",
+      completedAt: "2026-04-15T10:20:00",
+      summary: "Pasul 1 finalizat. Obiectivul analizei și documentele de intrare au fost confirmate cu clientul.",
+      read: true
+    },
+    {
+      id: 203,
+      situationId: "fi_0001",
+      clientCompany: "Electro Distrib S.R.L.",
+      clientContact: "Radu Stan",
+      sender: "internal",
+      senderName: "Cristina Popescu",
+      date: "2026-04-18",
+      body: "Am verificat încadrarea serviciilor. Te rog să confirmi dacă factura include și servicii accesorii; poate schimba argumentația din proiect.",
+      attachments: [],
+      chips: [],
+      read: true
+    },
+    {
+      id: 204,
+      situationId: "fi_0001",
+      clientCompany: "Electro Distrib S.R.L.",
+      clientContact: "Radu Stan",
+      sender: "ai",
+      senderName: "Mesaj Automat Scriptica A.I.",
+      date: "2026-04-20",
+      body: "Pasul 2 — Documentare și redactare opinie este în lucru. Proiectul opiniei are un câmp obligatoriu necompletat: Revizie internă.",
+      attachments: [],
+      chips: [],
+      read: false,
+      channels: ["email"]
+    },
     {
       id: 1,
       situationId: "0000000126",
@@ -1861,6 +2107,10 @@ window.SCRIPTICA_MOCK = {
     return out;
   }
   var M = window.SCRIPTICA_MOCK;
+  var seededVerticals = {};
+  var seededTemplates = {};
+  ((M.superAdmin && M.superAdmin.flowVerticals) || []).forEach(function (v) { seededVerticals[v.id] = v; });
+  ((M.superAdmin && M.superAdmin.flowTemplates) || []).forEach(function (t) { seededTemplates[t.id] = t; });
   M.anexeTypes = mergeInto(M.anexeTypes || [], 'scriptica.anexe');
   M.situationTypes = mergeInto(M.situationTypes || [], 'scriptica.situationTypes');
 
@@ -1870,6 +2120,31 @@ window.SCRIPTICA_MOCK = {
   var SA = M.superAdmin || {};
   SA.flowVerticals = mergeInto(SA.flowVerticals || [], 'scriptica.flowVerticals');
   SA.flowTemplates = mergeInto(SA.flowTemplates || [], 'scriptica.flowTemplates');
+  /* Migrare blândă pentru stări locale vechi: păstrăm editările utilizatorului,
+     dar completăm vocabularul de documente introdus după salvarea lor. */
+  SA.flowVerticals.forEach(function (v) {
+    var seed = seededVerticals[v.id];
+    if (seed && v.documentVocabularyVersion !== 1) {
+      v.documentCategories = JSON.parse(JSON.stringify(seed.documentCategories || []));
+      v.documentFilters = JSON.parse(JSON.stringify(seed.documentFilters || []));
+      if (seed.defaultDocumentCategoryIds) v.defaultDocumentCategoryIds = seed.defaultDocumentCategoryIds.slice();
+    }
+    if (!v.documentFilters && seed) v.documentFilters = JSON.parse(JSON.stringify(seed.documentFilters || []));
+    if (!v.defaultDocumentCategoryIds && seed && seed.defaultDocumentCategoryIds) {
+      v.defaultDocumentCategoryIds = seed.defaultDocumentCategoryIds.slice();
+    }
+    v.documentVocabularyVersion = 1;
+    delete v.lifecycle;
+  });
+  SA.flowTemplates.forEach(function (t) {
+    var seed = seededTemplates[t.id];
+    var vertical = SA.flowVerticals.find(function (v) { return v.id === t.verticalId; });
+    var systemIds = ((vertical && vertical.documentCategories) || []).filter(function (category) { return category.system; }).map(function (category) { return category.id; });
+    var hasWorkingCategory = (t.documentCategoryIds || []).some(function (id) { return systemIds.indexOf(id) === -1; });
+    if ((!t.documentCategoryIds || !t.documentCategoryIds.length || !hasWorkingCategory) && seed && seed.documentCategoryIds) {
+      t.documentCategoryIds = seed.documentCategoryIds.slice();
+    }
+  });
   SA.clientTypes = mergeInto(SA.clientTypes || [], 'scriptica.clientTypes');
   SA.clients = mergeInto(SA.clients || [], 'scriptica.saClients');
   M.flowItems = mergeInto(M.flowItems || [], 'scriptica.flowItems');
@@ -1947,10 +2222,51 @@ window.SCRIPTICA_MOCK = {
       .filter(function (i) { return i.verticalId === verticalId; });
   };
 
-  /* ---- Structura de arhivă (per tip de client) ---- */
-  window.scripticaDocumentTypes = function () {
-    return window.SCRIPTICA_MOCK.documentTypes || [];
+  /* ---- Vocabularul documentelor (per verticală) ---- */
+  window.scripticaDocumentCategoriesForVertical = function (verticalId) {
+    var vertical = window.scripticaVerticalById(verticalId);
+    return (vertical && vertical.documentCategories) || [];
   };
+  window.scripticaDocumentTypesForVertical = function (verticalId) {
+    var types = [];
+    window.scripticaDocumentCategoriesForVertical(verticalId).forEach(function (category) {
+      (category.documentTypes || []).forEach(function (type) {
+        types.push({ id: type.id, name: type.name, verticalId: verticalId, categoryId: category.id });
+      });
+    });
+    return types;
+  };
+  window.scripticaDocumentTypes = function () {
+    var out = [];
+    var seen = {};
+    window.scripticaFlowVerticals().forEach(function (vertical) {
+      window.scripticaDocumentTypesForVertical(vertical.id).forEach(function (type) {
+        if (!seen[type.id]) { seen[type.id] = true; out.push(type); }
+      });
+    });
+    /* Compatibilitate pentru structurile de arhivă salvate înainte ca
+       vocabularul să fie mutat pe verticală. */
+    (window.SCRIPTICA_MOCK.documentTypes || []).forEach(function (type) {
+      if (!seen[type.id]) { seen[type.id] = true; out.push(type); }
+    });
+    return out;
+  };
+  window.scripticaDocumentCategoryForType = function (verticalId, value) {
+    var wanted = String(value || '').toLocaleLowerCase('ro-RO');
+    return window.scripticaDocumentCategoriesForVertical(verticalId).find(function (category) {
+      return (category.documentTypes || []).some(function (type) {
+        return type.id === value || String(type.name || '').toLocaleLowerCase('ro-RO') === wanted;
+      });
+    }) || null;
+  };
+  window.scripticaSystemDocumentCategory = function (verticalId) {
+    return window.scripticaDocumentCategoriesForVertical(verticalId).find(function (category) {
+      return category.system || category.id === 'necategorisit';
+    }) || null;
+  };
+  /* ---- Structura de arhivă (per tip de client) ----
+     Arhiva este o configurație separată: urmează nevoile fluxului și nu
+     redefinește ori deține categoriile folosite de clasificarea A.I. */
   /* Clasa de identitate cromatică a unei verticale (.va-<culoare>) —
      culoarea se alege în HQ la crearea/editarea verticalei. */
   window.scripticaVerticalAccentClass = function (v) {
@@ -2663,6 +2979,83 @@ window.SCRIPTICA_MOCK = {
     }
   ];
 
+  /* Documentele dosarului configurabil folosesc același motor vizual și
+     aceleași acțiuni ca documentele unei situații contabile. */
+  window.SCRIPTICA_MOCK.documents.push(
+    {
+      id: "doc_flow_001", situationId: "fi_0001", domain: "consultanta",
+      filename: "contract_servicii_consultanta.pdf", uploadedAt: "2026-04-14T09:12:00",
+      source: "email", pagesCount: 6, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Contract", emitent: "Global Tax Advisory GmbH",
+      numarDocument: "GTA-184/2026", dataEmiterii: "2026-04-05", perioadaFiscala: "2026-04",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "EUR",
+      categoriePropusa: "Contract", broadCategory: "primite", subFilter: "ue",
+      confidenceExtraction: 97, confidenceCategorization: 96,
+      observatieAI: "Contract pentru servicii de consultanță prestate de un furnizor stabilit în Germania.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "doc_flow_002", situationId: "fi_0001", domain: "consultanta",
+      filename: "factura_servicii_GTA_aprilie.pdf", uploadedAt: "2026-04-14T09:14:00",
+      source: "email", pagesCount: 1, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Factură servicii", emitent: "Global Tax Advisory GmbH",
+      numarDocument: "RE-2026-0418", dataEmiterii: "2026-04-08", perioadaFiscala: "2026-04",
+      valoareFaraTVA: 4200, tvaProcent: 0, tvaValoare: 0, valoareTotala: 4200, moneda: "EUR",
+      categoriePropusa: "Factură servicii", broadCategory: "primite", subFilter: "ue",
+      confidenceExtraction: 98, confidenceCategorization: 97,
+      observatieAI: "Factură fără TVA emisă de furnizor UE; este indicat codul valid de TVA al beneficiarului român.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "doc_flow_003", situationId: "fi_0001", domain: "consultanta",
+      filename: "corespondenta_speta_TVA.pdf", uploadedAt: "2026-04-15T14:30:00",
+      source: "email", pagesCount: 3, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "E-mail de transmitere", emitent: "Electro Distrib S.R.L.",
+      numarDocument: null, dataEmiterii: "2026-04-15", perioadaFiscala: "2026-04",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: null,
+      categoriePropusa: "E-mail de transmitere", broadCategory: "primite", subFilter: null,
+      confidenceExtraction: 94, confidenceCategorization: 92,
+      observatieAI: "Corespondență cu explicațiile clientului privind natura serviciilor achiziționate.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "doc_flow_004", situationId: "fi_0001", domain: "consultanta",
+      filename: "extras_cod_fiscal_art_278.pdf", uploadedAt: "2026-04-18T11:05:00",
+      source: "upload", pagesCount: 4, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Legislație și practică", emitent: "Ministerul Finanțelor",
+      numarDocument: null, dataEmiterii: "2026-04-18", perioadaFiscala: "2026",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: null,
+      categoriePropusa: "Legislație și practică", broadCategory: "documentare", subFilter: null,
+      confidenceExtraction: 99, confidenceCategorization: 93,
+      observatieAI: "Extras de lucru: locul prestării serviciilor și persoana obligată la plata TVA.",
+      verificat: true, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "doc_flow_005", situationId: "fi_0001", domain: "consultanta",
+      filename: "proiect_opinie_fiscala_v1.docx", uploadedAt: "2026-04-20T09:40:00",
+      source: "upload", pagesCount: 5, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Opinie fiscală", emitent: "Scriptica Consulting",
+      numarDocument: "OP-17/2026", dataEmiterii: "2026-04-20", perioadaFiscala: "2026-04",
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: null,
+      categoriePropusa: "Opinie fiscală", broadCategory: "livrabile", subFilter: null,
+      confidenceExtraction: 100, confidenceCategorization: 100,
+      observatieAI: "Prima versiune a opiniei fiscale; revizia internă este încă în așteptare.",
+      verificat: false, verificatManual: false, pageThumbnails: []
+    },
+    {
+      id: "doc_flow_006", situationId: "fi_0001", domain: "consultanta",
+      filename: "scan_anexa_neidentificata.pdf", uploadedAt: "2026-04-20T10:18:00",
+      source: "email", pagesCount: 2, multiDoc: false, multiDocConfidence: null,
+      tipDocument: "Altele", emitent: "—",
+      numarDocument: null, dataEmiterii: null, perioadaFiscala: null,
+      valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: null,
+      categoriePropusa: "Altele", broadCategory: "necategorisit", subFilter: null,
+      confidenceExtraction: 61, confidenceCategorization: 48,
+      observatieAI: "Conținut insuficient pentru o clasificare sigură. Este necesară verificarea manuală.",
+      verificat: false, verificatManual: false, pageThumbnails: []
+    }
+  );
+
   /* Seed a plausible observation on one completed task per completed step
      for every situation, plus a couple of senior-attention flags for variety.
      Ensures the Situații table's expanded row always has something to show. */
@@ -2995,7 +3388,15 @@ window.SCRIPTICA_MOCK = {
     var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.documents) || [];
     if (typeof window.getViewScope === 'function') {
       var scope = window.getViewScope();
-      all = all.filter(function (d) { return scope.indexOf(d.domain || 'contabil') !== -1; });
+      var flowItems = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.flowItems) || [];
+      all = all.filter(function (d) {
+        var domain = d.domain;
+        if (!domain && d.situationId) {
+          var flowItem = flowItems.find(function (item) { return item.id === d.situationId; });
+          domain = flowItem && flowItem.domain;
+        }
+        return scope.indexOf(domain || 'contabil') !== -1;
+      });
     }
     if (!isClientView()) return all;
     var visibleSitIds = window.getVisibleSituations().map(function (s) { return s.id; });

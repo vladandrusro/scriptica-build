@@ -51,12 +51,12 @@ flowchart TD
 | Module | Owns | Exposes (window.*) |
 |---|---|---|
 | `js/shell.js` | persona/view model, body classes, nav injection (audit, planificare, custom verticals, admin) + domain gating, sidebar/messaging chrome, avatar dropdown | `getCurrentView`, `setCurrentView`, `getViewScope`, `viewInScope`, `scripticaCurrentUser`, `renderAvatar`, `scripticaInitials`, `scripticaAvatarColor` |
-| `js/mock-data.js` | ALL data (seed + merge + derivation), flow-registry persistence API, visibility/scoping helpers | `SCRIPTICA_MOCK`, `scripticaFlowSave/Delete`, `scripticaFlowVerticals/CustomVerticals/VerticalById/TemplatesForVertical/ClientTypes/ClientTypeById/FlowItemsForVertical`, `scripticaDocumentTypes/DocTypeById/ArchiveTreeFor/DefaultArchiveTree/TenantClientTypeId`, `getVisibleSituations/Clients/Documents/Messages/Anexe`, `scripticaVerticalAccentClass`, `scripticaIsClientView`, `SCRIPTICA_CANVAS_CLIENT_ID`, label helpers |
+| `js/mock-data.js` | ALL data (seed + merge + derivation), flow-registry persistence API, vertical-owned document vocabulary, visibility/scoping helpers | `SCRIPTICA_MOCK`, `scripticaFlowSave/Delete`, `scripticaFlowVerticals/CustomVerticals/VerticalById/TemplatesForVertical/ClientTypes/ClientTypeById/FlowItemsForVertical`, `scripticaDocumentCategoriesForVertical/DocumentTypesForVertical/DocumentCategoryForType/SystemDocumentCategory`, `scripticaDocumentTypes/DocTypeById/ArchiveTreeFor/DefaultArchiveTree/TenantClientTypeId`, `getVisibleSituations/Clients/Documents/Messages/Anexe`, `scripticaVerticalAccentClass`, `scripticaIsClientView`, `SCRIPTICA_CANVAS_CLIENT_ID`, label helpers |
 | `js/timer.js` | cross-page active timer (only persisted timer state) | `ScripticaTimer`; events `scriptica:timer-started/-stopped` |
 | `js/dashboard.js` | static home regions, client/audit home routing, Situație Nouă modal, toasts | `SCRIPTICA_TOAST` |
 | `js/dashboard-widgets.js` | 10-widget library; swaps `#main` on acasa.html with the client type's configured layout | `SCRIPTICA_WIDGETS {render, cardHtml, paletteFor}` |
 | `js/situatii.js` / `js/situatie-detaliu.js` / `js/documents.js` | contabil list, workspace (tasks/chat/anexe gating), AI-document modals & upload simulation | `SCRIPTICA_SITUATII_RESET`, `SCRIPTICA_OPEN_DOC_AI_MODAL`, `SCRIPTICA_DOC_TIP_PREFIX`, `SCRIPTICA_DOCS_REFRESH` |
-| `js/arhiva.js` | archive tree (Client→An→Lună→Category from HQ archiveTree) | — |
+| `js/arhiva.js` | archive tree (Container→An→Lună→Folder); legacy folders come from HQ archiveTree, custom-flow folders follow the included templates and are independent from classification categories | — |
 | `js/time-tracking.js` | month view, bar chart, session table/edit | — |
 | `js/misiuni-audit.js` / `js/misiune-audit-workspace.js` / `js/planificare-audit.js` / `js/rapoarte-audit.js` | audit list+tabs+creation, workspace (objectives, Dosar Permanent, Etapa IV, decision bar), plans, reports table+modals | `SCRIPTICA_MISIUNI_RESET`, `SCRIPTICA_RAPOARTE.render` |
 | `js/administrare.js` | hash-routed admin tabs; situation/mission type builder (steps, anexe attach, cross-anexă formulas with DFS cycle validation) | — |
@@ -64,7 +64,9 @@ flowchart TD
 | `js/anexa-fill.js` | fill modal for all field types, completion %, safe formula evaluator (`evalExpr`, recursive descent, **no eval**), computed-field states (auto/override/manual/pending), derivation modal | `SCRIPTICA_ANEXE {renderCards, allComplete, getStepAnexe}`; event `scriptica:anexa-saved` |
 | `js/list-columns.js` | per-vertical table-column engine ("expresia în tabel") | `SCRIPTICA_LISTVIEW {availableFor, defaultsFor, effectiveFor, colById, headerHtml, cellsHtml, colCount, normalizeSituation/Mission/FlowItem, sampleItems}` |
 | `js/flux.js` | generic list+detail for custom verticals; builtin verticals redirect to dedicated pages | — |
-| `js/super-admin.js` | ALL 7 HQ pages routed by `body[data-page]`: ops dashboard (downtime-by-cause), clients, client detail, flow registry, client types, dashboard builder, table builder | — |
+| `js/super-admin.js` | HQ ops dashboard, clients, client detail, legacy client types, dashboard builder and table builder | — |
+| `js/super-admin-fluxuri-v2.js` | canonical HQ flow constructor: per-template steps/tasks/anexe, local drafts, validation/preview, guarded publish into the shared registry | — |
+| `js/super-admin-tipuri-clienti-v2.js` | client-type package editor: verticals/templates, archive routing and links into the Acasă builder | — |
 | `js/prezentare.js` | slide deck (exposes nothing) | — |
 
 ## Component boundaries and data flow
@@ -106,7 +108,7 @@ The one-way cycle to understand: **HQ writes configuration → localStorage → 
 Three layers, lowest priority first:
 
 1. **Seed** — hard-coded in `mock-data.js` ("today" pinned to 2026-04-20; verified counts: 10 tenant clients, 6 employees, 28 situations (13 of them generated archival), 7 audit missions + entities/plans/reports, 119 documents, 27 anexe, 6 HQ clients, 4 flow verticals, 5 client types, 9 flow items — incl. the seeded Consultanță + Construcții showcases).
-2. **localStorage overrides** — `scriptica.*` keys, each a JSON map `id → full record`, `{deleted:true}` = tombstone. Merge REPLACES whole records (no field-level merge) — stale persisted records shadow new seed fields until cleared.
+2. **localStorage overrides** — `scriptica.*` keys, each a JSON map `id → full record`, `{deleted:true}` = tombstone. Merge REPLACES whole records (no field-level merge) — stale persisted records normally shadow new seed fields until cleared. The vertical document-vocabulary migration is an explicit exception: missing `documentCategories`, filters and template category selections are backfilled from the canonical seed.
 3. **In-memory mutations** — everything else; lost on reload.
 
 Full localStorage inventory (all owned keys):
@@ -117,11 +119,14 @@ Full localStorage inventory (all owned keys):
 | `scriptica.anexe` | anexă templates | constructor-anexe.js, administrare.js |
 | `scriptica.situationTypes` | situation/mission types (steps, formulas) | administrare.js |
 | `scriptica.flowVerticals` / `.flowTemplates` / `.clientTypes` / `.saClients` / `.flowItems` | HQ flow registry + instances | super-admin.js, flux.js — always via `scripticaFlowSave` |
+| `scriptica.prototype.fluxuriV2` | Fluxuri constructor drafts + migration metadata; published eligible templates are copied into `scriptica.flowTemplates` | super-admin-fluxuri-v2.js |
 | `scriptica.anexaResponses` | anexă fill values, key `sitId::anexaId`, values keyed by **field index**; `__fxman__<idx>` marks manual overrides | anexa-fill.js |
 | `scriptica.auditMissionStatus` | missionId → status (the Authority's decision) | misiune-audit-workspace.js |
 | `scriptica.arhiva.selection` | archive tree selection | arhiva.js |
 | `scriptica.activeTimer` | the running timer only | timer.js |
 | `scriptica.sidebarExpanded` / `.messagingPanelCollapsed` | chrome state | shell.js |
+
+Flow configuration has two distinct owners: a `flowVertical` groups templates and owns `documentCategories[]` (each with its nested, uniquely assigned `documentTypes[]`), while a `flowTemplate` owns `steps[]` and `documentCategoryIds[]`. The permanent system category `Necategorisit` is always added to the template selection. `clientTypes[].archiveTree` is deliberately independent from that taxonomy; custom-flow archive folders are derived from the flow templates included in the client type.
 
 ## Authentication and permissions
 

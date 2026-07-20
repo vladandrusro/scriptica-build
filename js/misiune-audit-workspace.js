@@ -163,7 +163,7 @@
     { type: 'step_completion', title: 'Anexă finalizată',
       body: 'Iulian Popescu a completat Anexa — Chestionar de Control Intern (100%).', meta: 'Mesaj Automat Scriptica A.I.', date: '13.05, 15:02' },
     { type: 'deadline_projection', title: 'Proiecție termen', icon: 'schedule',
-      body: 'Iulian Popescu a completat o anexă. La ritmul actual, termenul misiunii (25 oct 2024) va fi depășit cu aproximativ 4 zile. Recomandare: prioritizează FIAP și formularul de iregularități.',
+      body: 'Iulian Popescu a completat o anexă. La ritmul actual, termenul misiunii (25 oct 2024) va fi depășit cu aproximativ 4 zile. Recomandare: prioritizează FIAP și anexa de iregularități.',
       meta: 'Mesaj Automat Scriptica A.I. · proiecție' }
   ];
 

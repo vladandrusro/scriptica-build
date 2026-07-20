@@ -23,19 +23,40 @@
     flashIds: []
   };
 
-  var CATEGORY_LABELS = {
-    intrare: 'Intrare',
-    iesire: 'Ieșire',
-    salarizare: 'Salarizare',
-    necategorisit: 'Necategorisit'
-  };
+  var contextCache = null;
 
-  var AI_TYPE_OPTIONS = [
-    'Factură furnizor', 'Factură emisă', 'Bon fiscal', 'NIR',
-    'Aviz / Proces verbal', 'E-mail de transmitere', 'Document HR',
-    'Situația stocurilor', 'Balanță de verificare', 'Registru de casă',
-    'Registru imobilizări', 'Foaie de parcurs', 'Document multiplu', 'Altul'
-  ];
+  function documentContext() {
+    if (contextCache) return contextCache;
+    var params = new URLSearchParams(window.location.search);
+    var flowId = params.get('flowId');
+    var item = (MOCK.flowItems || []).find(function (entry) { return entry.id === flowId; }) || null;
+    var verticalId = item ? item.verticalId : 'vert_contabil';
+    var vertical = typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
+    var template = item ? ((MOCK.superAdmin && MOCK.superAdmin.flowTemplates) || []).find(function (entry) { return entry.id === item.templateId; }) : null;
+    var allCategories = (vertical && vertical.documentCategories) || [];
+    var visibleIds = item
+      ? ((template && template.documentCategoryIds) || allCategories.map(function (category) { return category.id; }))
+      : ((vertical && vertical.defaultDocumentCategoryIds) || allCategories.map(function (category) { return category.id; }));
+    var categories = allCategories.filter(function (category) { return category.system || visibleIds.indexOf(category.id) !== -1; });
+    var system = categories.find(function (category) { return category.system; }) || { id: 'necategorisit', name: 'Necategorisit', system: true, documentTypes: [] };
+    if (!categories.some(function (category) { return category.id === system.id; })) categories.push(system);
+    contextCache = { item: item, vertical: vertical, template: template, categories: categories, system: system, filters: (vertical && vertical.documentFilters) || [] };
+    return contextCache;
+  }
+
+  function categoryLabel(key) {
+    var category = documentContext().categories.find(function (item) { return item.id === key; });
+    return category ? category.name : key;
+  }
+
+  function typeOptions() {
+    var out = [];
+    documentContext().categories.forEach(function (category) {
+      (category.documentTypes || []).forEach(function (type) { out.push(type.name); });
+    });
+    if (out.indexOf('Altele') === -1) out.push('Altele');
+    return out;
+  }
 
   var SEGMENT_COLORS = ['#47386A', '#38BA31', '#F9A956', '#FF3C80', '#5B4D7A'];
 
@@ -49,6 +70,8 @@
 
   function resolveSituationId() {
     var params = new URLSearchParams(window.location.search);
+    var flowId = params.get('flowId');
+    if (flowId && (MOCK.flowItems || []).some(function (item) { return item.id === flowId; })) return flowId;
     var id = params.get('id');
     var s = MOCK.situations.find(function (x) { return x.id === id; });
     return (s || MOCK.situations[0]).id;
@@ -69,8 +92,13 @@
   }
 
   function effectiveCategory(d) {
-    if (isLowConf(d)) return 'necategorisit';
-    return d.broadCategory;
+    var context = documentContext();
+    if (isLowConf(d)) return context.system.id;
+    if (context.categories.some(function (category) { return category.id === d.broadCategory; })) return d.broadCategory;
+    var matched = context.categories.find(function (category) {
+      return (category.documentTypes || []).some(function (type) { return type.name === d.tipDocument || type.id === d.tipDocument; });
+    });
+    return matched ? matched.id : context.system.id;
   }
 
   function matchesSearch(d, q) {
@@ -109,13 +137,11 @@
 
   function sectionHtml() {
     var docs = getDocs();
-    var counts = {
-      all: docs.length,
-      intrare: docs.filter(function (d) { return effectiveCategory(d) === 'intrare'; }).length,
-      iesire: docs.filter(function (d) { return effectiveCategory(d) === 'iesire'; }).length,
-      salarizare: docs.filter(function (d) { return effectiveCategory(d) === 'salarizare'; }).length,
-      necategorisit: docs.filter(function (d) { return effectiveCategory(d) === 'necategorisit'; }).length
-    };
+    var categories = documentContext().categories;
+    var counts = { all: docs.length };
+    categories.forEach(function (category) {
+      counts[category.id] = docs.filter(function (d) { return effectiveCategory(d) === category.id; }).length;
+    });
     var filtered = currentFilteredDocs();
 
     var html = '';
@@ -143,21 +169,18 @@
     '</div>';
 
     /* Tabs */
-    html += '<div class="doc-tabs" role="tablist">' +
-      tabHtml('all',           'Toate',          counts.all) +
-      tabHtml('intrare',       'Intrare',        counts.intrare) +
-      tabHtml('iesire',        'Ieșire',         counts.iesire) +
-      tabHtml('salarizare',    'Salarizare',     counts.salarizare) +
-      tabHtml('necategorisit', 'Necategorisit',  counts.necategorisit, counts.necategorisit > 0) +
-    '</div>';
+    html += '<div class="doc-tabs" role="tablist">' + tabHtml('all', 'Toate', counts.all) +
+      categories.map(function (category) {
+        return tabHtml(category.id, category.name, counts[category.id] || 0, category.system && counts[category.id] > 0);
+      }).join('') + '</div>';
 
     /* Sub-filters */
-    html += '<div class="doc-subfilters">' +
-      '<span class="doc-subfilters__label">Filtre suplimentare:</span>' +
-      '<label class="checkbox"><input type="checkbox" data-subfilter="bonuri"' + (state.subfilters.bonuri ? ' checked' : '') + '> Bonuri</label>' +
-      '<label class="checkbox"><input type="checkbox" data-subfilter="ue"'     + (state.subfilters.ue     ? ' checked' : '') + '> UE</label>' +
-      '<label class="checkbox"><input type="checkbox" data-subfilter="non-ue"' + (state.subfilters['non-ue'] ? ' checked' : '') + '> Non-UE</label>' +
-    '</div>';
+    var filters = documentContext().filters;
+    if (filters.length) {
+      html += '<div class="doc-subfilters"><span class="doc-subfilters__label">Filtre suplimentare:</span>' + filters.map(function (filter) {
+        return '<label class="checkbox"><input type="checkbox" data-subfilter="' + esc(filter.id) + '"' + (state.subfilters[filter.id] ? ' checked' : '') + '> ' + esc(filter.label) + '</label>';
+      }).join('') + '</div>';
+    }
 
     /* Bulk bar */
     html += bulkBarHtml();
@@ -172,7 +195,7 @@
     var active = state.tab === key;
     return '<button type="button" class="doc-tab' + (active ? ' is-active' : '') + '" data-tab="' + key + '" role="tab">' +
       esc(label) +
-      (key === 'necategorisit' && showBadge ?
+      (documentContext().system.id === key && showBadge ?
         ' <span class="pill pill--critical">' + count + '</span>' :
         ' <span class="pill--count" style="color: inherit; font-weight: 700;">(' + count + ')</span>') +
     '</button>';
@@ -180,6 +203,9 @@
 
   function bulkBarHtml() {
     var n = state.selected.size;
+    var categoryItems = documentContext().categories.map(function (category) {
+      return '<div class="reclass-menu__item" data-bulk-move="' + esc(category.id) + '">Mută în ' + esc(category.name) + '</div>';
+    }).join('');
     return '<div class="bulk-bar' + (n > 0 ? ' is-visible' : '') + '" id="bulk-bar">' +
       '<div>' +
         '<span class="bulk-bar__count">' + n + ' documente selectate</span>' +
@@ -190,10 +216,7 @@
           'Reclasifică <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>' +
         '</button>' +
         '<div class="reclass-menu" id="bulk-reclass-menu">' +
-          '<div class="reclass-menu__item" data-bulk-move="intrare">Mută în Intrare</div>' +
-          '<div class="reclass-menu__item" data-bulk-move="iesire">Mută în Ieșire</div>' +
-          '<div class="reclass-menu__item" data-bulk-move="salarizare">Mută în Salarizare</div>' +
-          '<div class="reclass-menu__item" data-bulk-move="necategorisit">Mută în Necategorisit</div>' +
+          categoryItems +
         '</div>' +
         '<button type="button" class="btn btn--inverted" id="bulk-download" title="Descarcă">' +
           '<span class="material-symbols-outlined" aria-hidden="true">download</span>' +
@@ -300,15 +323,14 @@
 
   function rowReclassMenuHtml(docId) {
     var open = state.rowMenuOpenFor === docId;
+    var categories = documentContext().categories.map(function (category) {
+      return '<div class="doc-row-menu__item" data-row-move="' + esc(category.id) + '">Mută în ' + esc(category.name) + '</div>';
+    }).join('');
+    var filters = documentContext().filters.map(function (filter) {
+      return '<div class="doc-row-menu__item" data-row-sub="' + esc(filter.id) + '">Marchează ca ' + esc(filter.label) + '</div>';
+    }).join('');
     return '<div class="doc-row-menu' + (open ? ' is-open' : '') + '" data-row-menu-for="' + esc(docId) + '">' +
-      '<div class="doc-row-menu__item" data-row-move="intrare">Mută în Intrare</div>' +
-      '<div class="doc-row-menu__item" data-row-move="iesire">Mută în Ieșire</div>' +
-      '<div class="doc-row-menu__item" data-row-move="salarizare">Mută în Salarizare</div>' +
-      '<div class="doc-row-menu__item" data-row-move="necategorisit">Mută în Necategorisit</div>' +
-      '<div class="doc-row-menu__divider"></div>' +
-      '<div class="doc-row-menu__item" data-row-sub="bonuri">Marchează ca Bonuri</div>' +
-      '<div class="doc-row-menu__item" data-row-sub="ue">Marchează ca UE</div>' +
-      '<div class="doc-row-menu__item" data-row-sub="non-ue">Marchează ca Non-UE</div>' +
+      categories + (filters ? '<div class="doc-row-menu__divider"></div>' + filters : '') +
     '</div>';
   }
 
@@ -1046,7 +1068,7 @@
 
     var fields = modal.querySelector('[data-edit-fields]');
     fields.innerHTML =
-      row('tipDocument',   'Tip document',        'text',   d.tipDocument) +
+      rowSelect('tipDocument', 'Tip document', typeOptions().concat(typeOptions().indexOf(d.tipDocument) === -1 && d.tipDocument ? [d.tipDocument] : []), d.tipDocument) +
       row('emitent',       'Emitent',             'text',   d.emitent) +
       row('numarDocument', 'Număr document',      'text',   d.numarDocument) +
       row('dataEmiterii',  'Data emiterii',       'date',   d.dataEmiterii) +
@@ -1085,6 +1107,10 @@
     modal.querySelector('[data-edit-cancel]').onclick = function () { closeModal(modal); };
     modal.querySelector('[data-edit-save]').onclick = function () {
       d.tipDocument     = modal.querySelector('[name="tipDocument"]').value.trim();
+      var category = documentContext().categories.find(function (item) {
+        return (item.documentTypes || []).some(function (type) { return type.name === d.tipDocument; });
+      });
+      d.broadCategory = category ? category.id : documentContext().system.id;
       d.emitent         = modal.querySelector('[name="emitent"]').value.trim();
       d.numarDocument   = modal.querySelector('[name="numarDocument"]').value.trim();
       d.dataEmiterii    = modal.querySelector('[name="dataEmiterii"]').value;
@@ -1120,7 +1146,7 @@
       segments: [{
         fromPage: 1,
         toPage: d.pagesCount,
-        tip: d.tipDocument || 'Factură furnizor',
+        tip: d.tipDocument || typeOptions()[0] || 'Altele',
         nume: 'document_1'
       }]
     };
@@ -1191,7 +1217,7 @@
             '<div class="segment-fields__full">' +
               '<label class="segment-fields__label">Tip document</label>' +
               '<select class="select" data-seg-field="tip">' +
-                AI_TYPE_OPTIONS.map(function (o) { return '<option value="' + esc(o) + '"' + (seg.tip === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') +
+                typeOptions().concat(typeOptions().indexOf(seg.tip) === -1 ? [seg.tip] : []).map(function (o) { return '<option value="' + esc(o) + '"' + (seg.tip === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') +
               '</select>' +
             '</div>' +
             '<div class="segment-fields__full">' +
@@ -1245,7 +1271,7 @@
       splitterState.segments.push({
         fromPage: start,
         toPage: Math.min(d.pagesCount, start),
-        tip: 'Factură furnizor',
+        tip: typeOptions()[0] || 'Altele',
         nume: 'document_' + (splitterState.segments.length + 1)
       });
       renderSplitter();
@@ -1257,11 +1283,15 @@
     var d = splitterState.doc;
     var origIdx = MOCK.documents.indexOf(d);
     var newDocs = splitterState.segments.map(function (seg, i) {
+      var category = documentContext().categories.find(function (item) {
+        return (item.documentTypes || []).some(function (type) { return type.name === seg.tip; });
+      });
       return Object.assign({}, d, {
         id: d.id + '_s' + (i + 1),
         filename: (seg.nume || 'document_' + (i + 1)) + '.pdf',
         tipDocument: seg.tip,
         categoriePropusa: seg.tip,
+        broadCategory: category ? category.id : documentContext().system.id,
         multiDoc: false,
         multiDocConfidence: null,
         pagesCount: (seg.toPage - seg.fromPage + 1),
@@ -1342,23 +1372,30 @@
     var conf2 = conf + Math.floor(Math.random() * 6) - 3;
     if (conf2 > 99) conf2 = 99;
     if (conf2 < 40) conf2 = 40;
-    var category = rnd < 0.4 ? 'intrare' : (rnd < 0.6 ? 'iesire' : (rnd < 0.7 ? 'salarizare' : 'necategorisit'));
+    var context = documentContext();
+    var workCategories = context.categories.filter(function (category) { return !category.system && (category.documentTypes || []).length; });
+    var category = isLowConfidencePair(conf, conf2) || !workCategories.length
+      ? context.system
+      : workCategories[Math.floor(Math.random() * workCategories.length)];
+    var types = category.documentTypes || [];
+    var typeName = types.length ? types[Math.floor(Math.random() * types.length)].name : 'Altele';
     return {
       id: 'doc_up_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
       situationId: state.situationId,
+      domain: context.vertical ? context.vertical.domain : 'contabil',
       filename: file.name,
       uploadedAt: new Date().toISOString(),
       source: 'upload',
       pagesCount: 1,
       multiDoc: false, multiDocConfidence: null,
-      tipDocument: category === 'intrare' ? 'Factură furnizor' : (category === 'iesire' ? 'Factură emisă' : (category === 'salarizare' ? 'Document HR' : 'Altul')),
+      tipDocument: typeName,
       emitent: 'Detectat automat',
       numarDocument: null,
       dataEmiterii: '2026-04-20',
       perioadaFiscala: '2026-04',
       valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: 'RON',
-      categoriePropusa: category === 'intrare' ? 'Factură furnizor' : (category === 'iesire' ? 'Factură emisă' : (category === 'salarizare' ? 'Document HR' : 'Altul')),
-      broadCategory: category,
+      categoriePropusa: typeName,
+      broadCategory: category.id,
       subFilter: null,
       confidenceExtraction: conf,
       confidenceCategorization: conf2,
@@ -1367,6 +1404,10 @@
       verificatManual: false,
       pageThumbnails: []
     };
+  }
+
+  function isLowConfidencePair(extraction, categorization) {
+    return extraction < 70 || categorization < 70;
   }
 
   /* ---------- Modal helpers ---------- */
