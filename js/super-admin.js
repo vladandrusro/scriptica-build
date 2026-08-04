@@ -394,23 +394,6 @@
     '</div>';
   }
 
-  function setupPathHtml(activeStep, t) {
-    var context = t ? '&ct=' + encodeURIComponent(t.id) : '';
-    function step(n, eyebrow, label, href) {
-      return '<a class="sa-setup__step' + (activeStep === n ? ' is-active' : '') + '" href="' + href + '"' +
-        (activeStep === n ? ' aria-current="step"' : '') + '><span>' + n + '</span><div><small>' + eyebrow + '</small><b>' + label + '</b></div></a>';
-    }
-    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
-      step(1, 'Definește organizația', 'Tip de client', 'super-admin-tipuri-clienti-v2.html?view=superadmin' + context) +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      step(2, 'Structurează activitatea', 'Verticale', 'super-admin-fluxuri-v2.html?view=superadmin' + context) +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      step(3, 'Definește execuția', 'Fluxuri', 'super-admin-fluxuri-v2.html?view=superadmin' + context) +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      step(4, 'Activează configurația', 'Client', 'super-admin-clienti.html?view=superadmin' + context) +
-    '</nav>';
-  }
-
   /* ============================================================
      CLIENTS LIST
      ============================================================ */
@@ -419,9 +402,7 @@
     var preferredType = clientTypeById(qs('ct'));
     var openRequested = qs('new') === 'client';
     root.innerHTML =
-      '<header class="page-header"><div><h1 class="page-header__title">Clienți</h1>' +
-        '<p class="sa-subtitle">Pasul 4 din 4: înrolează firma pe tipul configurat și activează experiența pregătită în Super Admin.</p></div></header>' +
-      setupPathHtml(4, preferredType) +
+      '<header class="page-header"><h1 class="page-header__title">Clienți</h1></header>' +
       '<div class="sa-table-toolbar">' +
         '<p class="sa-subtitle">Toate conturile de business · ' + list.length + ' clienți' +
           (preferredType ? ' · tip selectat: <b>' + esc(preferredType.name) + '</b>' : '') + '</p>' +
