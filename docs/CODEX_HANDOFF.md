@@ -41,7 +41,8 @@ All 🧠 (recorded from prior conversations), with code effects verified ✅:
 - **Table-column editor is a dedicated simulated-tenant page**, not a modal (Vlad's explicit request; the old modal was removed, `?cols=` deep links redirect).
 - **One-step flows allowed** to serve "projects-only" businesses like construction — the step is the *container* (anexe/docs/tasks/chat), not bureaucracy.
 - **Verticala nu definește pașii** — it groups related flows and defines their document-classification vocabulary. Each template owns its complete sequence of steps.
-- **Configurarea HQ pornește de la tipul de client** (2026-07-24, feedback de echipă) — ordinea vizibilă și demonstrabilă este Tip client → Verticale → Fluxuri → Client. Modelul de date rămâne compatibil: `clientTypes[].verticalIds` și `defaultTemplateIds` exprimă deja relațiile, iar noile verticale/fluxuri se atașează automat tipului aflat în context.
+- **Client category is separate from contracted flow modules** (2026-08-04, superseding the mandatory 2026-07-24 sequence) — HQ may create a client category and enroll a client before any vertical/flow module exists. The category classifies the business; `clients[].moduleAssignments[]` enables vertical modules later per individual client according to its plan. Legacy category package arrays remain only as the stale-state/demo fallback.
+- **Module removal never deletes client data** — a plan downgrade deactivates/hides the module. Operational history, documents, conversations, anexă responses and the archive remain intact; reactivation restores the same history. A used vertical/template is retired, never hard-deleted.
 - **Clasificare ≠ arhivă** — categories/types belong to the vertical; archive folders follow operational flow needs and remain independently configured.
 - **`main` is frozen as the pre-audit rollback baseline**; all work continues on `audit-vertical` deployed with `--branch=main`. ✅
 
@@ -57,6 +58,7 @@ Real gaps to be aware of:
 - **Admin edits to internal users and tags are in-memory only** (only anexe + situationTypes persist).
 - **Generic flow instances still lack lifecycle management actions** — no edit/cancel/delete for flow items; several statuses remain unreachable from the UI. The shared workspace now renders the configured tasks, anexe and document vocabulary.
 - **HQ client detail**: feature-flag toggles and pause/cancel/edit-name buttons mutate nothing persistent.
+- **Per-client modules are implemented for the prototype**: HQ clients can start with zero modules, store active/inactive `moduleAssignments[]`, and can be previewed as the selected tenant. Nav, dashboard, generic flux creation and archive routing now consume those assignments. Remaining production-model gap: most seeded operational records are shared demo data rather than carrying an HQ-client owner id; new generic flow records do receive `tenantAccountId`.
 - **Three admin tabs greyed out**: Solicitări interne, Configurare Arhivă, Conținut Acasă (the latter two now conceptually superseded by the HQ per-client-type editors).
 - 15 audit anexă schemas carry `// STUB: câmpuri de validat vs HG 1086/2013`; FIAP external-signature flow and FCRI 3-day escalation explicitly deferred.
 
@@ -91,11 +93,11 @@ Simulated AI (setTimeout + seeded confidences, `observatieAI: 'Rezultate AI simu
 - Copying app.scriptica.ro's design/data/"Instanță" multi-tenant concept (out of scope; only its Administrare panel *functionality* was adapted).
 - Column editor as a modal (rejected by Vlad for a dedicated simulated-tenant page).
 - Brief-specified visual values that contradict tokens (e.g. 10px card radius) — tokens win.
-- Gating tenant nav by clientType.verticalIds was CONSIDERED and consciously not done (see next section) — don't silently "fix" it.
+- Treating the client category itself as the permanent module entitlement is superseded. Do not solve module visibility by merely reusing `clientType.verticalIds`; entitlements must belong to the individual HQ client and preserve inactive history.
 
 ## Unresolved product questions 🧠
 
-1. **Tenant nav shows ALL custom verticals for every client type** (shell.js `injectCustomVerticalNav`) — kept for the instant-demo effect; gating by `clientType.verticalIds` is the coherent alternative. Flagged, awaiting Vlad's call.
+1. **Commercial module granularity is vertical-based** — a vertical is the sellable module and its eligible templates are snapshotted by id on assignment. Do not duplicate flow definitions inside each client.
 2. **Propagation of published flow changes** — Fluxuri now supports different steps per template and publishes new/unused templates centrally. Decide whether a later version updates existing customers, affects only future enrolments, or is offered as an explicit per-customer upgrade. Until then, publishing is held when an enrolled client already uses that template.
 3. When/how to **activate anexe/documents/chat on generic verticals** (the "de activat" row in caz-utilizare).
 4. Audit-report scoring: currently seeded mock; the real plan is a local-LLM computation on a paid tier ("fază ulterioară").
@@ -115,7 +117,7 @@ Simulated AI (setTimeout + seeded confidences, `observatieAI: 'Rezultate AI simu
 4. **Stop the time-tracking modal from mutating live task lists** (build the picker from a copy). *Files: js/time-tracking.js (openSessionEditModal ~line 458).*
 5. **Remove or gate the #debug-bar** on situatie-detaliu behind something explicit. *Files: situatie-detaliu.html, js/situatie-detaliu.js (~line 766).*
 6. **Renderer for `repeater_block` in anexa-fill.js** — the Constructor already sells it; the fill modal breaks the illusion. *Files: js/anexa-fill.js (fieldHtml), css/anexe.css; reference: js/constructor-anexe.js preview implementation.*
-7. **Vlad's call on nav gating by client type** (question 1 above), then implement in shell.js if approved. *Files: js/shell.js (injectCustomVerticalNav), js/mock-data.js (clientTypes).*
+7. **Implement per-client module entitlements end to end** — allow zero-module onboarding; store active/inactive assignments on the HQ client; introduce a real current-tenant/account reference; gate nav, creation actions and dashboards by active modules; keep archive/history resolvable when inactive; migrate stale localStorage; replace destructive deletion of used definitions with retirement. *Files: js/mock-data.js, js/super-admin.js, js/super-admin-tipuri-clienti-v2.js, js/super-admin-fluxuri-v2.js, js/shell.js, js/dashboard-widgets.js, js/arhiva.js, js/flux.js, js/situatie-detaliu.js.*
 8. Dead-code sweep (MOCK_DOC_NAMES, formatDateTime, `.sa-cols-*` CSS, dead conditional) — cheap hygiene, zero behavior change.
 
 ## Assumptions previously only in Claude conversations 🧠

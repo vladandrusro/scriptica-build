@@ -75,8 +75,18 @@
       return m.status !== 'aprobata' && m.status !== 'anulata' && m.status !== 'inchisa';
     });
   }
+  function activeVerticalIds(ct) {
+    var view = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
+    if (view !== 'superadmin' && typeof window.scripticaTenantActiveVerticalIds === 'function') {
+      return window.scripticaTenantActiveVerticalIds();
+    }
+    if (view === 'superadmin' && typeof window.scripticaFlowVerticals === 'function') {
+      return window.scripticaFlowVerticals().map(function (vertical) { return vertical.id; });
+    }
+    return (ct && ct.verticalIds) || [];
+  }
   function ctDomains(ct) {
-    return (ct.verticalIds || []).map(function (vid) {
+    return activeVerticalIds(ct).map(function (vid) {
       var v = window.scripticaVerticalById(vid);
       return v ? v.domain : null;
     }).filter(Boolean);
@@ -240,7 +250,7 @@
           rows.push({ days: d, title: esc(m.name), sub: esc(m.entityName), href: 'misiune-audit-workspace.html?id=' + esc(m.id) });
         });
       }
-      (ct.verticalIds || []).forEach(function (vid) {
+      activeVerticalIds(ct).forEach(function (vid) {
         var v = window.scripticaVerticalById(vid);
         if (!v || v.builtin) return;
         window.scripticaFlowItemsForVertical(vid).forEach(function (i) {
@@ -370,7 +380,7 @@
 
   function paletteFor(ct) {
     var entries = [];
-    (ct.verticalIds || []).forEach(function (vid) {
+    activeVerticalIds(ct).forEach(function (vid) {
       var v = window.scripticaVerticalById(vid);
       if (!v) return;
       entries.push({ widget: 'flow_summary', params: { verticalId: vid }, label: v.name, icon: v.icon || 'account_tree', desc: 'Elementele active din verticala „' + v.name + '".' });
@@ -433,12 +443,41 @@
     var view = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
     if (view === 'client' || view === 'superadmin') return;
     var ct = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());
-    var layout = ct && ct.dashboardLayout;
-    if (!layout || !layout.length) return;
+    if (!ct) return;
+    var layout = (ct.dashboardLayout || []).slice();
+    var moduleVerticalIds = activeVerticalIds(ct);
+    var moduleDomains = moduleVerticalIds.map(function (verticalId) {
+      var vertical = window.scripticaVerticalById(verticalId);
+      return vertical ? vertical.domain : null;
+    }).filter(Boolean);
+    layout = layout.filter(function (item) {
+      if (item.widget === 'flow_summary') {
+        return item.params && moduleVerticalIds.indexOf(item.params.verticalId) !== -1;
+      }
+      if (item.widget === 'situatii_noi' || item.widget === 'alerte' || item.widget === 'mesaje') {
+        return moduleDomains.indexOf('contabil') !== -1;
+      }
+      if (item.widget === 'rapoarte_audit') return moduleDomains.indexOf('audit') !== -1;
+      return true;
+    }).slice();
+    moduleVerticalIds.forEach(function (verticalId, index) {
+      var exists = layout.some(function (item) {
+        return item.widget === 'flow_summary' && item.params && item.params.verticalId === verticalId;
+      });
+      if (!exists) {
+        layout.splice(index, 0, {
+          id: 'dw_module_' + verticalId,
+          widget: 'flow_summary', params: { verticalId: verticalId }, size: 'half'
+        });
+      }
+    });
+    if (!moduleVerticalIds.length) layout = [];
     var main = document.getElementById('main');
     if (!main) return;
 
-    main.innerHTML = '<div class="dashboard"><div class="dw-grid">' +
+    main.innerHTML = '<div class="dashboard">' +
+      (!moduleVerticalIds.length ? '<div class="scope-block"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><h2>Modulele nu sunt activate încă</h2><p>Contul este creat și poate fi configurat ulterior de Scriptica HQ.</p></div>' : '') +
+      '<div class="dw-grid">' +
       layout.map(function (item) { return cardHtml(item, ct); }).join('') +
     '</div>' +
     '<p class="dw-note">Dashboard configurat pentru profilul firmei de către administratorul platformei.</p>' +

@@ -3,9 +3,9 @@
    Controller unic pentru cele 5 ecrane (router pe body[data-page]):
      super-admin               → Dashboard global
      super-admin-clienti       → Listă clienți (+ înrolare cu provisioning)
-     super-admin-client        → Detaliu client (comercial + tehnic + fluxuri)
+     super-admin-client        → Detaliu client (comercial + tehnic + module)
      super-admin-fluxuri       → Registrul de fluxuri (verticale + șabloane)
-     super-admin-tipuri-clienti→ Tipuri de clienți (pachete de fluxuri implicite)
+     super-admin-tipuri-clienti→ Categorii stabile de clienți
    Date: window.SCRIPTICA_MOCK.superAdmin (mock din seed).
    Registrul de fluxuri persistă prin scripticaFlowSave (localStorage).
    Downtime: defalcat pe 3 cauze; agregatul global e derivat din
@@ -36,6 +36,13 @@
   function clientTypesAll() { return (SA() && SA().clientTypes) || []; }
   function clientTypeById(id) { return clientTypesAll().find(function (t) { return t.id === id; }) || null; }
   function clientsOfType(id) { return clients().filter(function (c) { return c.clientTypeId === id; }); }
+  function moduleAssignments(c, includeInactive) {
+    if (typeof window.scripticaModuleAssignmentsForClient === 'function') {
+      return window.scripticaModuleAssignmentsForClient(c, includeInactive);
+    }
+    var list = (c && c.moduleAssignments) || [];
+    return includeInactive ? list.slice() : list.filter(function (assignment) { return assignment.status === 'activ'; });
+  }
 
   function slugify(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -449,6 +456,7 @@
           '</div>' +
         '</div>' +
         '<div class="sa-cd-actions">' +
+          '<button class="btn btn--secondary" type="button" data-preview-tenant><span class="material-symbols-outlined" aria-hidden="true">visibility</span>Previzualizează contul</button>' +
           '<button class="btn btn--ghost" type="button"><span class="material-symbols-outlined" aria-hidden="true">edit</span>Editează denumirea</button>' +
           pauseBtn(c) +
           cancelBtn(c) +
@@ -497,6 +505,14 @@
     bindToggles(root);
     var chg = root.querySelector('[data-change-ct]');
     if (chg) chg.addEventListener('click', function () { openChangeTypeModal(root, c); });
+    var modulesButton = root.querySelector('[data-manage-modules]');
+    if (modulesButton) modulesButton.addEventListener('click', function () { openModuleManagerModal(root, c); });
+    var previewButton = root.querySelector('[data-preview-tenant]');
+    if (previewButton) previewButton.addEventListener('click', function () {
+      if (typeof window.scripticaSetTenantAccountId === 'function') window.scripticaSetTenantAccountId(c.id);
+      if (typeof window.setCurrentView === 'function') window.setCurrentView('complet');
+      window.location.href = 'acasa.html?view=complet';
+    });
   }
 
   function kv(k, v) { return '<div class="sa-kv"><span class="sa-kv__k">' + k + '</span><span class="sa-kv__v">' + v + '</span></div>'; }
@@ -717,10 +733,27 @@
 
   function confirmDeleteVertical(root, v) {
     if (!v) return;
-    var active = activeFlowItems(function (i) { return i.verticalId === v.id; });
-    if (active.length) { blockedDeleteModal('Verticala nu poate fi ștearsă', active.length); return; }
+    var historical = ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.flowItems) || []).filter(function (i) { return i.verticalId === v.id; });
+    var assigned = clients().filter(function (client) {
+      return moduleAssignments(client, true).some(function (assignment) { return assignment.verticalId === v.id; });
+    });
     var tpls = templatesFor(v.id);
     var usedBy = clientTypesAll().filter(function (t) { return (t.verticalIds || []).indexOf(v.id) !== -1; });
+    if (historical.length || assigned.length) {
+      saModal({
+        title: 'Arhivează verticala „' + v.name + '"?',
+        bodyHtml: '<p class="sa-modal-note">Verticala are istoric la clienți. Va deveni inactivă împreună cu fluxurile sale, dar datele și arhiva rămân intacte.</p>',
+        submitLabel: 'Arhivează verticala',
+        onSubmit: function (m, close) {
+          tpls.forEach(function (template) { scripticaFlowSave('template', Object.assign({}, template, { status: 'inactiv' })); });
+          scripticaFlowSave('vertical', Object.assign({}, v, { status: 'inactiv' }));
+          close();
+          toast('success', 'Verticala a fost arhivată fără ștergerea istoricului.');
+          renderFluxuri(root);
+        }
+      });
+      return;
+    }
     saModal({
       title: 'Șterge verticala „' + v.name + '"?',
       bodyHtml: '<p class="sa-modal-note">Se șterg și cele ' + tpls.length + ' șabloane ale verticalei' +
@@ -794,8 +827,26 @@
 
   function confirmDeleteTemplate(root, t) {
     if (!t) return;
-    var active = activeFlowItems(function (i) { return i.templateId === t.id; });
-    if (active.length) { blockedDeleteModal('Șablonul nu poate fi șters', active.length); return; }
+    var historical = ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.flowItems) || []).filter(function (i) { return i.templateId === t.id; });
+    var assigned = clients().filter(function (client) {
+      return moduleAssignments(client, true).some(function (assignment) {
+        return (assignment.templateIds || []).indexOf(t.id) !== -1;
+      });
+    });
+    if (historical.length || assigned.length) {
+      saModal({
+        title: 'Arhivează șablonul „' + t.name + '"?',
+        bodyHtml: '<p class="sa-modal-note">Șablonul are istoric la clienți. Va deveni inactiv pentru fluxuri noi, fără să fie șterse datele sau arhiva existente.</p>',
+        submitLabel: 'Arhivează șablonul',
+        onSubmit: function (m, close) {
+          scripticaFlowSave('template', Object.assign({}, t, { status: 'inactiv' }));
+          close();
+          toast('success', 'Șablonul a fost arhivat fără ștergerea istoricului.');
+          renderFluxuri(root);
+        }
+      });
+      return;
+    }
     var usedBy = clientTypesAll().filter(function (ct) { return (ct.defaultTemplateIds || []).indexOf(t.id) !== -1; });
     saModal({
       title: 'Șterge șablonul „' + t.name + '"?',
@@ -1611,7 +1662,7 @@
   }
 
   /* ============================================================
-     ÎNROLARE CLIENT NOU — provisioning din tipul de client
+     ÎNROLARE CLIENT NOU — formular configurat manual per client
      ============================================================ */
   var CLIENT_PROFILE_FIELD_TYPES = {
     section_title: { label: 'Titlu secțiune', icon: 'title', defaults: { text: 'Secțiune nouă' } },
@@ -1640,56 +1691,6 @@
     field.sensitive = false;
     Object.keys(props || {}).forEach(function (k) { field[k] = props[k]; });
     return field;
-  }
-
-  function defaultClientProfileFields(t) {
-    var prefix = 'cpf_' + slugify((t && t.id) || 'client') + '_';
-    var vids = (t && t.verticalIds) || [];
-    var hasAccounting = vids.indexOf('vert_contabil') !== -1;
-    var hasAudit = vids.indexOf('vert_audit') !== -1;
-    var hasConstruction = vids.indexOf('vert_constructii') !== -1;
-    var hasConsulting = vids.indexOf('vert_consultanta') !== -1;
-    var result = [
-      clientProfileField('section_title', prefix + 'identity_section', { text: 'Identitate' }),
-      clientProfileField('dropdown', prefix + 'subject_type', { label: 'Tip persoană / organizație', required: true, options: ['Persoană juridică', 'PFA / profesie liberală', 'Persoană fizică', 'Instituție publică'] }),
-      clientProfileField('text_short', prefix + 'legal_name', { label: 'Denumire oficială / nume complet', required: true }),
-      clientProfileField('cui', prefix + 'fiscal_id', { label: 'Identificator fiscal', help: 'CUI, CIF, CNP sau NIF, în funcție de tipul selectat.', required: true, sensitive: true }),
-      clientProfileField('text_short', prefix + 'registry_number', { label: 'Nr. Registrul Comerțului / registru profesional' }),
-      clientProfileField('address', prefix + 'registered_address', { label: 'Sediu social / domiciliu', required: true }),
-      clientProfileField('section_title', prefix + 'contact_section', { text: 'Contact principal' }),
-      clientProfileField('text_short', prefix + 'contact_name', { label: 'Persoană de contact', required: true }),
-      clientProfileField('email', prefix + 'contact_email', { label: 'E-mail principal', required: true }),
-      clientProfileField('phone', prefix + 'contact_phone', { label: 'Telefon principal' })
-    ];
-
-    if (hasAccounting || hasConsulting) {
-      result.push(
-        clientProfileField('section_title', prefix + 'tax_section', { text: 'Fiscalitate și conformitate' }),
-        clientProfileField('text_short', prefix + 'caen', { label: 'Cod CAEN principal', help: 'Se păstrează împreună cu versiunea CAEN aplicabilă.' }),
-        clientProfileField('dropdown', prefix + 'vat_status', { label: 'Înregistrare în scopuri de TVA', required: true, options: ['Neînregistrat', 'TVA normal', 'TVA special art. 317', 'TVA normal și art. 317'] }),
-        clientProfileField('boolean', prefix + 'cash_vat', { label: 'Aplică TVA la încasare?' }),
-        clientProfileField('dropdown', prefix + 'vat_period', { label: 'Perioadă fiscală TVA', options: ['Lunară', 'Trimestrială', 'Nu se aplică'] }),
-        clientProfileField('repeater_block', prefix + 'beneficial_owners', { label: 'Beneficiari reali', help: 'Nume, identificator, cetățenie și participație.', sensitive: true })
-      );
-    }
-    if (hasAudit) {
-      result.push(
-        clientProfileField('section_title', prefix + 'public_section', { text: 'Date instituție publică' }),
-        clientProfileField('text_short', prefix + 'legal_basis', { label: 'Actul normativ de înființare', required: true }),
-        clientProfileField('text_short', prefix + 'uat', { label: 'UAT și CIF UAT' }),
-        clientProfileField('text_short', prefix + 'treasury', { label: 'Unitate și cod Trezorerie' }),
-        clientProfileField('dropdown', prefix + 'authorizer_type', { label: 'Tip ordonator de credite', options: ['Principal', 'Secundar', 'Terțiar', 'Nu se aplică'] }),
-        clientProfileField('text_short', prefix + 'superior_entity', { label: 'Instituție ierarhic superioară' })
-      );
-    }
-    if (hasConstruction) {
-      result.push(
-        clientProfileField('section_title', prefix + 'locations_section', { text: 'Locații și activitate' }),
-        clientProfileField('repeater_block', prefix + 'locations', { label: 'Puncte de lucru, depozite și șantiere', help: 'Pentru fiecare locație se păstrează tipul și adresa structurată.' }),
-        clientProfileField('text_short', prefix + 'eori', { label: 'Număr EORI', help: 'Se completează numai pentru operațiuni vamale.' })
-      );
-    }
-    return result;
   }
 
   function clientProfileToolboxHtml() {
@@ -1788,7 +1789,10 @@
       return clientProfileFieldHtml(field, idx, draft.fields.length);
     }).join('') : '<div class="sa-cpf-empty"><span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span><b>Adaugă primul câmp</b><span>Alege o componentă din panoul din stânga.</span></div>';
     props.innerHTML = clientProfilePropertiesHtml(findClientProfileField(draft, draft.selectedFieldId));
-    if (count) count.textContent = draft.fields.filter(function (field) { return field.type !== 'section_title'; }).length + ' câmpuri';
+    if (count) {
+      var inputCount = draft.fields.filter(function (field) { return field.type !== 'section_title'; }).length;
+      count.textContent = inputCount + (inputCount === 1 ? ' câmp' : ' câmpuri');
+    }
   }
 
   function bindClientProfileBuilder(modal, draft) {
@@ -1899,15 +1903,6 @@
       draft.dragFieldId = null;
       canvas.querySelectorAll('.is-dragging, .is-drag-over').forEach(function (el) { el.classList.remove('is-dragging', 'is-drag-over'); });
     });
-    var reset = modal.querySelector('[data-cpf-reset]');
-    if (reset) reset.addEventListener('click', function () {
-      var t = clientTypeById(draft.clientTypeId);
-      draft.fields = defaultClientProfileFields(t);
-      draft.selectedFieldId = draft.fields[1] ? draft.fields[1].id : null;
-      draft.dirty = true;
-      renderClientProfileBuilder(modal, draft);
-      toast('info', 'Formularul a revenit la structura recomandată pentru tipul ales.');
-    });
   }
 
   function newClientModalBody(ctOptions) {
@@ -1918,13 +1913,13 @@
       '</div>' +
       '<section class="sa-onboarding-step" data-onboarding-step="1">' +
         fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">', null, 'nume') +
-        fieldHtml('Tip de client', '<select class="select" data-f="ctype"><option value="">Selectează tipul...</option>' + ctOptions + '</select>', 'Determină verticalele, fluxurile și formularul recomandat.', 'tip') +
+        fieldHtml('Tip de client', '<select class="select" data-f="ctype"><option value="">Selectează tipul...</option>' + ctOptions + '</select>', 'Descrie categoria organizației. Formularul său de înrolare se configurează manual în pasul următor.', 'tip') +
         fieldHtml('Plan', '<select class="select" data-f="tier"><option value="baza">Bază</option><option value="plus" selected>Plus</option><option value="ent">Enterprise</option></select>') +
         '<div data-ct-preview class="sa-ct-preview"></div>' +
       '</section>' +
       '<section class="sa-onboarding-step" data-onboarding-step="2" hidden>' +
-        '<div class="sa-cpf-head"><div><b>Construiește formularul pentru clienții acestei firme</b><p>Structura pornește de la tipul selectat și rămâne specifică acestui cont.</p></div>' +
-          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-cpf-count>0 câmpuri</span><button class="btn btn--ghost" type="button" data-cpf-reset><span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>Revino la recomandări</button></div></div>' +
+        '<div class="sa-cpf-head"><div><b>Construiește formularul pentru clienții acestei firme</b><p>Adaugă și ordonează manual câmpurile necesare acestui cont.</p></div>' +
+          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-cpf-count>0 câmpuri</span></div></div>' +
         '<div class="sa-cpf-builder" data-cpf-builder>' +
           '<aside class="sa-cpf-toolbox" aria-label="Componente disponibile">' + clientProfileToolboxHtml() + '</aside>' +
           '<section class="sa-cpf-canvas-wrap" aria-label="Ordinea câmpurilor"><div class="sa-cpf-canvas-meta">Așa va arăta formularul la înrolare</div><div class="sa-cpf-canvas" data-cpf-canvas></div></section>' +
@@ -1936,14 +1931,12 @@
 
   function openNewClientModal(root, preferredTypeId) {
     var ctOptions = clientTypesAll().map(function (t) {
-      var ready = !!((t.verticalIds || []).length && (t.defaultTemplateIds || []).length);
-      return '<option value="' + esc(t.id) + '"' + (t.id === preferredTypeId && ready ? ' selected' : '') +
-        (ready ? '' : ' disabled') + '>' + esc(t.name) + (ready ? '' : ' — configurare incompletă') + '</option>';
+      return '<option value="' + esc(t.id) + '"' + (t.id === preferredTypeId ? ' selected' : '') + '>' + esc(t.name) + '</option>';
     }).join('');
     var draft = { step: 1, fields: [], selectedFieldId: null, clientTypeId: '', dirty: false, dragType: null, dragFieldId: null };
     saModal({
       title: 'Cont de business nou',
-      subtitle: 'Pasul 1 din 2 · Definește contul care intră în Scriptica.',
+      subtitle: 'Definește contul care intră în Scriptica.',
       bodyHtml: newClientModalBody(ctOptions),
       submitLabel: 'Continuă',
       wide: true,
@@ -1953,10 +1946,15 @@
         var subtitle = m.querySelector('.modal__subtitle');
         var submit = m.querySelector('[data-modal-submit]');
         var cancel = m.querySelector('[data-modal-cancel]');
+        var footer = m.querySelector('.modal__footer');
         var helper = m.querySelector('.modal__footer-helper');
         var sel = m.querySelector('[data-f="ctype"]');
         var prev = m.querySelector('[data-ct-preview]');
         dialog.classList.add('sa-client-onboarding-modal');
+        /* Indicatorul rămâne vizibil sub conținut, inclusiv când builder-ul
+           derulează, și precede acțiunile modalului. */
+        var progress = m.querySelector('.sa-onboarding-progress');
+        if (progress && footer) dialog.insertBefore(progress, footer);
         cancel.insertAdjacentHTML('beforebegin', '<button class="btn btn--ghost" type="button" data-onboarding-back hidden><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Înapoi</button>');
         var back = m.querySelector('[data-onboarding-back]');
 
@@ -1972,7 +1970,7 @@
           back.hidden = step === 1;
           cancel.textContent = step === 1 ? 'Anulează' : 'Renunță';
           submit.innerHTML = step === 1 ? 'Continuă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' : 'Creează contul<span class="material-symbols-outlined" aria-hidden="true">check</span>';
-          subtitle.textContent = step === 1 ? 'Pasul 1 din 2 · Definește contul care intră în Scriptica.' : 'Pasul 2 din 2 · Configurează datele cerute la înrolarea clienților săi.';
+          subtitle.textContent = step === 1 ? 'Definește contul care intră în Scriptica.' : 'Configurează datele cerute la înrolarea clienților săi.';
           helper.textContent = step === 1 ? 'Contul se creează după configurarea ambilor pași.' : 'Formularul poate fi ajustat ulterior din profilul contului.';
           if (step === 2) {
             renderClientProfileBuilder(m, draft);
@@ -1986,10 +1984,8 @@
         function updatePreview() {
           var t = clientTypeById(sel.value);
           if (!t) { prev.innerHTML = ''; return; }
-          var vs = (t.verticalIds || []).map(verticalById).filter(Boolean)
-            .map(function (v) { return v.name; }).join(' · ');
-          prev.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">downloading</span>' +
-            'Clientul va primi: <b>' + esc(vs) + '</b> cu ' + (t.defaultTemplateIds || []).length + ' fluxuri publicate.';
+          prev.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">category</span>' +
+            'Categoria <b>' + esc(t.name) + '</b> descrie organizația. Contul se creează fără module; verticalele contractate se activează apoi din profilul lui.';
         }
         sel.addEventListener('change', updatePreview);
         m.querySelectorAll('[data-onboarding-step="1"] input, [data-onboarding-step="1"] select').forEach(function (control) {
@@ -2011,8 +2007,6 @@
           if (!name || !t) return;
           if (draft.clientTypeId !== t.id) {
             draft.clientTypeId = t.id;
-            draft.fields = defaultClientProfileFields(t);
-            draft.selectedFieldId = draft.fields[1] ? draft.fields[1].id : null;
           }
           draft.dirty = true;
           draft.showStep(2);
@@ -2028,10 +2022,11 @@
         builderError.textContent = '';
         builderError.style.display = '';
         var tier = m.querySelector('[data-f="tier"]').value;
-        var hasAudit = (t.verticalIds || []).indexOf('vert_audit') !== -1;
+        var hasAudit = false;
         var recordId = uid('cli', name, clients());
         var rec = {
           id: recordId, name: name, domain: t.name, clientTypeId: t.id,
+          moduleAssignments: [], moduleAssignmentsVersion: 1,
           instance: slugify(name).replace(/_/g, '') + '.scriptica.ro',
           users: 1, enrolled: '20.04.2026', tier: tier, contract: 'activ', aiLoad: 5,
           commercial: {
@@ -2058,31 +2053,97 @@
         };
         scripticaFlowSave('saClient', rec);
         close();
-        toast('success', 'Contul „' + name + '” a fost creat cu un formular de înrolare de ' + inputFields.length + ' câmpuri.');
+        toast('success', 'Contul „' + name + '” a fost creat. Modulele pot fi activate acum din profilul clientului.');
         renderClients(root);
       }
     });
   }
 
-  /* Fluxurile provisionate ale unui client — derivate din tipul său. */
+  /* Modulele contractate aparțin clientului, nu categoriei sale. O asignare
+     inactivă rămâne în record ca istoric și poate fi reactivată fără pierderi. */
   function provisionedFlowsHtml(c) {
     var t = clientTypeById(c.clientTypeId);
     if (!t) return '';
-    var inner = (t.verticalIds || []).map(verticalById).filter(Boolean).map(function (v) {
-      var tpls = (t.defaultTemplateIds || []).map(templateById).filter(function (x) { return x && x.verticalId === v.id; });
-      return '<div class="sa-prov-vert">' +
-        '<div class="sa-prov-vert__head"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(v.name) + '</div>' +
+    var assignments = moduleAssignments(c, true);
+    var activeCount = assignments.filter(function (assignment) { return assignment.status === 'activ'; }).length;
+    var inner = assignments.map(function (assignment) {
+      var v = verticalById(assignment.verticalId);
+      if (!v) return '';
+      var tpls = (assignment.templateIds || []).map(templateById).filter(Boolean);
+      var active = assignment.status === 'activ';
+      return '<div class="sa-prov-vert' + (active ? '' : ' is-inactive') + '">' +
+        '<div class="sa-prov-vert__head"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(v.name) +
+          '<span class="pill ' + (active ? 'pill--success' : 'pill--neutral') + '">' + (active ? 'Activ' : 'Inactiv') + '</span></div>' +
         '<ul class="sa-ct-tpllist">' + tpls.map(function (x) { return '<li>' + esc(x.name) + ' <small>(' + esc(x.frequency) + ')</small></li>'; }).join('') + '</ul>' +
+        (!active ? '<div class="sa-module-history"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>Datele și arhiva modulului sunt păstrate.</div>' : '') +
       '</div>';
     }).join('');
     return '<div class="sa-sec">' +
-      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Fluxurile clientului' +
-        '<button class="btn btn--ghost sa-sec__action" type="button" data-change-ct>Schimbă tipul</button></div>' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">extension</span>Modulele clientului' +
+        '<button class="btn btn--secondary sa-sec__action" type="button" data-manage-modules>Gestionează modulele</button></div>' +
       kv('Tip client', ctPill(c.clientTypeId)) +
-      inner +
+      '<div class="sa-module-summary"><b>' + activeCount + '</b> ' + (activeCount === 1 ? 'modul activ' : 'module active') + '</div>' +
+      (inner || '<div class="sa-module-empty"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><b>Niciun modul activat</b><span>Clientul există și poate fi configurat mai târziu.</span></div>') +
       '<div class="sa-dt-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-        'Fluxurile afișate urmează tipul curent al clientului — clientul le poate adapta din Administrare.</div>' +
+        'Dezactivarea ascunde modulul din lucru, dar nu șterge fluxurile, documentele sau arhiva lui.</div>' +
+      '<button class="btn btn--ghost" type="button" data-change-ct>Schimbă categoria clientului</button>' +
     '</div>';
+  }
+
+  function openModuleManagerModal(root, c) {
+    var current = moduleAssignments(c, true);
+    var blocks = activeVerticals().map(function (vertical) {
+      var assignment = current.find(function (item) { return item.verticalId === vertical.id; });
+      var active = assignment && assignment.status === 'activ';
+      var templateCount = templatesFor(vertical.id).filter(function (template) { return (template.status || 'activ') === 'activ'; }).length;
+      return '<label class="sa-module-option ' + (window.scripticaVerticalAccentClass ? window.scripticaVerticalAccentClass(vertical) : '') + '">' +
+        '<input type="checkbox" data-module-vertical value="' + esc(vertical.id) + '"' + (active ? ' checked' : '') + '>' +
+        '<span class="sa-module-option__icon"><span class="material-symbols-outlined" aria-hidden="true">' + esc(vertical.icon || 'account_tree') + '</span></span>' +
+        '<span class="sa-module-option__copy"><b>' + esc(vertical.name) + '</b><small>' + templateCount + (templateCount === 1 ? ' tip de flux' : ' tipuri de flux') +
+          (assignment && !active ? ' · istoric păstrat' : '') + '</small></span>' +
+        '<span class="material-symbols-outlined sa-module-option__check" aria-hidden="true">check_circle</span>' +
+      '</label>';
+    }).join('');
+    saModal({
+      title: 'Modulele clientului',
+      subtitle: c.name,
+      wide: true,
+      bodyHtml: '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>' +
+        '<b>Modulele corespund verticalelor din registrul de fluxuri.</b> Dezactivarea lor ascunde activitatea curentă, dar păstrează integral istoricul și arhiva.</span></div>' +
+        '<div class="sa-module-options">' + (blocks || '<div class="empty-state"><p>Nu există verticale active în registru.</p></div>') + '</div>',
+      submitLabel: 'Salvează modulele',
+      onSubmit: function (m, close) {
+        var selectedIds = Array.prototype.map.call(m.querySelectorAll('[data-module-vertical]:checked'), function (input) { return input.value; });
+        var updated = current.map(function (assignment) {
+          var next = Object.assign({}, assignment);
+          var shouldBeActive = selectedIds.indexOf(next.verticalId) !== -1;
+          if (shouldBeActive && next.status !== 'activ') {
+            next.status = 'activ'; next.deactivatedAt = null;
+          } else if (!shouldBeActive && next.status === 'activ') {
+            next.status = 'inactiv'; next.deactivatedAt = '2026-04-20';
+          }
+          return next;
+        });
+        selectedIds.forEach(function (verticalId) {
+          if (updated.some(function (assignment) { return assignment.verticalId === verticalId; })) return;
+          updated.push({
+            id: 'mod_' + c.id + '_' + verticalId,
+            verticalId: verticalId,
+            templateIds: templatesFor(verticalId).filter(function (template) { return (template.status || 'activ') === 'activ'; }).map(function (template) { return template.id; }),
+            status: 'activ', activatedAt: '2026-04-20', deactivatedAt: null
+          });
+        });
+        var updatedFlags = (c.flags || []).map(function (flag) {
+          return flag.name === 'Vertical Audit' ? Object.assign({}, flag, { on: selectedIds.indexOf('vert_audit') !== -1 }) : flag;
+        });
+        scripticaFlowSave('saClient', Object.assign({}, c, {
+          moduleAssignments: updated, moduleAssignmentsVersion: 1, flags: updatedFlags
+        }));
+        close();
+        toast('success', 'Modulele clientului au fost actualizate. Istoricul modulelor inactive rămâne păstrat.');
+        renderClientDetail(root);
+      }
+    });
   }
 
   function openChangeTypeModal(root, c) {
@@ -2093,7 +2154,7 @@
       title: 'Schimbă tipul clientului',
       subtitle: c.name,
       bodyHtml: fieldHtml('Tip de client', '<select class="select" data-f="ctype">' + opts + '</select>',
-        'Fluxurile, arhiva și dashboard-ul clientului se actualizează la noul tip.'),
+        'Categoria descrie organizația. Modulele active și istoricul lor nu se modifică.'),
       submitLabel: 'Salvează',
       onSubmit: function (m, close) {
         var t = clientTypeById(m.querySelector('[data-f="ctype"]').value);

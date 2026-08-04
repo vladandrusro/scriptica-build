@@ -41,14 +41,30 @@
       })(f);
       return { key: f.id, label: f.name, system: !!f.system, typeNames: names };
     });
-    var templateIds = (clientType && clientType.defaultTemplateIds) || [];
-    var customVerticalIds = ((clientType && clientType.verticalIds) || []).filter(function (verticalId) {
+    var assignments = typeof window.scripticaTenantModuleAssignments === 'function'
+      ? window.scripticaTenantModuleAssignments(true) : [];
+    var templateIds = [];
+    assignments.forEach(function (assignment) {
+      templateIds = templateIds.concat(assignment.templateIds || []);
+    });
+    if (!assignments.length && !window.scripticaTenantAccountId()) {
+      templateIds = (clientType && clientType.defaultTemplateIds) || [];
+    }
+    var moduleVerticalIds = assignments.length
+      ? assignments.map(function (assignment) { return assignment.verticalId; })
+      : ((clientType && clientType.verticalIds) || []);
+    var customVerticalIds = moduleVerticalIds.filter(function (verticalId) {
       var vertical = typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
       return vertical && !vertical.builtin;
     });
     ((MOCK.superAdmin && MOCK.superAdmin.flowTemplates) || []).forEach(function (template) {
       if (templateIds.indexOf(template.id) === -1 || customVerticalIds.indexOf(template.verticalId) === -1) return;
-      folders.push({ key: 'af_flow_' + template.id, label: template.name, system: false, flowTemplateId: template.id, typeNames: [] });
+      var assignment = assignments.find(function (item) { return item.verticalId === template.verticalId; });
+      folders.push({
+        key: 'af_flow_' + template.id,
+        label: template.name + (assignment && assignment.status !== 'activ' ? ' · modul inactiv' : ''),
+        system: false, flowTemplateId: template.id, typeNames: []
+      });
     });
     if (!folders.some(function (f) { return f.system; })) {
       folders.push({ key: 'af_fallback', label: 'Necategorisit', system: true, typeNames: [] });

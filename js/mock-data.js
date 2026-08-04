@@ -2147,6 +2147,29 @@ window.SCRIPTICA_MOCK = {
   });
   SA.clientTypes = mergeInto(SA.clientTypes || [], 'scriptica.clientTypes');
   SA.clients = mergeInto(SA.clients || [], 'scriptica.saClients');
+  /* Migrare 2026-08 — tipul de client rămâne categorie, iar modulele
+     (verticalele contractate) aparțin clientului HQ. Pentru înregistrările
+     vechi derivăm o singură dată pachetul existent din tip, fără să confundăm
+     un array gol salvat explicit cu o stare nemigrată. */
+  SA.clients.forEach(function (client) {
+    if (client.moduleAssignmentsVersion === 1 && Array.isArray(client.moduleAssignments)) return;
+    var clientType = (SA.clientTypes || []).find(function (type) { return type.id === client.clientTypeId; });
+    var templateIds = (clientType && clientType.defaultTemplateIds) || [];
+    client.moduleAssignments = ((clientType && clientType.verticalIds) || []).map(function (verticalId) {
+      return {
+        id: 'mod_' + client.id + '_' + verticalId,
+        verticalId: verticalId,
+        templateIds: templateIds.filter(function (templateId) {
+          var template = (SA.flowTemplates || []).find(function (item) { return item.id === templateId; });
+          return template && template.verticalId === verticalId;
+        }),
+        status: 'activ',
+        activatedAt: '2026-04-20',
+        deactivatedAt: null
+      };
+    });
+    client.moduleAssignmentsVersion = 1;
+  });
   M.flowItems = mergeInto(M.flowItems || [], 'scriptica.flowItems');
 })();
 
@@ -2216,6 +2239,32 @@ window.SCRIPTICA_MOCK = {
   };
   window.scripticaClientTypeById = function (id) {
     return window.scripticaClientTypes().find(function (t) { return t.id === id; }) || null;
+  };
+  window.scripticaModuleAssignmentsForClient = function (clientOrId, includeInactive) {
+    var clients = (window.SCRIPTICA_MOCK.superAdmin && window.SCRIPTICA_MOCK.superAdmin.clients) || [];
+    var client = typeof clientOrId === 'string'
+      ? clients.find(function (item) { return item.id === clientOrId; })
+      : clientOrId;
+    var assignments = (client && client.moduleAssignments) || [];
+    return includeInactive ? assignments.slice() : assignments.filter(function (assignment) {
+      var vertical = window.scripticaVerticalById(assignment.verticalId);
+      return assignment.status === 'activ' && vertical && (vertical.status || 'activ') === 'activ';
+    });
+  };
+  window.scripticaActiveModuleVerticalIdsForClient = function (clientOrId) {
+    return window.scripticaModuleAssignmentsForClient(clientOrId, false).map(function (assignment) {
+      return assignment.verticalId;
+    });
+  };
+  window.scripticaTemplatesForClientModule = function (clientOrId, verticalId, includeInactive) {
+    var assignment = window.scripticaModuleAssignmentsForClient(clientOrId, includeInactive)
+      .find(function (item) { return item.verticalId === verticalId; });
+    if (!assignment) return [];
+    return (assignment.templateIds || []).map(function (templateId) {
+      return (window.SCRIPTICA_MOCK.superAdmin.flowTemplates || []).find(function (template) {
+        return template.id === templateId;
+      }) || null;
+    }).filter(Boolean);
   };
   window.scripticaFlowItemsForVertical = function (verticalId) {
     return (window.SCRIPTICA_MOCK.flowItems || [])
@@ -2289,9 +2338,51 @@ window.SCRIPTICA_MOCK = {
       : window.scripticaDefaultArchiveTree();
   };
 
-  /* Tipul de client al firmei demo, dedus din persona curentă — folosit de
-     paginile de tenant (Arhivă, Acasă) ca să reflecte configurația HQ. */
+  /* Contul HQ previzualizat pe suprafețele de tenant. Super Admin îl setează
+     explicit din detaliul clientului; în lipsa lui păstrăm fallback-ul demo
+     istoric pe tip, ca parcursurile existente să nu dispară. */
+  window.scripticaTenantAccountId = function () {
+    var id = '';
+    try { id = localStorage.getItem('scriptica.tenantAccountId') || ''; } catch (e) {}
+    return ((window.SCRIPTICA_MOCK.superAdmin && window.SCRIPTICA_MOCK.superAdmin.clients) || [])
+      .some(function (client) { return client.id === id; }) ? id : '';
+  };
+  window.scripticaTenantAccount = function () {
+    var id = window.scripticaTenantAccountId();
+    return id ? (window.SCRIPTICA_MOCK.superAdmin.clients || []).find(function (client) { return client.id === id; }) || null : null;
+  };
+  window.scripticaSetTenantAccountId = function (id) {
+    try {
+      if (id) localStorage.setItem('scriptica.tenantAccountId', id);
+      else localStorage.removeItem('scriptica.tenantAccountId');
+    } catch (e) {}
+  };
+  window.scripticaTenantModuleAssignments = function (includeInactive) {
+    var account = window.scripticaTenantAccount();
+    if (account) return window.scripticaModuleAssignmentsForClient(account, includeInactive);
+    var type = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());
+    var templateIds = (type && type.defaultTemplateIds) || [];
+    return ((type && type.verticalIds) || []).map(function (verticalId) {
+      return {
+        id: 'legacy_' + verticalId,
+        verticalId: verticalId,
+        templateIds: templateIds.filter(function (templateId) {
+          var template = (window.SCRIPTICA_MOCK.superAdmin.flowTemplates || []).find(function (item) { return item.id === templateId; });
+          return template && template.verticalId === verticalId;
+        }),
+        status: 'activ', activatedAt: null, deactivatedAt: null
+      };
+    });
+  };
+  window.scripticaTenantActiveVerticalIds = function () {
+    return window.scripticaTenantModuleAssignments(false).map(function (assignment) { return assignment.verticalId; });
+  };
+
+  /* Tipul de client al firmei demo sau al contului HQ previzualizat — folosit
+     de Arhivă și Acasă pentru configurațiile de bază ale categoriei. */
   window.scripticaTenantClientTypeId = function () {
+    var account = window.scripticaTenantAccount();
+    if (account && account.clientTypeId) return account.clientTypeId;
     var v = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
     if (v === 'contabilitate' || v === 'client') return 'ct_contabilitate';
     if (v === 'audit_stat' || v === 'autoritate') return 'ct_audit';

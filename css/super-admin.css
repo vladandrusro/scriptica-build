@@ -489,6 +489,10 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 .sa-client-onboarding-modal .modal__body {
   min-height: 0;
 }
+.sa-client-onboarding-modal > .sa-onboarding-progress {
+  flex: none;
+  margin: var(--space-3) var(--space-5) 0;
+}
 .sa-onboarding-progress {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -805,6 +809,53 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
   font-weight: var(--font-weight-bold); margin-bottom: var(--space-1);
 }
 .sa-prov-vert__head .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+.sa-prov-vert.is-inactive { opacity: .72; }
+.sa-prov-vert__head .pill { margin-left: auto; }
+.sa-module-summary {
+  display: inline-flex; align-items: baseline; gap: var(--space-1);
+  margin: var(--space-3) 0; color: var(--color-text-secondary);
+}
+.sa-module-summary b { color: var(--color-text-primary); font-size: var(--font-size-headline-2); }
+.sa-module-empty {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-2);
+  padding: var(--space-5); margin-bottom: var(--space-3); text-align: center;
+  border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md);
+  color: var(--color-text-muted); background: var(--color-surface-1);
+}
+.sa-module-empty .material-symbols-outlined { font-size: 32px; }
+.sa-module-history {
+  display: flex; align-items: center; gap: var(--space-1);
+  margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-small);
+}
+.sa-module-history .material-symbols-outlined { font-size: 16px; }
+.sa-module-note {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  padding: var(--space-3); margin-bottom: var(--space-4);
+  border-radius: var(--radius-md); background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+}
+.sa-module-note .material-symbols-outlined { color: var(--color-default-highlight); }
+.sa-module-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.sa-module-option {
+  display: flex; align-items: center; gap: var(--space-3); min-width: 0;
+  padding: var(--space-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); background: var(--color-surface-white); cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.sa-module-option:hover { border-color: var(--color-border-strong); background: var(--color-surface-1); }
+.sa-module-option:has(input:focus-visible) { outline: 2px solid var(--color-default-highlight); outline-offset: 2px; }
+.sa-module-option > input { position: absolute; opacity: 0; pointer-events: none; }
+.sa-module-option__icon {
+  width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md); background: var(--va-surface, var(--color-surface-2));
+  color: var(--va, var(--color-default-highlight));
+}
+.sa-module-option__copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sa-module-option__copy small { color: var(--color-text-muted); }
+.sa-module-option__check { color: var(--color-border-strong); font-variation-settings: 'FILL' 1; }
+.sa-module-option:has(input:checked) { border-color: var(--va, var(--color-default-highlight)); }
+.sa-module-option:has(input:checked) .sa-module-option__check { color: var(--color-success); }
+@media (max-width: 960px) { .sa-module-options { grid-template-columns: 1fr; } }
 
 /* ============================================================
    Configurările tipului (Structură arhivă · Ecranul Acasă) —

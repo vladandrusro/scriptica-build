@@ -33,16 +33,28 @@
      domeniu (contabil/audit), reutilizat din designul de formule/categorii. */
   window.getViewScope = function () {
     var v = getCurrentView();
-    if (v === 'contabilitate') return ['contabil'];
-    if (v === 'audit_stat' || v === 'autoritate') return ['audit'];
-    if (v === 'client') return ['contabil'];
+    var scope;
+    if (v === 'contabilitate') scope = ['contabil'];
+    else if (v === 'audit_stat' || v === 'autoritate') scope = ['audit'];
+    else if (v === 'client') scope = ['contabil'];
     /* complet, accountant, admin, superadmin: toate domeniile, inclusiv
        verticalele custom din registrul de fluxuri (definite de HQ). */
-    var scope = ['contabil', 'audit'];
+    else scope = ['contabil', 'audit'];
     if (typeof window.scripticaCustomVerticals === 'function') {
       window.scripticaCustomVerticals().forEach(function (cv) {
         if (scope.indexOf(cv.domain) === -1) scope.push(cv.domain);
       });
+    }
+    /* Persona spune ce are voie rolul să vadă; modulele active spun ce a
+       contractat contul curent. Intersecția celor două evită ca o verticală
+       dezactivată să rămână accesibilă prin URL sau navigație. */
+    if (v !== 'superadmin' && typeof window.scripticaTenantActiveVerticalIds === 'function' &&
+        typeof window.scripticaVerticalById === 'function') {
+      var moduleDomains = window.scripticaTenantActiveVerticalIds().map(function (verticalId) {
+        var vertical = window.scripticaVerticalById(verticalId);
+        return vertical ? vertical.domain : null;
+      }).filter(Boolean);
+      scope = scope.filter(function (domain) { return moduleDomains.indexOf(domain) !== -1; });
     }
     return scope;
   };
@@ -178,9 +190,8 @@
   }
 
   /* Verticalele custom din registrul de fluxuri (definite de Super Admin) —
-     un item de nav per verticală, servit de motorul generic flux.html.
-     Injectat după „Misiuni Audit"; ascuns pentru personas fără domeniul
-     verticalei în scope (gateNavByScope face gating-ul prin data-domain). */
+     un item de nav per modul activ, servit de motorul generic flux.html.
+     Rolul limitează domeniul, iar contul tenant limitează verticala exactă. */
   function injectCustomVerticalNav() {
     var view = getCurrentView();
     if (view === 'superadmin' || view === 'client') return;
@@ -188,7 +199,10 @@
     var nav = document.querySelector('.sidebar__nav');
     if (!nav) return;
     var anchor = nav.querySelector('[data-nav="misiuni-audit"]') || nav.querySelector('[href="situatii.html"]');
+    var activeVerticalIds = typeof window.scripticaTenantActiveVerticalIds === 'function'
+      ? window.scripticaTenantActiveVerticalIds() : null;
     window.scripticaCustomVerticals().forEach(function (v) {
+      if (activeVerticalIds && activeVerticalIds.indexOf(v.id) === -1) return;
       if (nav.querySelector('[data-nav="flux-' + v.id + '"]')) return;
       var a = document.createElement('a');
       a.className = 'nav-item';

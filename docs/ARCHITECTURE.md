@@ -1,6 +1,6 @@
 # Architecture
 
-Based on direct inspection of the source (2026-07-16, branch `audit-vertical`, commit `e1061a1`). Nothing here is aspirational — this documents what the code actually does.
+Based on direct inspection of the source (2026-07-16, branch `audit-vertical`, commit `e1061a1`, rechecked against the working tree on 2026-08-04). Except for sections explicitly labeled **approved direction**, this documents what the code actually does rather than an aspirational design.
 
 ## Repository structure
 
@@ -116,6 +116,7 @@ Full localStorage inventory (all owned keys):
 | Key | Contents | Written by |
 |---|---|---|
 | `scriptica.view` | persona id | shell.js (also force-set to `admin` by administrare.js/constructor-anexe.js, sparing `complet` on administrare only) |
+| `scriptica.tenantAccountId` | HQ client selected for tenant preview; its active module assignments scope tenant navigation and work surfaces | super-admin.js via `scripticaSetTenantAccountId()` |
 | `scriptica.anexe` | anexă templates | constructor-anexe.js, administrare.js |
 | `scriptica.situationTypes` | situation/mission types (steps, formulas) | administrare.js |
 | `scriptica.flowVerticals` / `.flowTemplates` / `.clientTypes` / `.saClients` / `.flowItems` | HQ flow registry + instances | super-admin.js, flux.js — always via `scripticaFlowSave` |
@@ -127,6 +128,18 @@ Full localStorage inventory (all owned keys):
 | `scriptica.sidebarExpanded` / `.messagingPanelCollapsed` | chrome state | shell.js |
 
 Flow configuration has two distinct owners: a `flowVertical` groups templates and owns `documentCategories[]` (each with its nested, uniquely assigned `documentTypes[]`), while a `flowTemplate` owns `steps[]` and `documentCategoryIds[]`. The permanent system category `Necategorisit` is always added to the template selection. `clientTypes[].archiveTree` is deliberately independent from that taxonomy; custom-flow archive folders are derived from the flow templates included in the client type.
+
+## Client categories and flow modules
+
+### Per-client modules (implemented in the prototype)
+
+`clientTypes[]` now acts as the stable business category. A client can be created in `superAdmin.clients[]` with that category and zero modules; category changes and module changes are separate operations. Each HQ client stores `moduleAssignments[]`, with stable vertical/template ids, status and activation/deactivation timestamps. Older `scriptica.saClients` records are migrated in memory from the former category package (`verticalIds[]` / `defaultTemplateIds[]`) so stale localStorage continues to render.
+
+The Fluxuri V2 surface is a global catalog: publishing a vertical or template makes it available for later activation, but does not attach it to a category or existing client. The HQ client detail has a module manager and a tenant preview. `scriptica.tenantAccountId` selects that preview account; `shell.js`, `dashboard-widgets.js`, `flux.js` and `arhiva.js` then resolve visibility from its assignments. Without a selected preview account, the seeded persona/category behavior remains as a compatibility fallback for the established demos.
+
+Module removal is non-destructive. An assignment must move from active to inactive/retired rather than be deleted. Operational records, documents, conversations, anexă responses and archive entries created while the module was active remain stored; ordinary work surfaces may be hidden while inactive, but the archive and historical integrity remain intact. Reactivating the same module must restore access to the same history.
+
+Archive folders are resolved from active **and inactive** assignments, while normal navigation, creation actions and dashboard module cards use active assignments only. Used verticals/templates are archived (`status: inactiv`) instead of tombstoned. One prototype limitation remains: most pre-seeded operational records are shared demo data rather than fully owned by an HQ client; newly created generic flow records receive `tenantAccountId`, but a production data model would enforce tenant ownership on every operational record.
 
 ## Authentication and permissions
 
@@ -159,3 +172,4 @@ Load order per page: Google Fonts → `tokens.css` (single source of truth: surf
 7. **Task-id determinism**: `augmentTasks` assigns task ids sequentially; seeded time sessions depend on those ids — editing a type's steps mis-attributes time data.
 8. **Two clocks**: pinned 2026-04-20 for rendering vs real `new Date()` in some modal validations (dashboard.js) — date-validation UX can look inconsistent relative to demo data.
 9. Prototype-only security posture: all "permissions" are cosmetic client-side gating. Nothing here should ever hold real data.
+10. **Operational ownership is only partially modeled** — per-client module entitlement is implemented, but most seeded flow instances still have no HQ-account owner. The selected-tenant preview therefore validates module visibility, not hard multi-tenant data isolation.

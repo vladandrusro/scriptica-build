@@ -23,7 +23,7 @@ The repository owner (Vlad) is **the product owner and UX designer, not a softwa
 - An internal "Autoritate Decidentă" (top-seniority approver of audit missions — deliberately internal, not external).
 - Scriptica HQ itself (a "Super Admin" zone: commercial ops + a no-code registry that defines client types and flow verticals).
 
-**The product problem it solves:** accounting/audit work is deadline-driven document flows spread across email, Excel and folklore. Scriptica's thesis is that **everything is a flow** ("totul este un flux"): a client type gets verticals, a vertical gets flow templates with steps, each step carries tasks, documents, form annexes (anexe) and a conversation — and one generic engine can serve any business vertical (accounting, audit, tax consulting, construction) that HQ configures, without new pages.
+**The product problem it solves:** accounting/audit work is deadline-driven document flows spread across email, Excel and folklore. Scriptica's thesis is that **everything is a flow** ("totul este un flux"): a client type classifies the business, modules activate the verticals/flow types that a specific client has contracted, and each flow template contains steps with tasks, documents, form annexes (anexe) and a conversation. One generic engine can therefore serve any business vertical (accounting, audit, tax consulting, construction) that HQ configures, without new pages.
 
 **Maturity:** advanced prototype, live at https://scriptica.vandrus.dev. Everything visual works and is demo-ready; there is no backend, no real auth, no real AI — data is mock, persistence is browser localStorage, "AI classification" results are seeded. Treat every feature as *demo-real*: it must look and behave convincingly in a walkthrough, and it does not need to survive production loads.
 
@@ -34,8 +34,10 @@ The repository owner (Vlad) is **the product owner and UX designer, not a softwa
 3. **Autoritate**: sees missions "Spre Aprobare" read-only → Aprobă / Cere modificări / Respinge (the one decision that persists across reloads).
 4. **Approved mission** → appears under the Rapoarte tab with the expandable AI-scored final report.
 5. **Client**: logs into a scoped portal (Canvas S.R.L. only), sees friendly statuses and required actions.
-6. **Scriptica HQ**: create the client type first (Accounting / Audit / Construction) → define that type's verticals → build the flows inside each vertical → enroll a client of that type → the tenant side instantly gets nav, list page, detail page, dashboard and archive routing. This business-first configuration journey is the product's signature demo (slides 4–7 of the presentation).
+6. **Scriptica HQ**: define the stable client category (Accounting / Audit / Construction) → create the client, even with no work modules yet → add the vertical/flow modules included in that client's plan when they become available. Active modules supply the tenant nav, list page, detail page, dashboard and archive routing; the client category no longer blocks onboarding.
 7. **Persona switching** via the avatar menu — the whole app re-scopes (nav, data, guards) per persona. Any change must be checked against personas it might leak between.
+
+**Module-lifecycle invariant:** assigning a flow module to a client may create operational records, documents, conversations, anexe and archive entries. Removing that module later (for example, after a plan downgrade) means **deactivating and hiding it, never deleting its data**. Historical records and the archive remain intact, and reactivation must reveal the same history. A vertical/template that has ever been assigned or used must be retired/archived rather than hard-deleted.
 
 ## UX and visual-design principles
 

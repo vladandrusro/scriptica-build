@@ -78,6 +78,21 @@
   function employeeById(id) {
     return (MOCK.employees || []).find(function (e) { return e.id === id; }) || null;
   }
+  function templatesForTenantVertical(verticalId) {
+    var all = window.scripticaTemplatesForVertical(verticalId);
+    if (typeof window.scripticaTenantModuleAssignments !== 'function') return all;
+    var assignment = window.scripticaTenantModuleAssignments(false).find(function (item) {
+      return item.verticalId === verticalId;
+    });
+    if (!assignment) return [];
+    return all.filter(function (template) {
+      return (assignment.templateIds || []).indexOf(template.id) !== -1;
+    });
+  }
+  function tenantHasVertical(verticalId) {
+    if (typeof window.scripticaTenantActiveVerticalIds !== 'function') return true;
+    return window.scripticaTenantActiveVerticalIds().indexOf(verticalId) !== -1;
+  }
   function trapFocus(e, container) {
     if (!container) return;
     var focusable = container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
@@ -163,7 +178,7 @@
     var v = window.scripticaVerticalById && window.scripticaVerticalById(qs('vertical'));
     if (!v) { notFound(root, 'Verticala cerută nu există în registrul de fluxuri.'); return; }
     if (v.builtin && v.pages && v.pages.list) { window.location.replace(v.pages.list); return; }
-    if (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain)) { scopeBlock(root, v.name); return; }
+    if (!tenantHasVertical(v.id) || (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain))) { scopeBlock(root, v.name); return; }
 
     document.title = v.name + ' — Scriptica';
     markNavActive(v.id);
@@ -189,7 +204,7 @@
           '<label for="fx-tip" class="sr-only">Șablon</label>' +
           '<select id="fx-tip" class="select" style="width:240px;">' +
             '<option value="">Toate șabloanele</option>' +
-            window.scripticaTemplatesForVertical(v.id).map(function (t) {
+            templatesForTenantVertical(v.id).map(function (t) {
               return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
             }).join('') +
           '</select>' +
@@ -215,7 +230,12 @@
   }
 
   function itemsFor(v) {
-    return window.scripticaFlowItemsForVertical(v.id);
+    var allowedTemplateIds = templatesForTenantVertical(v.id).map(function (template) {
+      return template.id;
+    });
+    return window.scripticaFlowItemsForVertical(v.id).filter(function (item) {
+      return allowedTemplateIds.indexOf(item.templateId) !== -1;
+    });
   }
   function getFiltered(v) {
     var f = state.filters, q = normalize(f.search);
@@ -329,7 +349,7 @@
   /* ---------- modal element nou (construit din JS) ---------- */
 
   function openNewItemModal(root, v) {
-    var tpls = window.scripticaTemplatesForVertical(v.id)
+    var tpls = templatesForTenantVertical(v.id)
       .filter(function (t) { return (t.status || 'activ') === 'activ' && t.steps && t.steps.length; });
     var overlay = document.createElement('div');
     overlay.className = 'modal is-open';
@@ -455,6 +475,7 @@
         verticalId: v.id, domain: v.domain,
         name: name, clientName: client,
         templateId: t.id, templateName: t.name,
+        tenantAccountId: typeof window.scripticaTenantAccountId === 'function' ? window.scripticaTenantAccountId() || null : null,
         startDate: dateInp.value,
         currentStep: 1, stepsCompleted: 0,
         status: 'analiza', responsibleIds: [resp]
@@ -487,7 +508,7 @@
     if (!item) { notFound(root, 'Elementul cerut nu există.'); return; }
     var v = window.scripticaVerticalById(item.verticalId);
     if (!v) { notFound(root, 'Verticala elementului nu mai există în registru.'); return; }
-    if (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain)) { scopeBlock(root, v.name); return; }
+    if (!tenantHasVertical(v.id) || (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain))) { scopeBlock(root, v.name); return; }
 
     document.title = item.name + ' — Scriptica';
     markNavActive(v.id);

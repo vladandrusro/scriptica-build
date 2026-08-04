@@ -80,43 +80,28 @@
   }
   function contextType() { return clientTypeById(state.clientTypeId); }
   function libraryVerticals() {
-    var ct = contextType();
-    if (!ct) return verticals();
-    return (ct.verticalIds || []).map(verticalById).filter(Boolean);
+    return verticals();
   }
   function libraryTemplates() {
     var ids = libraryVerticals().map(function (vertical) { return vertical.id; });
     return templates().filter(function (template) { return ids.indexOf(template.verticalId) !== -1; });
   }
-  function attachVerticalToContext(verticalId) {
-    var ct = contextType();
-    if (!ct || (ct.verticalIds || []).indexOf(verticalId) !== -1 || typeof window.scripticaFlowSave !== 'function') return;
-    var updated = clone(ct);
-    updated.verticalIds = (updated.verticalIds || []).concat([verticalId]);
-    updated.needsReview = Object.assign({}, updated.needsReview || {}, { archive: true, dashboard: true });
-    window.scripticaFlowSave('clientType', updated);
-  }
-  function attachTemplateToContext(templateId) {
-    var ct = contextType();
-    if (!ct || (ct.defaultTemplateIds || []).indexOf(templateId) !== -1 || typeof window.scripticaFlowSave !== 'function') return;
-    var updated = clone(ct);
-    updated.defaultTemplateIds = (updated.defaultTemplateIds || []).concat([templateId]);
-    window.scripticaFlowSave('clientType', updated);
-  }
   function usedByTypes(templateId) {
-    return clientTypes().filter(function (ct) {
-      return (ct.defaultTemplateIds || []).indexOf(templateId) !== -1;
-    });
+    return [];
   }
   function affectedClientsForTemplate(templateId) {
-    var typeIds = usedByTypes(templateId).map(function (ct) { return ct.id; });
-    return clients().filter(function (client) { return typeIds.indexOf(client.clientTypeId) !== -1; });
+    return clients().filter(function (client) {
+      return ((client && client.moduleAssignments) || []).some(function (assignment) {
+        return (assignment.templateIds || []).indexOf(templateId) !== -1;
+      });
+    });
   }
   function affectedClientsForVertical(verticalId) {
-    var typeIds = clientTypes().filter(function (ct) {
-      return (ct.verticalIds || []).indexOf(verticalId) !== -1;
-    }).map(function (ct) { return ct.id; });
-    return clients().filter(function (client) { return typeIds.indexOf(client.clientTypeId) !== -1; });
+    return clients().filter(function (client) {
+      return ((client && client.moduleAssignments) || []).some(function (assignment) {
+        return assignment.verticalId === verticalId;
+      });
+    });
   }
   function canonicalTemplateById(id) {
     return ((SA() && SA().flowTemplates) || []).find(function (template) { return template.id === id; }) || null;
@@ -522,16 +507,13 @@
   }
 
   function setupPathHtml(ct, template) {
-    var context = ct ? '&ct=' + encodeURIComponent(ct.id) : '';
     var flowActive = !!template;
-    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
-      '<a class="sa-setup__step" href="super-admin-tipuri-clienti-v2.html?view=superadmin' + context + '"><span>1</span><div><small>Definește organizația</small><b>Tip de client</b></div></a>' +
+    return '<nav class="sa-setup" aria-label="Registrul global de fluxuri">' +
+      '<a class="sa-setup__step' + (flowActive ? '' : ' is-active') + '" href="#fxv2-root"' + (flowActive ? '' : ' aria-current="step"') + '><span>1</span><div><small>Grupează serviciile</small><b>Verticale</b></div></a>' +
       '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step' + (flowActive ? '' : ' is-active') + '" href="#fxv2-root"' + (flowActive ? '' : ' aria-current="step"') + '><span>2</span><div><small>Structurează activitatea</small><b>Verticale</b></div></a>' +
+      '<a class="sa-setup__step' + (flowActive ? ' is-active' : '') + '" href="#fxv2-root"' + (flowActive ? ' aria-current="step"' : '') + '><span>2</span><div><small>Definește execuția</small><b>Fluxuri</b></div></a>' +
       '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step' + (flowActive ? ' is-active' : '') + '" href="#fxv2-root"' + (flowActive ? ' aria-current="step"' : '') + '><span>3</span><div><small>Definește execuția</small><b>Fluxuri</b></div></a>' +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin' + context + '"><span>4</span><div><small>Activează configurația</small><b>Client</b></div></a>' +
+      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin"><span>3</span><div><small>Activează pe cont</small><b>Module client</b></div></a>' +
     '</nav>';
   }
 
@@ -547,30 +529,24 @@
     var template = selectedTemplate();
     var visibleTemplates = libraryTemplates();
     var totalSteps = visibleTemplates.reduce(function (sum, item) { return sum + (item.steps || []).length; }, 0);
-    var readyForClient = !!(ct && (ct.verticalIds || []).length && (ct.defaultTemplateIds || []).length);
     root.innerHTML =
       '<header class="page-header fxv2-page-header">' +
         '<div class="fxv2-heading"><div class="fxv2-heading__line">' +
-          '<h1 class="page-header__title">Verticale și fluxuri</h1><span class="pill pill--neutral">Pașii 2–3 din 4</span></div>' +
-          '<p class="fxv2-intro">' + (ct
-            ? 'Configurezi tipul „<b>' + esc(ct.name) + '</b>”. Creează domeniile sale de lucru, apoi construiește fluxurile din fiecare verticală.'
-            : 'Registrul global rămâne vizibil pentru administrare. Pentru o configurare nouă, pornește prin alegerea unui tip de client.') + '</p>' +
+          '<h1 class="page-header__title">Verticale și fluxuri</h1><span class="pill pill--neutral">Registru global</span></div>' +
+          '<p class="fxv2-intro">Definește o singură dată verticalele și fluxurile platformei. Ele devin module disponibile, activate ulterior pe fiecare client.</p>' +
         '</div>' +
         '<div class="fxv2-page-actions">' +
-          (ct ? '<a class="btn btn--ghost" href="super-admin-tipuri-clienti-v2.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '">Înapoi la tip</a>' : '') +
-          (ct ? '<button class="btn btn--secondary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
-            : '<a class="btn btn--secondary" href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></a>') +
-          (ct && vertical ? '<button class="btn ' + (readyForClient ? 'btn--secondary' : 'btn--primary') + '" type="button" data-new-template>Flux nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' : '') +
-          (ct && readyForClient ? '<a class="btn btn--primary" href="super-admin-clienti.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '&new=client">Continuă la client<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' : '') +
+          '<button class="btn btn--secondary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+          (vertical ? '<button class="btn btn--primary" type="button" data-new-template>Flux nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' : '') +
         '</div>' +
       '</header>' +
       setupPathHtml(ct, template) +
       '<div class="fxv2-summary" aria-label="Rezumat registru de fluxuri">' +
-        summaryMetric('account_tree', libraryVerticals().length, ct ? 'verticale în acest tip' : 'verticale') +
-        summaryMetric('schema', visibleTemplates.length, ct ? 'fluxuri în verticale' : 'fluxuri definite') +
+        summaryMetric('account_tree', libraryVerticals().length, 'verticale globale') +
+        summaryMetric('schema', visibleTemplates.length, 'fluxuri definite') +
         summaryMetric('conversion_path', totalSteps, 'pași configurabili') +
         '<span class="fxv2-summary__explain"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-          (ct ? 'O verticală nouă este asociată automat acestui tip; un flux publicat devine parte din configurația de înrolare.' : 'Verticala definește categoriile; fiecare flux definește pașii și vizibilitatea lor.') + '</span>' +
+          'Verticala devine modul comercial; fiecare flux din ea definește pașii de lucru disponibili clientului.</span>' +
       '</div>' +
       '<div class="fxv2-workspace">' + libraryHtml(vertical, template) + editorHtml(vertical, template) + '</div>';
     rememberSelection();
@@ -589,7 +565,7 @@
     return '<aside class="fxv2-library" aria-label="Biblioteca de fluxuri">' +
       '<div class="fxv2-library__scroll">' +
         '<div class="fxv2-library__section">' +
-          '<div class="fxv2-library__heading"><div><h2>' + (ct ? esc(ct.name) : 'Registrul platformei') + '</h2><small>Alege verticala, apoi fluxul.</small></div><span>' + libraryTemplates().length + '</span></div>' +
+          '<div class="fxv2-library__heading"><div><h2>Registrul platformei</h2><small>Alege verticala, apoi fluxul.</small></div><span>' + libraryTemplates().length + '</span></div>' +
         '<div class="filter-input-search fxv2-search"><span class="material-symbols-outlined" aria-hidden="true">search</span>' +
           '<label class="sr-only" for="fxv2-search">Caută un flux</label>' +
           '<input id="fxv2-search" class="input" type="search" placeholder="Caută un flux..." autocomplete="off" value="' + esc(state.q) + '"></div>' +
@@ -612,9 +588,9 @@
     if (!groups.length) {
       return '<div class="fxv2-library-empty"><span class="material-symbols-outlined" aria-hidden="true">' + (state.q ? 'search_off' : 'account_tree') + '</span>' +
         '<b>' + (state.q ? 'Niciun flux găsit' : 'Nicio verticală configurată') + '</b><span>' +
-        (state.q ? 'Încearcă alt termen sau caută după frecvență.' : 'Creează prima verticală pentru acest tip de client.') + '</span>' +
+        (state.q ? 'Încearcă alt termen sau caută după frecvență.' : 'Creează prima verticală în registrul global.') + '</span>' +
         (state.q ? '<button type="button" data-clear-search>Șterge căutarea</button>' :
-          (contextType() ? '<button type="button" data-new-vertical>Creează verticala</button>' : '<a href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client</a>')) + '</div>';
+          '<button type="button" data-new-vertical>Creează verticala</button>') + '</div>';
     }
     return groups.map(function (item) {
       var list = visibleTemplates(item);
@@ -659,7 +635,6 @@
   }
 
   function publicationState(template) {
-    var usedBy = usedByTypes(template.id);
     var affectedClients = affectedClientsForTemplate(template.id);
     var dirty = isDirty(template);
     var pending = dirty && affectedClients.length > 0;
@@ -667,22 +642,16 @@
     if (pending) {
       copy = affectedClients.length + ' ' + plural(affectedClients.length, 'client folosește', 'clienți folosesc') +
         ' deja acest flux. Ciorna este păstrată, dar publicarea rămâne în așteptare până se decide cum sunt tratate configurațiile existente.';
-    } else if (usedBy.length) {
-      copy = usedBy.length + ' ' + plural(usedBy.length, 'tip de client include', 'tipuri de clienți includ') +
-        ' acest flux. Publicarea actualizează registrul central folosit de Tipuri de clienți și înrolare.';
-    } else if (contextType()) {
-      copy = 'După publicare, fluxul va fi inclus automat în tipul „' + contextType().name + '” și va deveni disponibil la înrolare.';
     } else {
-      copy = 'Fluxul nu este inclus încă într-un tip de client. După publicare devine disponibil în pachetele de înrolare.';
+      copy = 'După publicare, fluxul rămâne în registrul global și va fi inclus în noile activări ale modulului acestei verticale.';
     }
-    return { usedBy: usedBy, affectedClients: affectedClients, dirty: dirty, pending: pending, copy: copy };
+    return { usedBy: [], affectedClients: affectedClients, dirty: dirty, pending: pending, copy: copy };
   }
 
   function editorHtml(vertical, template) {
     if (!vertical) {
-      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează prima verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu și va aparține tipului de client selectat.</p>' +
-        (contextType() ? '<button class="btn btn--primary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' :
-          '<a class="btn btn--primary" href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client</a>') + '</section>';
+      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează prima verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu și va deveni un modul disponibil clienților.</p>' +
+        '<button class="btn btn--primary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button></section>';
     }
     if (!template) {
       return '<section class="fxv2-editor fxv2-editor--empty ' + vaClass(vertical) + '"><span class="material-symbols-outlined" aria-hidden="true">schema</span>' +
@@ -1101,30 +1070,14 @@
       toast('error', errors[0] || 'Fluxul nu poate fi publicat încă.');
       return;
     }
-    var usedBy = usedByTypes(template.id);
-    var ct = contextType();
-    var contextClients = ct ? clients().filter(function (client) { return client.clientTypeId === ct.id; }) : [];
-    var willAttachToContext = !!(ct && (ct.defaultTemplateIds || []).indexOf(template.id) === -1);
-    if (willAttachToContext && contextClients.length) {
-      persistModel();
-      openDialog({
-        title: 'Includerea fluxului este în așteptare',
-        subtitle: ct.name,
-        bodyHtml: '<div class="fxv2-dialog-note fxv2-dialog-note--critical"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span><span><b>' +
-          contextClients.length + ' ' + plural(contextClients.length, 'client folosește', 'clienți folosesc') + ' deja acest tip.</b> Ciorna rămâne salvată, dar nu este inclusă până când politica de actualizare a clienților existenți este decisă.</span></div>',
-        footerHtml: '<span class="modal__footer-helper">Nicio configurație de client nu a fost modificată.</span><button class="btn btn--primary" type="button" data-dialog-close>Am înțeles</button>'
-      });
-      return;
-    }
-    var publishedTypeCount = usedBy.length + (willAttachToContext ? 1 : 0);
     var affectedClients = affectedClientsForTemplate(template.id);
     if (affectedClients.length) {
       persistModel();
       openDialog({
         title: 'Publicarea este în așteptare',
         subtitle: template.name,
-        bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + affectedClients.length + '</b><span>' + plural(affectedClients.length, 'client existent', 'clienți existenți') + '</span></div>' +
-          '<div><b>' + usedBy.length + '</b><span>' + plural(usedBy.length, 'tip de client', 'tipuri de clienți') + '</span></div><div><b>Ciornă</b><span>salvată local</span></div></div>' +
+      bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + affectedClients.length + '</b><span>' + plural(affectedClients.length, 'client existent', 'clienți existenți') + '</span></div>' +
+          '<div><b>Modul activ</b><span>pe clienți</span></div><div><b>Ciornă</b><span>salvată local</span></div></div>' +
           '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span><span><b>Structura nu a fost trimisă în registrul central.</b> Ciorna rămâne disponibilă pentru editare și previzualizare până se decide dacă o versiune publicată actualizează sau nu clienții existenți.</span></div>',
         footerHtml: '<span class="modal__footer-helper">Nicio configurație de client nu a fost modificată.</span><button class="btn btn--primary" type="button" data-dialog-close>Am înțeles</button>'
       });
@@ -1135,21 +1088,20 @@
       subtitle: template.name,
       submitLabel: 'Publică modificările',
       bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + template.steps.length + '</b><span>' + plural(template.steps.length, 'pas', 'pași') + '</span></div>' +
-        '<div><b>Ziua ' + template.steps[template.steps.length - 1].offsetDays + '</b><span>termen final</span></div><div><b>' + publishedTypeCount + '</b><span>' + plural(publishedTypeCount, 'tip de client', 'tipuri de clienți') + '</span></div></div>' +
+        '<div><b>Ziua ' + template.steps[template.steps.length - 1].offsetDays + '</b><span>termen final</span></div><div><b>Global</b><span>registru platformă</span></div></div>' +
         '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">verified</span><span>' +
-          (willAttachToContext ? 'Fluxul va fi publicat și inclus automat în tipul „' + esc(ct.name) + '”.' : 'Fluxul va fi salvat în registrul central și va deveni disponibil imediat la înrolare.') + '</span></div>',
+          'Fluxul va fi salvat în registrul central. Niciun client nu primește automat modulul.</span></div>',
       onSubmit: function (dialog, close) {
         if (typeof window.scripticaFlowSave !== 'function') {
           toast('error', 'Registrul central nu este disponibil. Reîncarcă pagina și încearcă din nou.');
           return;
         }
         window.scripticaFlowSave('template', clone(template));
-        attachTemplateToContext(template.id);
         removeDraftId('draftTemplateIds', template.id);
         persistModel();
         close();
         renderPage();
-        toast('success', 'Fluxul „' + template.name + '” a fost publicat' + (willAttachToContext ? ' și inclus în „' + ct.name + '”.' : ' în registrul central.'));
+        toast('success', 'Fluxul „' + template.name + '” a fost publicat în registrul central.');
       }
     });
   }
@@ -1308,7 +1260,7 @@
           '<p>Fluxul moștenește vocabularul verticalei. Poți ascunde categoriile nerelevante, fără să le redenumești.</p></div>' +
           '<button class="btn btn--ghost" type="button" data-open-vertical-categories><span class="material-symbols-outlined" aria-hidden="true">category</span>Editează vocabularul verticalei</button></div>' +
           '<div class="fxv2-category-choices">' + templateCategoryOptionsHtml(template) + '</div><span class="form-error" role="alert"></span></section>' +
-        '<div class="fxv2-settings-danger"><div><b>Zonă sensibilă</b><span>Ștergerea este blocată cât timp fluxul este inclus într-un tip de client.</span></div><button class="btn btn--critical" type="button" data-delete-template>Șterge fluxul</button></div>',
+        '<div class="fxv2-settings-danger"><div><b>Zonă sensibilă</b><span>Un flux folosit de un client este arhivat, nu șters, pentru a-i păstra istoricul.</span></div><button class="btn btn--critical" type="button" data-delete-template>Șterge sau arhivează</button></div>',
       submitLabel: 'Aplică în ciornă',
       isDirty: function (dialog) { return current(dialog) !== initial; },
       onSubmit: function (dialog, close) {
@@ -1353,14 +1305,12 @@
       return '<option value="' + esc(item.id) + '"' + (vertical && item.id === vertical.id ? ' selected' : '') + '>' + esc(item.name) + '</option>';
     }).join('');
     if (!verticalOptions) {
-      toast('error', 'Creează mai întâi o verticală pentru acest tip de client.');
+      toast('error', 'Creează mai întâi o verticală în registrul global.');
       return;
     }
     openDialog({
       title: 'Flux nou',
-      subtitle: contextType()
-        ? 'Fluxul va aparține unei verticale din tipul „' + contextType().name + '”.'
-        : 'Alege domeniul și punctul de pornire; pașii se editează apoi direct în constructor.',
+      subtitle: 'Alege verticala globală și punctul de pornire; pașii se editează apoi direct în constructor.',
       bodyHtml: fieldHtml('Denumire flux', '<input class="input" type="text" data-f="name" placeholder="ex. Închidere anuală">', null, 'name') +
         '<div class="fxv2-dialog-grid">' +
           fieldHtml('Verticală', '<select class="select" data-f="vertical">' + verticalOptions + '</select>') +
@@ -1506,11 +1456,6 @@
 
   function openVerticalEditor(vertical) {
     var isNew = !vertical;
-    var ct = contextType();
-    if (isNew && !ct) {
-      toast('error', 'Alege mai întâi tipul de client pentru care creezi verticala.');
-      return;
-    }
     var originalCategories = clone((vertical && vertical.documentCategories) || []);
     var workingCategories = clone(originalCategories);
     if (isNew) workingCategories = [
@@ -1518,9 +1463,9 @@
       { id: 'necategorisit', name: 'Necategorisit', system: true, documentTypes: [] }
     ];
     var dialog = openDialog({
-      title: isNew ? 'Verticală nouă pentru „' + ct.name + '”' : (vertical.builtin ? 'Categorii de documente — ' + vertical.name : 'Configurează verticala'),
+      title: isNew ? 'Verticală nouă' : (vertical.builtin ? 'Categorii de documente — ' + vertical.name : 'Configurează verticala'),
       subtitle: isNew
-        ? 'Pasul 2 din 4: definește un domeniu de lucru al acestui tip de client.'
+        ? 'Definește un domeniu de lucru care poate fi activat ca modul pe orice client.'
         : 'Verticala grupează fluxuri și definește vocabularul folosit de clasificarea A.I. Pașii aparțin exclusiv fluxurilor.',
       wide: true,
       bodyHtml: '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">layers</span><span>Fiecare tip de document are o singură categorie implicită. Fluxurile moștenesc acest vocabular și pot doar să ascundă ce nu folosesc.</span></div>' +
@@ -1576,7 +1521,6 @@
         syncTemplateCategories(savedVertical, originalCategories);
         if (!affectedClients.length && typeof window.scripticaFlowSave === 'function') {
           window.scripticaFlowSave('vertical', clone(savedVertical));
-          if (isNew) attachVerticalToContext(savedVertical.id);
           removeDraftId('draftVerticalIds', savedVertical.id);
         } else {
           addDraftId('draftVerticalIds', savedVertical.id);
@@ -1586,7 +1530,7 @@
         renderPage();
         toast(affectedClients.length ? 'info' : 'success', affectedClients.length
           ? 'Modificările verticalei au rămas în ciornă; clienții existenți nu au fost modificați.'
-          : (isNew ? 'Verticala „' + savedVertical.name + '” a fost adăugată în „' + ct.name + '”. Definește acum primul ei flux.' : 'Verticala a fost actualizată în registrul central.'));
+          : (isNew ? 'Verticala „' + savedVertical.name + '” a fost adăugată în registrul global. Definește acum primul ei flux.' : 'Verticala a fost actualizată în registrul central.'));
       }
     });
     dialog.addEventListener('click', function (event) {
@@ -1629,13 +1573,25 @@
   function confirmDeleteTemplate() {
     var template = selectedTemplate();
     if (!template) return;
-    var usedBy = usedByTypes(template.id);
-    if (usedBy.length) {
+    var affectedClients = affectedClientsForTemplate(template.id);
+    var historicalItems = ((MOCK() && MOCK().flowItems) || []).filter(function (item) { return item.templateId === template.id; });
+    if (affectedClients.length || historicalItems.length) {
       openDialog({
-        title: 'Fluxul nu poate fi șters',
+        title: 'Arhivezi fluxul?',
         subtitle: template.name,
-        bodyHtml: '<div class="fxv2-dialog-note fxv2-dialog-note--critical"><span class="material-symbols-outlined" aria-hidden="true">block</span><span><b>' + usedBy.length + ' ' + plural(usedBy.length, 'tip de client include', 'tipuri de clienți includ') + ' acest flux.</b> Scoate-l mai întâi din pachetele respective, apoi revino aici.</span></div>',
-        footerHtml: '<span class="modal__footer-helper"></span><a class="btn btn--ghost" href="super-admin-tipuri-clienti-v2.html?view=superadmin">Deschide Tipuri de clienți</a><button class="btn btn--primary" type="button" data-dialog-close>Închide</button>'
+        submitLabel: 'Arhivează fluxul',
+        bodyHtml: '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span><b>Fluxul are istoric la clienți.</b> Va deveni inactiv pentru configurări noi, dar definiția, datele și arhiva existente rămân intacte.</span></div>',
+        onSubmit: function (dialog, close) {
+          template.status = 'inactiv';
+          if (canonicalTemplateById(template.id) && typeof window.scripticaFlowSave === 'function') {
+            window.scripticaFlowSave('template', clone(template));
+          }
+          removeDraftId('draftTemplateIds', template.id);
+          persistModel();
+          close();
+          renderPage();
+          toast('success', 'Fluxul a fost arhivat. Istoricul clienților a rămas intact.');
+        }
       });
       return;
     }
@@ -1741,7 +1697,7 @@
     root.addEventListener('click', handleClick);
     root.addEventListener('input', handleInput);
     renderPage();
-    if (openNewVertical && contextType()) {
+    if (openNewVertical) {
       try {
         var url = new URL(window.location.href);
         url.searchParams.delete('new');
