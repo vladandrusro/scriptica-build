@@ -1946,21 +1946,24 @@
         var subtitle = m.querySelector('.modal__subtitle');
         var submit = m.querySelector('[data-modal-submit]');
         var cancel = m.querySelector('[data-modal-cancel]');
-        var footer = m.querySelector('.modal__footer');
         var helper = m.querySelector('.modal__footer-helper');
         var sel = m.querySelector('[data-f="ctype"]');
         var prev = m.querySelector('[data-ct-preview]');
+        var shell = document.createElement('div');
+        shell.className = 'sa-client-onboarding-shell';
+        dialog.parentNode.insertBefore(shell, dialog);
+        shell.appendChild(dialog);
         dialog.classList.add('sa-client-onboarding-modal');
-        /* Indicatorul rămâne vizibil sub conținut, inclusiv când builder-ul
-           derulează, și precede acțiunile modalului. */
+        /* Indicatorul este o a doua placă, în afara cadrului alb, care iese
+           vizual de sub marginea lui inferioară. */
         var progress = m.querySelector('.sa-onboarding-progress');
-        if (progress && footer) dialog.insertBefore(progress, footer);
+        if (progress) shell.appendChild(progress);
         cancel.insertAdjacentHTML('beforebegin', '<button class="btn btn--ghost" type="button" data-onboarding-back hidden><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Înapoi</button>');
         var back = m.querySelector('[data-onboarding-back]');
 
         function showStep(step) {
           draft.step = step;
-          dialog.classList.toggle('is-builder-step', step === 2);
+          shell.classList.toggle('is-builder-step', step === 2);
           m.querySelectorAll('[data-onboarding-step]').forEach(function (section) { section.hidden = section.getAttribute('data-onboarding-step') !== String(step); });
           m.querySelectorAll('[data-onboarding-progress]').forEach(function (item) {
             var n = parseInt(item.getAttribute('data-onboarding-progress'), 10);

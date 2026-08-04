@@ -64,10 +64,8 @@ Real gaps to be aware of:
 
 ## Known bugs (small, none demo-blocking) ✅
 
-- **Cache-version drift**: `situatie-detaliu.html` loads `dashboard.js?v=28` while 18 pages use `?v=30`; `timer.js` is `?v=28` on 13 pages vs `?v=29` on 6; `design-system.html` loads mock-data.js/timer.js with no `?v=` at all. (Good first Codex task — see checklist.)
 - **Status-label drift**: flux.js labels `in_verificare` "În Lucru" and lacks `aprobata`; list-columns.js says "În Verificare" and has it — same row can read differently depending on render path.
 - `rapoarte-audit.js` FINAL_STATUSES includes `respinsa` but no code path ever sets it (Respinge maps to `in_verificare`); "changes_requested" sends a chat message but changes no status.
-- Widget dashboard **overwrites the audit personas' "Acasă · Audit" scope-block** on acasa.html when ct_audit has a dashboardLayout (two renders per load; last one wins). Behavior is acceptable-looking but the double render is real.
 - `arhiva_recente` widget: for `system` folders the doc filter degenerates to *all* documents.
 - time-tracking session-edit modal **injects phantom tasks into the live situation task list** (mutates `sit.tasks` while building its picker).
 - `renderAvatar` fallback HTML contains a stray `">` artifact (brittle nested-quote string in shell.js).
@@ -111,9 +109,9 @@ Simulated AI (setTimeout + seeded confidences, `observatieAI: 'Rezultate AI simu
 
 ## Next recommended tasks (priority order)
 
-1. **Align cache-bust versions** (`dashboard.js?v=30`, `timer.js?v=29` everywhere; add `?v=` on design-system.html) — mechanical, high-confidence starter. *Files: all `*.html`.*
+1. ~~**Align cache-bust versions.**~~ ✅ Resolved 2026-08-04; shared dashboard, timer, shell and mock-data references are aligned across the HTML pages.
 2. **Fix the status-label drift** between `js/flux.js` (STATUS_LABELS) and `js/list-columns.js` — pick list-columns' wording as canonical. *Files: js/flux.js, js/list-columns.js.*
-3. **Decide + implement audit-home behavior on acasa.html** (widget dashboard vs scope-block double render). *Files: js/dashboard.js (routeAuditHome), js/dashboard-widgets.js (DOMContentLoaded swap).*
+3. ~~**Decide + implement audit-home behavior on acasa.html.**~~ ✅ Resolved 2026-08-04: dashboard widgets are filtered by both active module and persona scope; `routeAuditHome()` is restricted to `acasa.html` and can no longer overwrite generic flow pages.
 4. **Stop the time-tracking modal from mutating live task lists** (build the picker from a copy). *Files: js/time-tracking.js (openSessionEditModal ~line 458).*
 5. **Remove or gate the #debug-bar** on situatie-detaliu behind something explicit. *Files: situatie-detaliu.html, js/situatie-detaliu.js (~line 766).*
 6. **Renderer for `repeater_block` in anexa-fill.js** — the Constructor already sells it; the fill modal breaks the illusion. *Files: js/anexa-fill.js (fieldHtml), css/anexe.css; reference: js/constructor-anexe.js preview implementation.*

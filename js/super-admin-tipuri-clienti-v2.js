@@ -14,10 +14,14 @@
   function SA() { return (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.superAdmin) || null; }
   function clientTypes() { return (SA() && SA().clientTypes) || []; }
   function verticals() { return (SA() && SA().flowVerticals) || []; }
+  function templates() { return (SA() && SA().flowTemplates) || []; }
   function clients() { return (SA() && SA().clients) || []; }
   function typeById(id) { return clientTypes().find(function (t) { return t.id === id; }) || null; }
   function verticalById(id) { return verticals().find(function (v) { return v.id === id; }) || null; }
   function clientsForType(id) { return clients().filter(function (c) { return c.clientTypeId === id; }); }
+  /* Compatibilitate pentru editorul de pachet rămas izolat în codul V1;
+     suprafața V2 nu îl mai expune și modulele se gestionează per client. */
+  function templatesForVertical(id) { return templates().filter(function (t) { return t.verticalId === id; }); }
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')

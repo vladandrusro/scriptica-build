@@ -39,6 +39,8 @@
      contabil (situații/clienți/mesaje). Acasă rămâne accesibilă, dar cu un
      ecran orientat pe audit. Previne scurgerea conținutului contabil. */
   function routeAuditHome() {
+    var filename = window.location.pathname.split('/').pop() || 'index.html';
+    if (filename !== 'acasa.html') return false;
     if (typeof window.viewInScope !== 'function') return false;
     if (window.viewInScope('contabil')) return false; /* are acces contabil → dashboard normal */
     if (!document.querySelector('.dashboard') && !document.getElementById('main')) return false;

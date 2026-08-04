@@ -78,7 +78,10 @@
   function activeVerticalIds(ct) {
     var view = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
     if (view !== 'superadmin' && typeof window.scripticaTenantActiveVerticalIds === 'function') {
-      return window.scripticaTenantActiveVerticalIds();
+      return window.scripticaTenantActiveVerticalIds().filter(function (verticalId) {
+        var vertical = window.scripticaVerticalById(verticalId);
+        return vertical && (typeof window.viewInScope !== 'function' || window.viewInScope(vertical.domain));
+      });
     }
     if (view === 'superadmin' && typeof window.scripticaFlowVerticals === 'function') {
       return window.scripticaFlowVerticals().map(function (vertical) { return vertical.id; });
@@ -446,6 +449,9 @@
     if (!ct) return;
     var layout = (ct.dashboardLayout || []).slice();
     var moduleVerticalIds = activeVerticalIds(ct);
+    var contractedVerticalIds = typeof window.scripticaTenantActiveVerticalIds === 'function'
+      ? window.scripticaTenantActiveVerticalIds() : moduleVerticalIds;
+    var restrictedByRole = contractedVerticalIds.length > 0 && moduleVerticalIds.length === 0;
     var moduleDomains = moduleVerticalIds.map(function (verticalId) {
       var vertical = window.scripticaVerticalById(verticalId);
       return vertical ? vertical.domain : null;
@@ -476,7 +482,9 @@
     if (!main) return;
 
     main.innerHTML = '<div class="dashboard">' +
-      (!moduleVerticalIds.length ? '<div class="scope-block"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><h2>Modulele nu sunt activate încă</h2><p>Contul este creat și poate fi configurat ulterior de Scriptica HQ.</p></div>' : '') +
+      (!moduleVerticalIds.length ? '<div class="scope-block"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><h2>' +
+        (restrictedByRole ? 'Niciun modul disponibil pentru acest rol' : 'Modulele nu sunt activate încă') + '</h2><p>' +
+        (restrictedByRole ? 'Contul are module active, dar ele nu intră în aria acestei personae.' : 'Contul este creat și poate fi configurat ulterior de Scriptica HQ.') + '</p></div>' : '') +
       '<div class="dw-grid">' +
       layout.map(function (item) { return cardHtml(item, ct); }).join('') +
     '</div>' +
