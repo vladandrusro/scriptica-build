@@ -394,22 +394,52 @@
     '</div>';
   }
 
+  function setupPathHtml(activeStep, t) {
+    var context = t ? '&ct=' + encodeURIComponent(t.id) : '';
+    function step(n, eyebrow, label, href) {
+      return '<a class="sa-setup__step' + (activeStep === n ? ' is-active' : '') + '" href="' + href + '"' +
+        (activeStep === n ? ' aria-current="step"' : '') + '><span>' + n + '</span><div><small>' + eyebrow + '</small><b>' + label + '</b></div></a>';
+    }
+    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
+      step(1, 'Definește organizația', 'Tip de client', 'super-admin-tipuri-clienti-v2.html?view=superadmin' + context) +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      step(2, 'Structurează activitatea', 'Verticale', 'super-admin-fluxuri-v2.html?view=superadmin' + context) +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      step(3, 'Definește execuția', 'Fluxuri', 'super-admin-fluxuri-v2.html?view=superadmin' + context) +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      step(4, 'Activează configurația', 'Client', 'super-admin-clienti.html?view=superadmin' + context) +
+    '</nav>';
+  }
+
   /* ============================================================
      CLIENTS LIST
      ============================================================ */
   function renderClients(root) {
     var list = clients();
+    var preferredType = clientTypeById(qs('ct'));
+    var openRequested = qs('new') === 'client';
     root.innerHTML =
-      '<header class="page-header"><h1 class="page-header__title">Clienți</h1></header>' +
-      '<p class="sa-subtitle">Toate conturile de business · ' + list.length + ' clienți</p>' +
-      clientsTable(list) +
-      '<div style="margin-top:var(--space-4)">' +
+      '<header class="page-header"><div><h1 class="page-header__title">Clienți</h1>' +
+        '<p class="sa-subtitle">Pasul 4 din 4: înrolează firma pe tipul configurat și activează experiența pregătită în Super Admin.</p></div></header>' +
+      setupPathHtml(4, preferredType) +
+      '<div class="sa-table-toolbar">' +
+        '<p class="sa-subtitle">Toate conturile de business · ' + list.length + ' clienți' +
+          (preferredType ? ' · tip selectat: <b>' + esc(preferredType.name) + '</b>' : '') + '</p>' +
         '<button class="btn btn--primary" type="button" id="sa-new-client">Cont de business nou' +
           '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
-      '</div>';
+      '</div>' +
+      clientsTable(list);
     bindRows(root);
     var nb = root.querySelector('#sa-new-client');
-    if (nb) nb.addEventListener('click', function () { openNewClientModal(root); });
+    if (nb) nb.addEventListener('click', function () { openNewClientModal(root, preferredType ? preferredType.id : ''); });
+    if (openRequested && preferredType) {
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.delete('new');
+        window.history.replaceState({}, '', url.pathname + '?' + url.searchParams.toString());
+      } catch (e) { /* Deep link-ul nu este esențial pentru prototip. */ }
+      window.setTimeout(function () { openNewClientModal(root, preferredType.id); }, 0);
+    }
   }
 
   /* ============================================================
@@ -816,7 +846,7 @@
   function renderTableBuilder(root) {
     var v = verticalById(qs('vertical'));
     if (!v || !window.SCRIPTICA_LISTVIEW) {
-      root.innerHTML = '<p class="sa-subtitle">Verticala nu a fost găsită. <a href="super-admin-fluxuri.html' + vq() + '">Înapoi la Fluxuri</a></p>';
+      root.innerHTML = '<p class="sa-subtitle">Verticala nu a fost găsită. <a href="super-admin-fluxuri-v2.html' + vq() + '">Înapoi la Verticale și fluxuri</a></p>';
       return;
     }
     markFluxuriNavActive();
@@ -906,7 +936,7 @@
     }
 
     root.innerHTML =
-      '<div class="sa-crumb"><a href="super-admin-fluxuri.html' + vq() + '">Fluxuri</a> › ' + esc(v.name) + ' · Tabel</div>' +
+      '<div class="sa-crumb"><a href="super-admin-fluxuri-v2.html?view=superadmin&vertical=' + encodeURIComponent(v.id) + '">Verticale și fluxuri</a> › ' + esc(v.name) + ' · Tabel</div>' +
       '<header class="page-header"><h1 class="page-header__title">Tabelul verticalei — ' + esc(v.name) + '</h1>' +
         '<div class="sa-tbl-actions">' +
           '<button class="btn btn--ghost" type="button" id="tbl-reset">Revino la implicit<span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>' +
@@ -1130,7 +1160,7 @@
       return '<div class="sa-ct-vblock">' +
         '<label class="checkbox sa-ct-vblock__head"><input type="checkbox" data-ct-vert value="' + esc(v.id) + '"' + (vChecked ? ' checked' : '') + '> ' +
           '<span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span><b>' + esc(v.name) + '</b></label>' +
-        '<div class="sa-ct-tpls">' + (tpls || '<span class="admin-table__muted">Fără șabloane — <a href="super-admin-fluxuri.html' + vq() + '">adaugă din „Fluxuri"</a>.</span>') + '</div>' +
+        '<div class="sa-ct-tpls">' + (tpls || '<span class="admin-table__muted">Fără fluxuri — <a href="super-admin-fluxuri-v2.html' + vq() + '">configurează verticala</a>.</span>') + '</div>' +
       '</div>';
     }).join('');
     saModal({
@@ -1423,7 +1453,7 @@
   function renderDashboardBuilder(root) {
     var ct = clientTypeById(qs('ct'));
     if (!ct || !window.SCRIPTICA_WIDGETS) {
-      root.innerHTML = '<p class="sa-subtitle">Tipul de client nu a fost găsit. <a href="super-admin-tipuri-clienti.html' + vq() + '">Înapoi la Tipuri de clienți</a></p>';
+      root.innerHTML = '<p class="sa-subtitle">Tipul de client nu a fost găsit. <a href="super-admin-tipuri-clienti-v2.html' + vq() + '">Înapoi la Tipuri de clienți</a></p>';
       return;
     }
     markTipuriNavActive();
@@ -1496,7 +1526,7 @@
     }
 
     root.innerHTML =
-      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti.html' + vq() + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' › Ecranul Acasă</div>' +
+      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti-v2.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' › Ecranul Acasă</div>' +
       '<header class="page-header"><h1 class="page-header__title">Ecranul Acasă — ' + esc(ct.name) + '</h1>' +
         '<button class="btn btn--primary" type="button" id="dwb-save">Salvează layout-ul<span class="material-symbols-outlined" aria-hidden="true">save</span></button>' +
       '</header>' +
@@ -1602,43 +1632,425 @@
   /* ============================================================
      ÎNROLARE CLIENT NOU — provisioning din tipul de client
      ============================================================ */
-  function openNewClientModal(root) {
-    var ctOptions = clientTypesAll().map(function (t) {
-      return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
+  var CLIENT_PROFILE_FIELD_TYPES = {
+    section_title: { label: 'Titlu secțiune', icon: 'title', defaults: { text: 'Secțiune nouă' } },
+    text_short: { label: 'Text scurt', icon: 'short_text', defaults: { label: 'Câmp nou', placeholder: '', help: '', required: false } },
+    text_long: { label: 'Text lung', icon: 'subject', defaults: { label: 'Observații', placeholder: '', help: '', required: false } },
+    cui: { label: 'CUI / identificator fiscal', icon: 'badge', defaults: { label: 'CUI / CIF', placeholder: 'ex. RO12345678', help: '', required: false } },
+    email: { label: 'Adresă de e-mail', icon: 'mail', defaults: { label: 'Adresă de e-mail', placeholder: 'nume@companie.ro', help: '', required: false } },
+    phone: { label: 'Număr de telefon', icon: 'call', defaults: { label: 'Număr de telefon', placeholder: '+40', help: '', required: false } },
+    date: { label: 'Dată', icon: 'calendar_today', defaults: { label: 'Dată', placeholder: '', help: '', required: false } },
+    address: { label: 'Adresă structurată', icon: 'location_on', defaults: { label: 'Adresă', placeholder: 'Stradă, număr, localitate, județ, cod poștal', help: '', required: false } },
+    dropdown: { label: 'Listă de opțiuni', icon: 'arrow_drop_down_circle', defaults: { label: 'Alege o opțiune', help: '', required: false, options: ['Opțiunea 1', 'Opțiunea 2'] } },
+    boolean: { label: 'Confirmare Da / Nu', icon: 'toggle_on', defaults: { label: 'Confirmare', help: '', required: false } },
+    file_upload: { label: 'Document justificativ', icon: 'attach_file', defaults: { label: 'Încarcă documentul', help: '', required: false } },
+    repeater_block: { label: 'Bloc repetabil', icon: 'repeat', defaults: { label: 'Elemente multiple', help: 'Utilizatorul poate adăuga mai multe înregistrări.', required: false } }
+  };
+  var clientProfileFieldSeq = 0;
+
+  function deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+  function clientProfileField(type, key, props) {
+    var def = CLIENT_PROFILE_FIELD_TYPES[type] || CLIENT_PROFILE_FIELD_TYPES.text_short;
+    var field = deepCopy(def.defaults);
+    field.id = key || ('cpf_custom_' + Date.now() + '_' + (++clientProfileFieldSeq));
+    field.type = type;
+    field.scope = 'onboarding_profile';
+    field.sensitive = false;
+    Object.keys(props || {}).forEach(function (k) { field[k] = props[k]; });
+    return field;
+  }
+
+  function defaultClientProfileFields(t) {
+    var prefix = 'cpf_' + slugify((t && t.id) || 'client') + '_';
+    var vids = (t && t.verticalIds) || [];
+    var hasAccounting = vids.indexOf('vert_contabil') !== -1;
+    var hasAudit = vids.indexOf('vert_audit') !== -1;
+    var hasConstruction = vids.indexOf('vert_constructii') !== -1;
+    var hasConsulting = vids.indexOf('vert_consultanta') !== -1;
+    var result = [
+      clientProfileField('section_title', prefix + 'identity_section', { text: 'Identitate' }),
+      clientProfileField('dropdown', prefix + 'subject_type', { label: 'Tip persoană / organizație', required: true, options: ['Persoană juridică', 'PFA / profesie liberală', 'Persoană fizică', 'Instituție publică'] }),
+      clientProfileField('text_short', prefix + 'legal_name', { label: 'Denumire oficială / nume complet', required: true }),
+      clientProfileField('cui', prefix + 'fiscal_id', { label: 'Identificator fiscal', help: 'CUI, CIF, CNP sau NIF, în funcție de tipul selectat.', required: true, sensitive: true }),
+      clientProfileField('text_short', prefix + 'registry_number', { label: 'Nr. Registrul Comerțului / registru profesional' }),
+      clientProfileField('address', prefix + 'registered_address', { label: 'Sediu social / domiciliu', required: true }),
+      clientProfileField('section_title', prefix + 'contact_section', { text: 'Contact principal' }),
+      clientProfileField('text_short', prefix + 'contact_name', { label: 'Persoană de contact', required: true }),
+      clientProfileField('email', prefix + 'contact_email', { label: 'E-mail principal', required: true }),
+      clientProfileField('phone', prefix + 'contact_phone', { label: 'Telefon principal' })
+    ];
+
+    if (hasAccounting || hasConsulting) {
+      result.push(
+        clientProfileField('section_title', prefix + 'tax_section', { text: 'Fiscalitate și conformitate' }),
+        clientProfileField('text_short', prefix + 'caen', { label: 'Cod CAEN principal', help: 'Se păstrează împreună cu versiunea CAEN aplicabilă.' }),
+        clientProfileField('dropdown', prefix + 'vat_status', { label: 'Înregistrare în scopuri de TVA', required: true, options: ['Neînregistrat', 'TVA normal', 'TVA special art. 317', 'TVA normal și art. 317'] }),
+        clientProfileField('boolean', prefix + 'cash_vat', { label: 'Aplică TVA la încasare?' }),
+        clientProfileField('dropdown', prefix + 'vat_period', { label: 'Perioadă fiscală TVA', options: ['Lunară', 'Trimestrială', 'Nu se aplică'] }),
+        clientProfileField('repeater_block', prefix + 'beneficial_owners', { label: 'Beneficiari reali', help: 'Nume, identificator, cetățenie și participație.', sensitive: true })
+      );
+    }
+    if (hasAudit) {
+      result.push(
+        clientProfileField('section_title', prefix + 'public_section', { text: 'Date instituție publică' }),
+        clientProfileField('text_short', prefix + 'legal_basis', { label: 'Actul normativ de înființare', required: true }),
+        clientProfileField('text_short', prefix + 'uat', { label: 'UAT și CIF UAT' }),
+        clientProfileField('text_short', prefix + 'treasury', { label: 'Unitate și cod Trezorerie' }),
+        clientProfileField('dropdown', prefix + 'authorizer_type', { label: 'Tip ordonator de credite', options: ['Principal', 'Secundar', 'Terțiar', 'Nu se aplică'] }),
+        clientProfileField('text_short', prefix + 'superior_entity', { label: 'Instituție ierarhic superioară' })
+      );
+    }
+    if (hasConstruction) {
+      result.push(
+        clientProfileField('section_title', prefix + 'locations_section', { text: 'Locații și activitate' }),
+        clientProfileField('repeater_block', prefix + 'locations', { label: 'Puncte de lucru, depozite și șantiere', help: 'Pentru fiecare locație se păstrează tipul și adresa structurată.' }),
+        clientProfileField('text_short', prefix + 'eori', { label: 'Număr EORI', help: 'Se completează numai pentru operațiuni vamale.' })
+      );
+    }
+    return result;
+  }
+
+  function clientProfileToolboxHtml() {
+    var groups = [
+      { label: 'Structură', types: ['section_title'] },
+      { label: 'Date de bază', types: ['text_short', 'text_long', 'cui', 'email', 'phone', 'date', 'address'] },
+      { label: 'Alegere', types: ['dropdown', 'boolean'] },
+      { label: 'Avansat', types: ['file_upload', 'repeater_block'] }
+    ];
+    return groups.map(function (group) {
+      return '<div class="sa-cpf-toolgroup"><div class="sa-cpf-toolgroup__title">' + esc(group.label) + '</div>' +
+        group.types.map(function (type) {
+          var def = CLIENT_PROFILE_FIELD_TYPES[type];
+          return '<button class="sa-cpf-tool" type="button" draggable="true" data-cpf-add="' + esc(type) + '">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">' + esc(def.icon) + '</span><span>' + esc(def.label) + '</span></button>';
+        }).join('') + '</div>';
     }).join('');
+  }
+
+  function clientProfilePreviewControl(field) {
+    if (field.type === 'text_long' || field.type === 'address') {
+      return '<textarea class="input sa-cpf-fake-textarea" disabled placeholder="' + esc(field.placeholder || '') + '"></textarea>';
+    }
+    if (field.type === 'dropdown') {
+      return '<select class="select" disabled><option>' + esc((field.options || [])[0] || 'Selectează...') + '</option></select>';
+    }
+    if (field.type === 'boolean') {
+      return '<div class="sa-cpf-choice"><span>Da</span><span>Nu</span></div>';
+    }
+    if (field.type === 'file_upload') {
+      return '<div class="sa-cpf-upload"><span class="material-symbols-outlined" aria-hidden="true">upload_file</span>Încarcă document</div>';
+    }
+    if (field.type === 'repeater_block') {
+      return '<div class="sa-cpf-repeat"><span class="material-symbols-outlined" aria-hidden="true">add</span>Adaugă înregistrare</div>';
+    }
+    var inputType = field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : field.type === 'date' ? 'date' : 'text';
+    return '<input class="input" type="' + inputType + '" disabled placeholder="' + esc(field.placeholder || '') + '">';
+  }
+
+  function clientProfileFieldHtml(field, idx, total) {
+    if (field.type === 'section_title') {
+      return '<div class="sa-cpf-item sa-cpf-item--section" draggable="true" data-cpf-id="' + esc(field.id) + '">' +
+        '<span class="material-symbols-outlined sa-cpf-grip" data-cpf-grip aria-hidden="true">drag_indicator</span>' +
+        '<strong data-cpf-card-label>' + esc(field.text || 'Secțiune') + '</strong>' +
+        '<div class="sa-cpf-item__actions">' + clientProfileMoveButtons(idx, total) + '</div></div>';
+    }
+    var def = CLIENT_PROFILE_FIELD_TYPES[field.type] || CLIENT_PROFILE_FIELD_TYPES.text_short;
+    return '<div class="sa-cpf-item" draggable="true" data-cpf-id="' + esc(field.id) + '">' +
+      '<span class="material-symbols-outlined sa-cpf-grip" data-cpf-grip aria-hidden="true">drag_indicator</span>' +
+      '<div class="sa-cpf-item__content"><div class="sa-cpf-item__label"><span data-cpf-card-label>' + esc(field.label || def.label) + '</span>' +
+        (field.required ? '<b aria-label="Obligatoriu">*</b>' : '') +
+        (field.sensitive ? '<span class="pill pill--neutral">Date sensibile</span>' : '') + '</div>' +
+        (field.help ? '<div class="sa-cpf-item__help">' + esc(field.help) + '</div>' : '') +
+        clientProfilePreviewControl(field) + '</div>' +
+      '<div class="sa-cpf-item__actions">' + clientProfileMoveButtons(idx, total) +
+        '<button type="button" data-cpf-duplicate title="Duplică"><span class="material-symbols-outlined" aria-hidden="true">content_copy</span></button>' +
+        '<button type="button" data-cpf-delete title="Șterge"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button></div></div>';
+  }
+
+  function clientProfileMoveButtons(idx, total) {
+    return '<button type="button" data-cpf-move="-1" title="Mută sus"' + (idx === 0 ? ' disabled' : '') + '><span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
+      '<button type="button" data-cpf-move="1" title="Mută jos"' + (idx === total - 1 ? ' disabled' : '') + '><span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>';
+  }
+
+  function findClientProfileField(draft, id) {
+    return draft.fields.find(function (field) { return field.id === id; }) || null;
+  }
+
+  function clientProfilePropertiesHtml(field) {
+    if (!field) {
+      return '<div class="sa-cpf-properties__empty"><span class="material-symbols-outlined" aria-hidden="true">tune</span><b>Selectează un câmp</b><span>Aici îi configurezi eticheta și regulile.</span></div>';
+    }
+    var def = CLIENT_PROFILE_FIELD_TYPES[field.type] || CLIENT_PROFILE_FIELD_TYPES.text_short;
+    var html = '<div class="sa-cpf-properties__type">' + esc(def.label) + '</div>';
+    if (field.type === 'section_title') {
+      html += fieldHtml('Titlul secțiunii', '<input type="text" class="input" data-cpf-prop="text" value="' + esc(field.text || '') + '">');
+    } else {
+      html += fieldHtml('Etichetă', '<input type="text" class="input" data-cpf-prop="label" value="' + esc(field.label || '') + '">') +
+        fieldHtml('Text de ajutor', '<textarea class="input sa-cpf-prop-textarea" data-cpf-prop="help">' + esc(field.help || '') + '</textarea>') +
+        '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="required"' + (field.required ? ' checked' : '') + '> Câmp obligatoriu</label>' +
+        '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="sensitive"' + (field.sensitive ? ' checked' : '') + '> Date sensibile</label>' +
+        fieldHtml('Apare', '<select class="select" data-cpf-prop="scope"><option value="onboarding_profile"' + (field.scope === 'onboarding_profile' ? ' selected' : '') + '>La înrolare și în profil</option><option value="onboarding"' + (field.scope === 'onboarding' ? ' selected' : '') + '>Doar la înrolare</option><option value="profile"' + (field.scope === 'profile' ? ' selected' : '') + '>Doar în profil</option></select>');
+      if (field.type === 'dropdown') {
+        html += fieldHtml('Opțiuni', '<textarea class="input sa-cpf-options" data-cpf-prop="options" aria-label="Câte o opțiune pe rând">' + esc((field.options || []).join('\n')) + '</textarea>', 'Câte o opțiune pe rând.');
+      }
+    }
+    return html + '<div class="sa-cpf-properties__actions"><button class="btn btn--critical" type="button" data-cpf-delete>Șterge câmpul</button></div>';
+  }
+
+  function renderClientProfileBuilder(modal, draft) {
+    var canvas = modal.querySelector('[data-cpf-canvas]');
+    var props = modal.querySelector('[data-cpf-properties]');
+    var count = modal.querySelector('[data-cpf-count]');
+    if (!canvas || !props) return;
+    canvas.innerHTML = draft.fields.length ? draft.fields.map(function (field, idx) {
+      return clientProfileFieldHtml(field, idx, draft.fields.length);
+    }).join('') : '<div class="sa-cpf-empty"><span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span><b>Adaugă primul câmp</b><span>Alege o componentă din panoul din stânga.</span></div>';
+    props.innerHTML = clientProfilePropertiesHtml(findClientProfileField(draft, draft.selectedFieldId));
+    if (count) count.textContent = draft.fields.filter(function (field) { return field.type !== 'section_title'; }).length + ' câmpuri';
+  }
+
+  function bindClientProfileBuilder(modal, draft) {
+    var builder = modal.querySelector('[data-cpf-builder]');
+    var canvas = modal.querySelector('[data-cpf-canvas]');
+    if (!builder || !canvas) return;
+
+    function selectAndRender(id) {
+      draft.selectedFieldId = id;
+      renderClientProfileBuilder(modal, draft);
+    }
+    function addField(type, at) {
+      var field = clientProfileField(type, null, {});
+      var index = typeof at === 'number' ? at : draft.fields.length;
+      draft.fields.splice(index, 0, field);
+      draft.dirty = true;
+      selectAndRender(field.id);
+    }
+    function fieldIndexFromEvent(e) {
+      var item = e.target.closest('[data-cpf-id]');
+      return item ? draft.fields.findIndex(function (field) { return field.id === item.getAttribute('data-cpf-id'); }) : -1;
+    }
+
+    builder.addEventListener('click', function (e) {
+      var tool = e.target.closest('[data-cpf-add]');
+      if (tool) { addField(tool.getAttribute('data-cpf-add')); return; }
+      var item = e.target.closest('[data-cpf-id]');
+      if (item && !e.target.closest('button')) draft.selectedFieldId = item.getAttribute('data-cpf-id');
+      var idx = fieldIndexFromEvent(e);
+      var move = e.target.closest('[data-cpf-move]');
+      if (move && idx !== -1) {
+        var to = idx + parseInt(move.getAttribute('data-cpf-move'), 10);
+        if (to >= 0 && to < draft.fields.length) draft.fields.splice(to, 0, draft.fields.splice(idx, 1)[0]);
+        draft.dirty = true;
+      }
+      var duplicate = e.target.closest('[data-cpf-duplicate]');
+      if (duplicate && idx !== -1) {
+        var copy = deepCopy(draft.fields[idx]);
+        copy.id = 'cpf_custom_' + Date.now() + '_' + (++clientProfileFieldSeq);
+        draft.fields.splice(idx + 1, 0, copy);
+        draft.selectedFieldId = copy.id;
+        draft.dirty = true;
+      }
+      var remove = e.target.closest('[data-cpf-delete]');
+      if (remove) {
+        var selectedIdx = idx !== -1 ? idx : draft.fields.findIndex(function (field) { return field.id === draft.selectedFieldId; });
+        if (selectedIdx !== -1) draft.fields.splice(selectedIdx, 1);
+        draft.selectedFieldId = draft.fields[Math.min(selectedIdx, draft.fields.length - 1)] ? draft.fields[Math.min(selectedIdx, draft.fields.length - 1)].id : null;
+        draft.dirty = true;
+      }
+      if (item || move || duplicate || remove) renderClientProfileBuilder(modal, draft);
+    });
+
+    builder.addEventListener('input', function (e) {
+      var prop = e.target.getAttribute('data-cpf-prop');
+      var field = findClientProfileField(draft, draft.selectedFieldId);
+      if (!prop || !field) return;
+      if (prop === 'required' || prop === 'sensitive') field[prop] = e.target.checked;
+      else if (prop === 'options') field.options = e.target.value.split('\n').map(function (v) { return v.trim(); }).filter(Boolean);
+      else field[prop] = e.target.value;
+      draft.dirty = true;
+      var card = canvas.querySelector('[data-cpf-id="' + field.id + '"] [data-cpf-card-label]');
+      if (card && (prop === 'label' || prop === 'text')) card.textContent = e.target.value || 'Fără etichetă';
+    });
+    builder.addEventListener('change', function (e) {
+      if (e.target.hasAttribute('data-cpf-prop')) renderClientProfileBuilder(modal, draft);
+    });
+
+    builder.addEventListener('dragstart', function (e) {
+      var tool = e.target.closest('[data-cpf-add]');
+      var item = e.target.closest('[data-cpf-id]');
+      if (tool) { draft.dragType = tool.getAttribute('data-cpf-add'); draft.dragFieldId = null; }
+      else if (item) { draft.dragFieldId = item.getAttribute('data-cpf-id'); draft.dragType = null; item.classList.add('is-dragging'); }
+      else return;
+      e.dataTransfer.effectAllowed = tool ? 'copy' : 'move';
+      try { e.dataTransfer.setData('text/plain', draft.dragType || draft.dragFieldId); } catch (err) {}
+    });
+    builder.addEventListener('dragover', function (e) {
+      if (!draft.dragType && !draft.dragFieldId) return;
+      if (!e.target.closest('[data-cpf-canvas]')) return;
+      e.preventDefault();
+      canvas.querySelectorAll('.is-drag-over').forEach(function (el) { el.classList.remove('is-drag-over'); });
+      var item = e.target.closest('[data-cpf-id]');
+      if (item && item.getAttribute('data-cpf-id') !== draft.dragFieldId) item.classList.add('is-drag-over');
+    });
+    builder.addEventListener('drop', function (e) {
+      if (!e.target.closest('[data-cpf-canvas]')) return;
+      e.preventDefault();
+      var targetIdx = fieldIndexFromEvent(e);
+      if (targetIdx === -1) targetIdx = draft.fields.length;
+      if (draft.dragType) addField(draft.dragType, targetIdx);
+      else if (draft.dragFieldId) {
+        var from = draft.fields.findIndex(function (field) { return field.id === draft.dragFieldId; });
+        if (from !== -1) {
+          var moved = draft.fields.splice(from, 1)[0];
+          if (from < targetIdx) targetIdx--;
+          draft.fields.splice(targetIdx, 0, moved);
+          draft.selectedFieldId = moved.id;
+          draft.dirty = true;
+        }
+        renderClientProfileBuilder(modal, draft);
+      }
+      draft.dragType = null;
+      draft.dragFieldId = null;
+    });
+    builder.addEventListener('dragend', function () {
+      draft.dragType = null;
+      draft.dragFieldId = null;
+      canvas.querySelectorAll('.is-dragging, .is-drag-over').forEach(function (el) { el.classList.remove('is-dragging', 'is-drag-over'); });
+    });
+    var reset = modal.querySelector('[data-cpf-reset]');
+    if (reset) reset.addEventListener('click', function () {
+      var t = clientTypeById(draft.clientTypeId);
+      draft.fields = defaultClientProfileFields(t);
+      draft.selectedFieldId = draft.fields[1] ? draft.fields[1].id : null;
+      draft.dirty = true;
+      renderClientProfileBuilder(modal, draft);
+      toast('info', 'Formularul a revenit la structura recomandată pentru tipul ales.');
+    });
+  }
+
+  function newClientModalBody(ctOptions) {
+    return '<div class="sa-onboarding-progress" aria-label="Pașii creării contului">' +
+        '<div class="sa-onboarding-progress__step is-active" data-onboarding-progress="1"><span>1</span><div><b>Contul de business</b><small>Identitate și plan</small></div></div>' +
+        '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
+        '<div class="sa-onboarding-progress__step" data-onboarding-progress="2"><span>2</span><div><b>Formularul de înrolare</b><small>Datele clienților săi</small></div></div>' +
+      '</div>' +
+      '<section class="sa-onboarding-step" data-onboarding-step="1">' +
+        fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">', null, 'nume') +
+        fieldHtml('Tip de client', '<select class="select" data-f="ctype"><option value="">Selectează tipul...</option>' + ctOptions + '</select>', 'Determină verticalele, fluxurile și formularul recomandat.', 'tip') +
+        fieldHtml('Plan', '<select class="select" data-f="tier"><option value="baza">Bază</option><option value="plus" selected>Plus</option><option value="ent">Enterprise</option></select>') +
+        '<div data-ct-preview class="sa-ct-preview"></div>' +
+      '</section>' +
+      '<section class="sa-onboarding-step" data-onboarding-step="2" hidden>' +
+        '<div class="sa-cpf-head"><div><b>Construiește formularul pentru clienții acestei firme</b><p>Structura pornește de la tipul selectat și rămâne specifică acestui cont.</p></div>' +
+          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-cpf-count>0 câmpuri</span><button class="btn btn--ghost" type="button" data-cpf-reset><span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>Revino la recomandări</button></div></div>' +
+        '<div class="sa-cpf-builder" data-cpf-builder>' +
+          '<aside class="sa-cpf-toolbox" aria-label="Componente disponibile">' + clientProfileToolboxHtml() + '</aside>' +
+          '<section class="sa-cpf-canvas-wrap" aria-label="Ordinea câmpurilor"><div class="sa-cpf-canvas-meta">Așa va arăta formularul la înrolare</div><div class="sa-cpf-canvas" data-cpf-canvas></div></section>' +
+          '<aside class="sa-cpf-properties" aria-label="Proprietățile câmpului" data-cpf-properties></aside>' +
+        '</div>' +
+        '<span class="form-error sa-cpf-error" data-cpf-error role="alert"></span>' +
+      '</section>';
+  }
+
+  function openNewClientModal(root, preferredTypeId) {
+    var ctOptions = clientTypesAll().map(function (t) {
+      var ready = !!((t.verticalIds || []).length && (t.defaultTemplateIds || []).length);
+      return '<option value="' + esc(t.id) + '"' + (t.id === preferredTypeId && ready ? ' selected' : '') +
+        (ready ? '' : ' disabled') + '>' + esc(t.name) + (ready ? '' : ' — configurare incompletă') + '</option>';
+    }).join('');
+    var draft = { step: 1, fields: [], selectedFieldId: null, clientTypeId: '', dirty: false, dragType: null, dragFieldId: null };
     saModal({
       title: 'Cont de business nou',
-      subtitle: 'La creare, clientul primește fluxurile tipului ales; le poate adapta apoi din Administrare.',
-      bodyHtml:
-        fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">', null, 'nume') +
-        fieldHtml('Tip de client', '<select class="select" data-f="ctype"><option value="">Selectează tipul...</option>' + ctOptions + '</select>',
-          'Determină verticalele și șabloanele primite la înrolare.', 'tip') +
-        fieldHtml('Plan', '<select class="select" data-f="tier"><option value="baza">Bază</option><option value="plus" selected>Plus</option><option value="ent">Enterprise</option></select>') +
-        '<div data-ct-preview class="sa-ct-preview"></div>',
-      submitLabel: 'Creează contul',
+      subtitle: 'Pasul 1 din 2 · Definește contul care intră în Scriptica.',
+      bodyHtml: newClientModalBody(ctOptions),
+      submitLabel: 'Continuă',
+      wide: true,
+      isDirty: function () { return draft.dirty; },
       onOpen: function (m) {
+        var dialog = m.querySelector('.modal__dialog');
+        var subtitle = m.querySelector('.modal__subtitle');
+        var submit = m.querySelector('[data-modal-submit]');
+        var cancel = m.querySelector('[data-modal-cancel]');
+        var helper = m.querySelector('.modal__footer-helper');
         var sel = m.querySelector('[data-f="ctype"]');
         var prev = m.querySelector('[data-ct-preview]');
-        sel.addEventListener('change', function () {
+        dialog.classList.add('sa-client-onboarding-modal');
+        cancel.insertAdjacentHTML('beforebegin', '<button class="btn btn--ghost" type="button" data-onboarding-back hidden><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Înapoi</button>');
+        var back = m.querySelector('[data-onboarding-back]');
+
+        function showStep(step) {
+          draft.step = step;
+          dialog.classList.toggle('is-builder-step', step === 2);
+          m.querySelectorAll('[data-onboarding-step]').forEach(function (section) { section.hidden = section.getAttribute('data-onboarding-step') !== String(step); });
+          m.querySelectorAll('[data-onboarding-progress]').forEach(function (item) {
+            var n = parseInt(item.getAttribute('data-onboarding-progress'), 10);
+            item.classList.toggle('is-active', n === step);
+            item.classList.toggle('is-complete', n < step);
+          });
+          back.hidden = step === 1;
+          cancel.textContent = step === 1 ? 'Anulează' : 'Renunță';
+          submit.innerHTML = step === 1 ? 'Continuă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' : 'Creează contul<span class="material-symbols-outlined" aria-hidden="true">check</span>';
+          subtitle.textContent = step === 1 ? 'Pasul 1 din 2 · Definește contul care intră în Scriptica.' : 'Pasul 2 din 2 · Configurează datele cerute la înrolarea clienților săi.';
+          helper.textContent = step === 1 ? 'Contul se creează după configurarea ambilor pași.' : 'Formularul poate fi ajustat ulterior din profilul contului.';
+          if (step === 2) {
+            renderClientProfileBuilder(m, draft);
+            window.setTimeout(function () {
+              var first = m.querySelector('[data-cpf-add]');
+              if (first) first.focus();
+            }, 0);
+          }
+        }
+        draft.showStep = showStep;
+        function updatePreview() {
           var t = clientTypeById(sel.value);
           if (!t) { prev.innerHTML = ''; return; }
           var vs = (t.verticalIds || []).map(verticalById).filter(Boolean)
             .map(function (v) { return v.name; }).join(' · ');
           prev.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">downloading</span>' +
-            'Clientul va primi: <b>' + esc(vs) + '</b> cu ' + (t.defaultTemplateIds || []).length + ' șabloane implicite.';
+            'Clientul va primi: <b>' + esc(vs) + '</b> cu ' + (t.defaultTemplateIds || []).length + ' fluxuri publicate.';
+        }
+        sel.addEventListener('change', updatePreview);
+        m.querySelectorAll('[data-onboarding-step="1"] input, [data-onboarding-step="1"] select').forEach(function (control) {
+          control.addEventListener('input', function () { draft.dirty = true; });
+          control.addEventListener('change', function () { draft.dirty = true; });
         });
+        back.addEventListener('click', function () { showStep(1); });
+        bindClientProfileBuilder(m, draft);
+        updatePreview();
+        showStep(1);
       },
       onSubmit: function (m, close) {
         clearFieldErrors(m);
         var name = fval(m, 'name');
         var t = clientTypeById(m.querySelector('[data-f="ctype"]').value);
-        setFieldError(m, 'nume', name ? '' : 'Denumirea firmei este obligatorie.');
-        setFieldError(m, 'tip', t ? '' : 'Selectează tipul de client.');
-        if (!name || !t) return;
+        if (draft.step === 1) {
+          setFieldError(m, 'nume', name ? '' : 'Denumirea firmei este obligatorie.');
+          setFieldError(m, 'tip', t ? '' : 'Selectează tipul de client.');
+          if (!name || !t) return;
+          if (draft.clientTypeId !== t.id) {
+            draft.clientTypeId = t.id;
+            draft.fields = defaultClientProfileFields(t);
+            draft.selectedFieldId = draft.fields[1] ? draft.fields[1].id : null;
+          }
+          draft.dirty = true;
+          draft.showStep(2);
+          return;
+        }
+        var inputFields = draft.fields.filter(function (field) { return field.type !== 'section_title'; });
+        var builderError = m.querySelector('[data-cpf-error]');
+        if (!inputFields.length) {
+          builderError.textContent = 'Adaugă cel puțin un câmp în formularul de înrolare.';
+          builderError.style.display = 'block';
+          return;
+        }
+        builderError.textContent = '';
+        builderError.style.display = '';
         var tier = m.querySelector('[data-f="tier"]').value;
         var hasAudit = (t.verticalIds || []).indexOf('vert_audit') !== -1;
+        var recordId = uid('cli', name, clients());
         var rec = {
-          id: uid('cli', name, clients()), name: name, domain: t.name, clientTypeId: t.id,
+          id: recordId, name: name, domain: t.name, clientTypeId: t.id,
           instance: slugify(name).replace(/_/g, '') + '.scriptica.ro',
           users: 1, enrolled: '20.04.2026', tier: tier, contract: 'activ', aiLoad: 5,
           commercial: {
@@ -1653,12 +2065,19 @@
             { name: 'Vertical Audit', tier: 'Enterprise', on: hasAudit },
             { name: 'Backup local', tier: 'Plus · add-on', on: false }
           ],
+          clientProfileSchema: {
+            id: 'cps_' + recordId,
+            version: 1,
+            sourceClientTypeId: t.id,
+            configuredAt: '20.04.2026',
+            fields: deepCopy(draft.fields)
+          },
           technical: { vmLoad: [4, 6, 5, 9, 7, 6, 4, 3], vmPeakIdx: 3, aiPerMonth: '0', docsStored: '0', uptime30: 100, lastIncident: '—' },
           downtime: { incidents: [] }
         };
         scripticaFlowSave('saClient', rec);
         close();
-        toast('success', 'Contul „' + name + '" a fost creat — fluxurile tipului „' + t.name + '" sunt active pentru client.');
+        toast('success', 'Contul „' + name + '” a fost creat cu un formular de înrolare de ' + inputFields.length + ' câmpuri.');
         renderClients(root);
       }
     });

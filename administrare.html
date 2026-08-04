@@ -14,7 +14,8 @@
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=17">
   <link rel="stylesheet" href="css/administrare.css?v=16">
-  <link rel="stylesheet" href="css/super-admin.css?v=9">
+  <link rel="stylesheet" href="css/client-onboarding.css?v=1">
+  <link rel="stylesheet" href="css/super-admin.css?v=11">
 </head>
 <body>
   <div class="shell shell--messaging-closed">
@@ -150,19 +151,24 @@
             <label for="ue-search" class="sr-only">Caută client</label>
             <input id="ue-search" class="input" type="search" placeholder="Caută după nume, CUI, email sau telefon" autocomplete="off">
           </div>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="ue-add" class="btn btn--primary" type="button">
+            Client nou
+            <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+          </button>
         </div>
-        <p class="admin-helper">Clienții sunt adăugați prin fluxul de colaborare, nu din panoul de administrare.</p>
+        <p class="admin-helper">Configurează identitatea clientului, persoanele de contact, accesul în Scriptica și toate sursele autorizate pentru documente.</p>
         <div class="table-wrap" id="ue-table-wrap">
           <table class="admin-table">
             <thead>
               <tr>
                 <th style="min-width:220px;">Client</th>
-                <th style="width:180px;">Contact</th>
-                <th style="width:130px;">CNP/CUI</th>
-                <th style="width:150px;">Telefon</th>
-                <th>Email</th>
-                <th style="width:160px;">Tip</th>
+                <th style="width:180px;">Contact principal</th>
+                <th style="width:140px;">Identificator</th>
+                <th>Surse documente</th>
+                <th style="width:160px;">Fluxuri</th>
                 <th style="width:110px;">Status</th>
+                <th style="width:80px;">Acțiuni</th>
               </tr>
             </thead>
             <tbody id="ue-tbody"></tbody>
@@ -606,6 +612,205 @@
     </div>
   </div>
 
+  <!-- Modal: onboarding client extern -->
+  <div class="modal co-modal" id="modal-client-onboarding" role="dialog" aria-modal="true" aria-labelledby="co-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide co-modal__dialog" role="document">
+      <button type="button" class="modal__close" data-co-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header co-modal__header">
+        <div>
+          <h2 class="modal__title" id="co-title">Client nou</h2>
+          <p class="modal__subtitle">Creează profilul folosit pentru fluxuri, conversații, documente și accesul clientului.</p>
+        </div>
+        <ol class="co-progress" aria-label="Pașii configurării">
+          <li class="co-progress__item is-current" data-co-progress="1"><span>1</span><b>Identitate</b></li>
+          <li class="co-progress__item" data-co-progress="2"><span>2</span><b>Contacte</b></li>
+          <li class="co-progress__item" data-co-progress="3"><span>3</span><b>Acces</b></li>
+          <li class="co-progress__item" data-co-progress="4"><span>4</span><b>Colaborare</b></li>
+          <li class="co-progress__item" data-co-progress="5"><span>5</span><b>Verificare</b></li>
+        </ol>
+      </header>
+
+      <form class="modal__body co-modal__body" id="co-form" novalidate>
+        <div class="co-error-summary" id="co-error-summary" role="alert" hidden></div>
+
+        <section class="co-step" data-co-step="1" aria-labelledby="co-step-1-title">
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">domain</span>
+            <div><h3 id="co-step-1-title">Identitatea clientului</h3><p>Datele stabile care vor lega toate fluxurile și documentele aceluiași client.</p></div>
+          </div>
+          <div class="co-grid">
+            <div class="form-field" data-co-field="personType">
+              <label class="form-label" for="co-person-type">Tip client*</label>
+              <select id="co-person-type" class="select">
+                <option value="">Selectează tipul...</option>
+                <option value="pj">Persoană juridică</option>
+                <option value="pfa">PFA</option>
+                <option value="pf">Persoană fizică</option>
+                <option value="institutie">Instituție publică</option>
+              </select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="identifier">
+              <label class="form-label" for="co-identifier">CUI / CNP / identificator*</label>
+              <input id="co-identifier" type="text" class="input" autocomplete="off" placeholder="ex. RO18234561">
+              <span class="form-helper">Identificatorul trebuie să fie unic în portofoliul firmei.</span>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="legalName">
+              <label class="form-label" for="co-legal-name">Denumire legală*</label>
+              <input id="co-legal-name" type="text" class="input" autocomplete="organization" placeholder="ex. Canvas S.R.L.">
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="displayName">
+              <label class="form-label" for="co-display-name">Denumire afișată</label>
+              <input id="co-display-name" type="text" class="input" autocomplete="off" placeholder="Se completează automat din denumirea legală">
+            </div>
+            <div class="form-field" data-co-field="country">
+              <label class="form-label" for="co-country">Țară*</label>
+              <select id="co-country" class="select">
+                <option value="România">România</option>
+                <option value="Altă țară UE">Altă țară UE</option>
+                <option value="Țară non-UE">Țară non-UE</option>
+              </select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="startDate">
+              <label class="form-label" for="co-start-date">Colaborare începând cu*</label>
+              <input id="co-start-date" type="date" class="input">
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field co-grid__full" data-co-field="address">
+              <label class="form-label" for="co-address">Sediu / adresă</label>
+              <input id="co-address" type="text" class="input" autocomplete="street-address" placeholder="Adresă completă">
+            </div>
+          </div>
+        </section>
+
+        <section class="co-step" data-co-step="2" aria-labelledby="co-step-2-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">contacts</span>
+            <div><h3 id="co-step-2-title">Contacte și expeditori autorizați</h3><p>Un client poate avea mai multe persoane, adrese de e-mail și numere de telefon sau WhatsApp.</p></div>
+          </div>
+          <div class="co-contact-list" id="co-contact-list"></div>
+          <button type="button" class="admin-add-btn co-add-contact" id="co-add-contact">
+            <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+            Adaugă persoană de contact
+          </button>
+        </section>
+
+        <section class="co-step" data-co-step="3" aria-labelledby="co-step-3-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+            <div><h3 id="co-step-3-title">Acces în Scriptica</h3><p>Alege cine primește cont și ce poate face în fluxurile acestui client.</p></div>
+          </div>
+          <div class="co-access-list" id="co-access-list"></div>
+        </section>
+
+        <section class="co-step" data-co-step="4" aria-labelledby="co-step-4-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">hub</span>
+            <div><h3 id="co-step-4-title">Colaborare și intrarea documentelor</h3><p>Configurează responsabilul, fluxurile active și traseul fiecărui document primit.</p></div>
+          </div>
+
+          <div class="co-grid">
+            <div class="form-field" data-co-field="responsible">
+              <label class="form-label" for="co-responsible">Responsabil intern*</label>
+              <select id="co-responsible" class="select"></select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="status">
+              <label class="form-label" for="co-status">Status după salvare</label>
+              <select id="co-status" class="select">
+                <option value="activ">Activ</option>
+                <option value="inactiv">Inactiv</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field" data-co-field="services">
+            <span class="form-label">Fluxuri și servicii*</span>
+            <span class="form-helper">Selectează cel puțin un flux. Acesta va deveni disponibil pentru client după activare.</span>
+            <div class="co-choice-grid" id="co-service-list"></div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="form-field" data-co-field="sources">
+            <span class="form-label">Surse autorizate pentru documente*</span>
+            <div class="co-source-grid" id="co-source-list">
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="scriptica" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">forum</span>
+                <span><b>Conversațiile din Scriptica</b><small>Fișierele încărcate în chat rămân legate direct de flux.</small></span>
+              </label>
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="email" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                <span><b>E-mail</b><small>Expeditorul este identificat dintre adresele autorizate ale contactelor.</small></span>
+              </label>
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="whatsapp" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+                <span><b>WhatsApp</b><small>Numărul expeditorului identifică persoana și clientul; contextul stabilește fluxul.</small></span>
+              </label>
+            </div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="form-field" data-co-field="notifications">
+            <span class="form-label">Canale pentru notificări automate*</span>
+            <div class="checkbox-group co-notification-channels">
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="scriptica" checked> Scriptica</label>
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="email" checked> E-mail</label>
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="whatsapp" checked> WhatsApp</label>
+            </div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="co-routing-note">
+            <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+            <div><b>Regulă de siguranță</b><p>Dacă expeditorul este cunoscut, dar fluxul nu poate fi stabilit sigur, documentul ajunge în „De clasificat”. Un expeditor necunoscut nu este asociat automat niciunui client.</p></div>
+          </div>
+        </section>
+
+        <section class="co-step" data-co-step="5" aria-labelledby="co-step-5-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">fact_check</span>
+            <div><h3 id="co-step-5-title">Verificare și activare</h3><p>Confirmă profilul complet înainte ca persoanele invitate și sursele de documente să devină active.</p></div>
+          </div>
+          <div class="co-review" id="co-review"></div>
+          <div class="form-field" data-co-field="confirmation">
+            <label class="checkbox co-confirmation">
+              <input type="checkbox" id="co-confirm">
+              Am verificat identitatea, expeditorii autorizați, permisiunile și fluxurile clientului.
+            </label>
+            <span class="form-error" role="alert"></span>
+          </div>
+        </section>
+      </form>
+
+      <footer class="modal__footer co-modal__footer">
+        <span class="modal__footer-helper" id="co-footer-helper">Pasul 1 din 5 · * Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-co-close>Anulează</button>
+        <button type="button" class="btn btn--ghost" id="co-save-draft">Salvează ciornă</button>
+        <button type="button" class="btn btn--secondary" id="co-back" hidden>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+          Înapoi
+        </button>
+        <button type="button" class="btn btn--primary" id="co-next">
+          Continuă
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </button>
+        <button type="button" class="btn btn--primary" id="co-activate" hidden>
+          Activează clientul
+          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Modal: confirmare acțiune critică -->
   <div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="mc-title" aria-hidden="true">
     <div class="modal__dialog modal__dialog--narrow" role="document">
@@ -636,5 +841,6 @@
   <script src="js/timer.js?v=30"></script>
   <script src="js/dashboard.js?v=30"></script>
   <script src="js/administrare.js?v=31"></script>
+  <script src="js/client-onboarding.js?v=1"></script>
 </body>
 </html>

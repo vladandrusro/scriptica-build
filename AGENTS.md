@@ -34,7 +34,7 @@ The repository owner (Vlad) is **the product owner and UX designer, not a softwa
 3. **Autoritate**: sees missions "Spre Aprobare" read-only → Aprobă / Cere modificări / Respinge (the one decision that persists across reloads).
 4. **Approved mission** → appears under the Rapoarte tab with the expandable AI-scored final report.
 5. **Client**: logs into a scoped portal (Canvas S.R.L. only), sees friendly statuses and required actions.
-6. **Scriptica HQ**: define a vertical (colors, lifecycle steps, table columns) → flow templates → a client type bundling them (+ archive folder tree + Acasă dashboard layout) → enroll a client → the tenant side instantly gets nav, list page, detail page, dashboard and archive routing for the new vertical. This end-to-end launch journey is the product's signature demo (slide 7 of the presentation).
+6. **Scriptica HQ**: create the client type first (Accounting / Audit / Construction) → define that type's verticals → build the flows inside each vertical → enroll a client of that type → the tenant side instantly gets nav, list page, detail page, dashboard and archive routing. This business-first configuration journey is the product's signature demo (slides 4–7 of the presentation).
 7. **Persona switching** via the avatar menu — the whole app re-scopes (nav, data, guards) per persona. Any change must be checked against personas it might leak between.
 
 ## UX and visual-design principles

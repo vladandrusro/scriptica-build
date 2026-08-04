@@ -120,26 +120,39 @@
     } catch (e) { /* URL-ul nu este esențial pentru prototip. */ }
   }
 
+  function setupPathHtml(t) {
+    var context = t ? '&ct=' + encodeURIComponent(t.id) : '';
+    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
+      '<a class="sa-setup__step is-active" href="super-admin-tipuri-clienti-v2.html?view=superadmin" aria-current="step"><span>1</span><div><small>Definește organizația</small><b>Tip de client</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step" href="super-admin-fluxuri-v2.html?view=superadmin' + context + '"><span>2</span><div><small>Structurează activitatea</small><b>Verticale</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step" href="super-admin-fluxuri-v2.html?view=superadmin' + context + '"><span>3</span><div><small>Definește execuția</small><b>Fluxuri</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin' + context + '"><span>4</span><div><small>Activează configurația</small><b>Client</b></div></a>' +
+    '</nav>';
+  }
+
   function renderPage() {
     var type = selectedType();
     var totalClients = clientTypes().reduce(function (sum, t) { return sum + clientsForType(t.id).length; }, 0);
     root.innerHTML =
       '<header class="page-header ctv2-page-header">' +
         '<div class="ctv2-heading"><div class="ctv2-heading__line">' +
-          '<h1 class="page-header__title">Tipuri de clienți</h1><span class="pill pill--neutral">Explorare V2</span></div>' +
-          '<p class="ctv2-intro">Construiește experiența completă primită de fiecare categorie de client: munca disponibilă, arhiva inteligentă și ecranul Acasă.</p>' +
+          '<h1 class="page-header__title">Tipuri de clienți</h1><span class="pill pill--neutral">Pasul 1 din 4</span></div>' +
+          '<p class="ctv2-intro">Începe cu organizația pe care o deservește Scriptica. Verticalele și fluxurile se configurează apoi în interiorul tipului ales.</p>' +
         '</div>' +
         '<div class="ctv2-page-actions">' +
-          '<a class="btn btn--ghost" href="super-admin-tipuri-clienti.html?view=superadmin">Versiunea actuală</a>' +
           '<button class="btn btn--primary" type="button" data-new-type>Tip de client nou' +
             '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
         '</div>' +
       '</header>' +
+      setupPathHtml(type) +
       '<div class="ctv2-summary" aria-label="Rezumat tipuri de clienți">' +
         summaryMetric('category', clientTypes().length, 'tipuri definite') +
         summaryMetric('apartment', totalClients, 'clienți înrolați') +
         '<span class="ctv2-summary__explain"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-          'Un client are un singur tip. Selectează tipul pentru a-i configura cele trei componente.</span>' +
+          'Un client are un singur tip și moștenește configurația acelui tip la înrolare.</span>' +
       '</div>' +
       '<div class="ctv2-workspace">' +
         '<aside class="ctv2-selector" aria-label="Tipuri de clienți">' +
@@ -198,6 +211,8 @@
             '<p>' + esc(t.description || 'Fără descriere.') + '</p></div>' +
         '</div>' +
         '<div class="ctv2-detail__actions">' +
+          '<button class="btn btn--ghost" type="button" data-edit-type="' + esc(t.id) + '">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">edit</span>Editează tipul</button>' +
           '<button class="btn btn--ghost" type="button" data-show-clients="' + esc(t.id) + '">' +
             '<span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + ' ' + plural(n, 'client', 'clienți') + '</button>' +
           (n === 0 ? '<button class="sa-mini-btn sa-mini-btn--danger" type="button" data-delete-type="' + esc(t.id) + '" title="Șterge tipul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>' : '') +
@@ -243,14 +258,14 @@
       return '<li><span class="material-symbols-outlined" aria-hidden="true">description</span><span>' + esc(tpl.name) + '</span></li>';
     }).join('');
     var extra = Math.max(0, ts.length - 4);
-    return '<article class="ctv2-module">' + moduleHead('1', 'account_tree', 'Pachet de lucru', 'Se pornește la înrolare', packageStatus(t)) +
-      '<div class="ctv2-module__body"><p>Stabilește verticalele și șabloanele de flux cu care începe un client nou.</p>' +
+    return '<article class="ctv2-module">' + moduleHead('1', 'account_tree', 'Verticale și fluxuri', 'Structura operațională', packageStatus(t)) +
+      '<div class="ctv2-module__body"><p>Construiește domeniile de lucru ale acestui tip, apoi definește fluxurile din fiecare verticală.</p>' +
         '<div class="ctv2-module__section"><span class="ctv2-label">Verticale incluse</span><div class="ctv2-pills">' + verticalPillsHtml(vs) + '</div></div>' +
-        '<div class="ctv2-module__section"><span class="ctv2-label">Șabloane implicite · ' + ts.length + '</span>' +
+        '<div class="ctv2-module__section"><span class="ctv2-label">Fluxuri publicate · ' + ts.length + '</span>' +
           '<ul class="ctv2-template-preview">' + preview + '</ul>' +
-          (extra ? '<span class="ctv2-more">+' + extra + ' ' + plural(extra, 'șablon', 'șabloane') + '</span>' : '') + '</div>' +
+          (extra ? '<span class="ctv2-more">+' + extra + ' ' + plural(extra, 'flux', 'fluxuri') + '</span>' : '') + '</div>' +
         '<div class="ctv2-terminology"><span>În aplicație</span><b>„' + esc(t.clientLabel || 'Client') + '” / „' + esc(t.clientLabelPlural || 'Clienți') + '”</b></div>' +
-      '</div><footer class="ctv2-module__foot"><button class="btn btn--secondary" type="button" data-edit-package="' + esc(t.id) + '">Editează pachetul<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></footer></article>';
+      '</div><footer class="ctv2-module__foot"><a class="btn btn--secondary" href="super-admin-fluxuri-v2.html?view=superadmin&ct=' + encodeURIComponent(t.id) + '">Configurează verticale și fluxuri<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></footer></article>';
   }
 
   function flattenFolders(tree) {
@@ -324,7 +339,9 @@
       state.q = '';
       renderPage();
     } else if ((el = e.target.closest('[data-new-type]'))) {
-      openPackageEditor(null);
+      openTypeEditor(null);
+    } else if ((el = e.target.closest('[data-edit-type]'))) {
+      openTypeEditor(typeById(el.getAttribute('data-edit-type')));
     } else if ((el = e.target.closest('[data-edit-package]'))) {
       openPackageEditor(typeById(el.getAttribute('data-edit-package')));
     } else if ((el = e.target.closest('[data-edit-archive]'))) {
@@ -363,6 +380,87 @@
       return '<button type="button" class="sa-iconpick__btn' + (icon === selected ? ' is-selected' : '') + '" data-pick-icon="' + icon + '" title="' + icon + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">' + icon + '</span></button>';
     }).join('') + '</div>';
+  }
+
+  function openTypeEditor(t) {
+    var isNew = !t;
+    var initialState = JSON.stringify({
+      name: t ? t.name : '',
+      icon: t ? t.icon : CT_ICONS[0],
+      description: t ? t.description || '' : '',
+      clientLabel: t ? t.clientLabel || '' : '',
+      clientLabelPlural: t ? t.clientLabelPlural || '' : ''
+    });
+
+    function editorState(dialog) {
+      var selectedIcon = dialog.querySelector('[data-pick-icon].is-selected');
+      return JSON.stringify({
+        name: fval(dialog, 'name'),
+        icon: selectedIcon ? selectedIcon.getAttribute('data-pick-icon') : CT_ICONS[0],
+        description: fval(dialog, 'description'),
+        clientLabel: fval(dialog, 'clientLabel'),
+        clientLabelPlural: fval(dialog, 'clientLabelPlural')
+      });
+    }
+
+    openDialog({
+      title: isNew ? 'Tip de client nou' : 'Editează tipul de client',
+      subtitle: isNew
+        ? 'Definește mai întâi organizația. Verticalele și fluxurile urmează în pașii următori.'
+        : t.name,
+      bodyHtml:
+        '<div class="ctv2-editor-note"><span class="material-symbols-outlined" aria-hidden="true">category</span>' +
+          '<span><b>Tipul de client este rădăcina configurației.</b> După salvare vei construi verticalele și fluxurile care îi aparțin.</span></div>' +
+        fieldHtml('Denumirea tipului', '<input class="input" type="text" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Firmă de contabilitate">', null, 'name') +
+        fieldHtml('Pictogramă', iconPickerHtml(t ? t.icon : CT_ICONS[0])) +
+        fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description" placeholder="Ce fel de organizații folosesc acest tip?">' + esc(t ? t.description || '' : '') + '</textarea>') +
+        '<div class="sa-form-2col">' +
+          fieldHtml('Partea externă · singular', '<input class="input" type="text" data-f="clientLabel" value="' + esc(t ? t.clientLabel || '' : '') + '" placeholder="Client">', 'Exemple: Client, Instituție, Beneficiar.') +
+          fieldHtml('Partea externă · plural', '<input class="input" type="text" data-f="clientLabelPlural" value="' + esc(t ? t.clientLabelPlural || '' : '') + '" placeholder="Clienți">') +
+        '</div>',
+      submitLabel: isNew ? 'Creează și continuă' : 'Salvează modificările',
+      isDirty: function (dialog) { return editorState(dialog) !== initialState; },
+      onOpen: function (dialog) {
+        dialog.querySelectorAll('[data-pick-icon]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            dialog.querySelectorAll('[data-pick-icon]').forEach(function (x) { x.classList.remove('is-selected'); });
+            button.classList.add('is-selected');
+          });
+        });
+      },
+      onSubmit: function (dialog, close) {
+        var name = fval(dialog, 'name');
+        setFieldError(dialog, 'name', name ? '' : 'Denumirea tipului este obligatorie.');
+        if (!name) return;
+        var selectedIcon = dialog.querySelector('[data-pick-icon].is-selected');
+        var clientLabel = fval(dialog, 'clientLabel') || 'Client';
+        var id = t ? t.id : uniqueId('ct', name, clientTypes());
+        var record = t ? Object.assign({}, t) : {
+          id: id,
+          builtin: false,
+          verticalIds: [],
+          defaultTemplateIds: [],
+          archiveTree: typeof window.scripticaDefaultArchiveTree === 'function' ? window.scripticaDefaultArchiveTree() : [],
+          dashboardLayout: [],
+          needsReview: { archive: true, dashboard: true }
+        };
+        record.name = name;
+        record.icon = selectedIcon ? selectedIcon.getAttribute('data-pick-icon') : 'category';
+        record.description = fval(dialog, 'description');
+        record.clientLabel = clientLabel;
+        record.clientLabelPlural = fval(dialog, 'clientLabelPlural') ||
+          (clientLabel === 'Client' ? 'Clienți' : clientLabel === 'Instituție' ? 'Instituții' : clientLabel + 'i');
+        window.scripticaFlowSave('clientType', record);
+        rememberSelection(id);
+        close();
+        if (isNew) {
+          window.location.href = 'super-admin-fluxuri-v2.html?view=superadmin&ct=' + encodeURIComponent(id) + '&new=vertical';
+          return;
+        }
+        renderPage();
+        toast('success', 'Tipul „' + name + '” a fost actualizat.');
+      }
+    });
   }
 
   function packageBlocksHtml(t) {

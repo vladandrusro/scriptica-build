@@ -125,6 +125,10 @@ Height `40px`, padding `8px 16px`, radius `--radius-sm`, font `14px / 700`.
 
 Icons inside buttons use Material Symbols Outlined at `20px`.
 
+#### Table-specific primary actions
+
+A primary action that directly creates or adds a record to a specific table is placed **above that table, aligned to its top-right edge**. The table title, result count, or filtering context stays on the left of the same toolbar. Do not place this action below the table or detach it into a distant page-level action area. Page-wide actions that do not belong to one particular table remain in the page header.
+
 ### 6.2 Inputs
 
 Height `40px`, padding `0 12px`, radius `--radius-sm`, border `1px solid --color-border`, background `--color-surface-white`, text `--color-text-primary`.

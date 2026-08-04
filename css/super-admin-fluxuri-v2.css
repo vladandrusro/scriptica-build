@@ -1777,6 +1777,9 @@ body[data-page="super-admin-fluxuri"] .main {
 .fxv2-type-add .btn { margin: 0; }
 
 @media (max-width: 1500px) {
+  .fxv2-page-header { grid-template-columns: minmax(0, 1fr); }
+  .fxv2-page-actions { flex-wrap: wrap; }
+
   .fxv2-workspace {
     grid-template-columns: calc(var(--space-8) * 4 + var(--space-4)) minmax(0, 1fr);
   }

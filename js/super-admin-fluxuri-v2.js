@@ -16,6 +16,7 @@
   var FREQUENCIES = ['punctual', 'lunar', 'trimestrial', 'semestrial', 'anual'];
   var COLORS = ['mov', 'albastru', 'verde', 'auriu', 'portocaliu', 'roz'];
   var state = {
+    clientTypeId: '',
     verticalId: '',
     expandedVerticalId: '',
     templateId: '',
@@ -74,6 +75,34 @@
   }
   function clientTypes() { return (SA() && SA().clientTypes) || []; }
   function clients() { return (SA() && SA().clients) || []; }
+  function clientTypeById(id) {
+    return clientTypes().find(function (ct) { return ct.id === id; }) || null;
+  }
+  function contextType() { return clientTypeById(state.clientTypeId); }
+  function libraryVerticals() {
+    var ct = contextType();
+    if (!ct) return verticals();
+    return (ct.verticalIds || []).map(verticalById).filter(Boolean);
+  }
+  function libraryTemplates() {
+    var ids = libraryVerticals().map(function (vertical) { return vertical.id; });
+    return templates().filter(function (template) { return ids.indexOf(template.verticalId) !== -1; });
+  }
+  function attachVerticalToContext(verticalId) {
+    var ct = contextType();
+    if (!ct || (ct.verticalIds || []).indexOf(verticalId) !== -1 || typeof window.scripticaFlowSave !== 'function') return;
+    var updated = clone(ct);
+    updated.verticalIds = (updated.verticalIds || []).concat([verticalId]);
+    updated.needsReview = Object.assign({}, updated.needsReview || {}, { archive: true, dashboard: true });
+    window.scripticaFlowSave('clientType', updated);
+  }
+  function attachTemplateToContext(templateId) {
+    var ct = contextType();
+    if (!ct || (ct.defaultTemplateIds || []).indexOf(templateId) !== -1 || typeof window.scripticaFlowSave !== 'function') return;
+    var updated = clone(ct);
+    updated.defaultTemplateIds = (updated.defaultTemplateIds || []).concat([templateId]);
+    window.scripticaFlowSave('clientType', updated);
+  }
   function usedByTypes(templateId) {
     return clientTypes().filter(function (ct) {
       return (ct.defaultTemplateIds || []).indexOf(templateId) !== -1;
@@ -376,13 +405,17 @@
 
   function initialSelection() {
     var params = new URLSearchParams(window.location.search);
+    var requestedType = clientTypeById(params.get('ct'));
     var requestedTemplate = templateById(params.get('template'));
     var requestedVertical = verticalById(params.get('vertical'));
-    if (requestedTemplate) {
+    state.clientTypeId = requestedType ? requestedType.id : '';
+    var allowedVerticalIds = libraryVerticals().map(function (vertical) { return vertical.id; });
+    if (requestedTemplate && allowedVerticalIds.indexOf(requestedTemplate.verticalId) !== -1) {
       state.templateId = requestedTemplate.id;
       state.verticalId = requestedTemplate.verticalId;
     } else {
-      state.verticalId = requestedVertical ? requestedVertical.id : (verticals()[0] ? verticals()[0].id : '');
+      state.verticalId = requestedVertical && allowedVerticalIds.indexOf(requestedVertical.id) !== -1
+        ? requestedVertical.id : (libraryVerticals()[0] ? libraryVerticals()[0].id : '');
       state.templateId = templatesForVertical(state.verticalId)[0] ? templatesForVertical(state.verticalId)[0].id : '';
     }
     state.expandedVerticalId = state.verticalId;
@@ -394,6 +427,8 @@
       if (state.verticalId) url.searchParams.set('vertical', state.verticalId);
       if (state.templateId) url.searchParams.set('template', state.templateId);
       else url.searchParams.delete('template');
+      if (state.clientTypeId) url.searchParams.set('ct', state.clientTypeId);
+      else url.searchParams.delete('ct');
       url.searchParams.set('view', 'superadmin');
       window.history.replaceState({}, '', url.pathname + '?' + url.searchParams.toString());
     } catch (e) { /* Deep link-ul nu este esențial. */ }
@@ -401,8 +436,8 @@
 
   function selectedVertical() {
     var vertical = verticalById(state.verticalId);
-    if (vertical) return vertical;
-    vertical = verticals()[0] || null;
+    if (vertical && libraryVerticals().some(function (item) { return item.id === vertical.id; })) return vertical;
+    vertical = libraryVerticals()[0] || null;
     state.verticalId = vertical ? vertical.id : '';
     return vertical;
   }
@@ -486,6 +521,20 @@
       '<b>' + number + '</b><span>' + esc(label) + '</span></div>';
   }
 
+  function setupPathHtml(ct, template) {
+    var context = ct ? '&ct=' + encodeURIComponent(ct.id) : '';
+    var flowActive = !!template;
+    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
+      '<a class="sa-setup__step" href="super-admin-tipuri-clienti-v2.html?view=superadmin' + context + '"><span>1</span><div><small>Definește organizația</small><b>Tip de client</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step' + (flowActive ? '' : ' is-active') + '" href="#fxv2-root"' + (flowActive ? '' : ' aria-current="step"') + '><span>2</span><div><small>Structurează activitatea</small><b>Verticale</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step' + (flowActive ? ' is-active' : '') + '" href="#fxv2-root"' + (flowActive ? ' aria-current="step"' : '') + '><span>3</span><div><small>Definește execuția</small><b>Fluxuri</b></div></a>' +
+      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
+      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin' + context + '"><span>4</span><div><small>Activează configurația</small><b>Client</b></div></a>' +
+    '</nav>';
+  }
+
   function renderPage() {
     var previousLibrary = root.querySelector('.fxv2-library__scroll');
     var previousEditor = root.querySelector('.fxv2-editor');
@@ -493,26 +542,35 @@
     if (previousLibrary) state.libraryScroll = previousLibrary.scrollTop;
     if (previousEditor) state.editorScroll = previousEditor.scrollTop;
     if (previousSequence) state.sequenceScroll = previousSequence.scrollLeft;
+    var ct = contextType();
     var vertical = selectedVertical();
     var template = selectedTemplate();
-    var totalSteps = templates().reduce(function (sum, item) { return sum + (item.steps || []).length; }, 0);
+    var visibleTemplates = libraryTemplates();
+    var totalSteps = visibleTemplates.reduce(function (sum, item) { return sum + (item.steps || []).length; }, 0);
+    var readyForClient = !!(ct && (ct.verticalIds || []).length && (ct.defaultTemplateIds || []).length);
     root.innerHTML =
       '<header class="page-header fxv2-page-header">' +
         '<div class="fxv2-heading"><div class="fxv2-heading__line">' +
-          '<h1 class="page-header__title">Fluxuri</h1></div>' +
-          '<p class="fxv2-intro">Verticala grupează fluxurile și definește vocabularul documentelor. Fiecare flux își configurează propriii pași și alege categoriile relevante.</p>' +
+          '<h1 class="page-header__title">Verticale și fluxuri</h1><span class="pill pill--neutral">Pașii 2–3 din 4</span></div>' +
+          '<p class="fxv2-intro">' + (ct
+            ? 'Configurezi tipul „<b>' + esc(ct.name) + '</b>”. Creează domeniile sale de lucru, apoi construiește fluxurile din fiecare verticală.'
+            : 'Registrul global rămâne vizibil pentru administrare. Pentru o configurare nouă, pornește prin alegerea unui tip de client.') + '</p>' +
         '</div>' +
         '<div class="fxv2-page-actions">' +
-          '<button class="btn btn--secondary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
-          '<button class="btn btn--primary" type="button" data-new-template>Flux nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+          (ct ? '<a class="btn btn--ghost" href="super-admin-tipuri-clienti-v2.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '">Înapoi la tip</a>' : '') +
+          (ct ? '<button class="btn btn--secondary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
+            : '<a class="btn btn--secondary" href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></a>') +
+          (ct && vertical ? '<button class="btn ' + (readyForClient ? 'btn--secondary' : 'btn--primary') + '" type="button" data-new-template>Flux nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' : '') +
+          (ct && readyForClient ? '<a class="btn btn--primary" href="super-admin-clienti.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '&new=client">Continuă la client<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>' : '') +
         '</div>' +
       '</header>' +
+      setupPathHtml(ct, template) +
       '<div class="fxv2-summary" aria-label="Rezumat registru de fluxuri">' +
-        summaryMetric('account_tree', verticals().length, 'verticale') +
-        summaryMetric('schema', templates().length, 'fluxuri definite') +
+        summaryMetric('account_tree', libraryVerticals().length, ct ? 'verticale în acest tip' : 'verticale') +
+        summaryMetric('schema', visibleTemplates.length, ct ? 'fluxuri în verticale' : 'fluxuri definite') +
         summaryMetric('conversion_path', totalSteps, 'pași configurabili') +
         '<span class="fxv2-summary__explain"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-          'Verticala definește categoriile; fiecare flux definește pașii și vizibilitatea lor.</span>' +
+          (ct ? 'O verticală nouă este asociată automat acestui tip; un flux publicat devine parte din configurația de înrolare.' : 'Verticala definește categoriile; fiecare flux definește pașii și vizibilitatea lor.') + '</span>' +
       '</div>' +
       '<div class="fxv2-workspace">' + libraryHtml(vertical, template) + editorHtml(vertical, template) + '</div>';
     rememberSelection();
@@ -527,10 +585,11 @@
   }
 
   function libraryHtml(vertical, template) {
+    var ct = contextType();
     return '<aside class="fxv2-library" aria-label="Biblioteca de fluxuri">' +
       '<div class="fxv2-library__scroll">' +
         '<div class="fxv2-library__section">' +
-          '<div class="fxv2-library__heading"><div><h2>Verticale și fluxuri</h2><small>Alege verticala, apoi fluxul.</small></div><span>' + templates().length + '</span></div>' +
+          '<div class="fxv2-library__heading"><div><h2>' + (ct ? esc(ct.name) : 'Registrul platformei') + '</h2><small>Alege verticala, apoi fluxul.</small></div><span>' + libraryTemplates().length + '</span></div>' +
         '<div class="filter-input-search fxv2-search"><span class="material-symbols-outlined" aria-hidden="true">search</span>' +
           '<label class="sr-only" for="fxv2-search">Caută un flux</label>' +
           '<input id="fxv2-search" class="input" type="search" placeholder="Caută un flux..." autocomplete="off" value="' + esc(state.q) + '"></div>' +
@@ -547,13 +606,15 @@
 
   function verticalAccordionHtml(selected) {
     var q = normalize(state.q);
-    var groups = verticals().filter(function (vertical) {
+    var groups = libraryVerticals().filter(function (vertical) {
       return !q || visibleTemplates(vertical).length > 0;
     });
     if (!groups.length) {
-      return '<div class="fxv2-library-empty"><span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
-        '<b>Niciun flux găsit</b><span>Încearcă alt termen sau caută după frecvență.</span>' +
-        '<button type="button" data-clear-search>Șterge căutarea</button></div>';
+      return '<div class="fxv2-library-empty"><span class="material-symbols-outlined" aria-hidden="true">' + (state.q ? 'search_off' : 'account_tree') + '</span>' +
+        '<b>' + (state.q ? 'Niciun flux găsit' : 'Nicio verticală configurată') + '</b><span>' +
+        (state.q ? 'Încearcă alt termen sau caută după frecvență.' : 'Creează prima verticală pentru acest tip de client.') + '</span>' +
+        (state.q ? '<button type="button" data-clear-search>Șterge căutarea</button>' :
+          (contextType() ? '<button type="button" data-new-vertical>Creează verticala</button>' : '<a href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client</a>')) + '</div>';
     }
     return groups.map(function (item) {
       var list = visibleTemplates(item);
@@ -609,6 +670,8 @@
     } else if (usedBy.length) {
       copy = usedBy.length + ' ' + plural(usedBy.length, 'tip de client include', 'tipuri de clienți includ') +
         ' acest flux. Publicarea actualizează registrul central folosit de Tipuri de clienți și înrolare.';
+    } else if (contextType()) {
+      copy = 'După publicare, fluxul va fi inclus automat în tipul „' + contextType().name + '” și va deveni disponibil la înrolare.';
     } else {
       copy = 'Fluxul nu este inclus încă într-un tip de client. După publicare devine disponibil în pachetele de înrolare.';
     }
@@ -617,7 +680,9 @@
 
   function editorHtml(vertical, template) {
     if (!vertical) {
-      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează o verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu.</p></section>';
+      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează prima verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu și va aparține tipului de client selectat.</p>' +
+        (contextType() ? '<button class="btn btn--primary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' :
+          '<a class="btn btn--primary" href="super-admin-tipuri-clienti-v2.html?view=superadmin">Alege tipul de client</a>') + '</section>';
     }
     if (!template) {
       return '<section class="fxv2-editor fxv2-editor--empty ' + vaClass(vertical) + '"><span class="material-symbols-outlined" aria-hidden="true">schema</span>' +
@@ -1037,6 +1102,21 @@
       return;
     }
     var usedBy = usedByTypes(template.id);
+    var ct = contextType();
+    var contextClients = ct ? clients().filter(function (client) { return client.clientTypeId === ct.id; }) : [];
+    var willAttachToContext = !!(ct && (ct.defaultTemplateIds || []).indexOf(template.id) === -1);
+    if (willAttachToContext && contextClients.length) {
+      persistModel();
+      openDialog({
+        title: 'Includerea fluxului este în așteptare',
+        subtitle: ct.name,
+        bodyHtml: '<div class="fxv2-dialog-note fxv2-dialog-note--critical"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span><span><b>' +
+          contextClients.length + ' ' + plural(contextClients.length, 'client folosește', 'clienți folosesc') + ' deja acest tip.</b> Ciorna rămâne salvată, dar nu este inclusă până când politica de actualizare a clienților existenți este decisă.</span></div>',
+        footerHtml: '<span class="modal__footer-helper">Nicio configurație de client nu a fost modificată.</span><button class="btn btn--primary" type="button" data-dialog-close>Am înțeles</button>'
+      });
+      return;
+    }
+    var publishedTypeCount = usedBy.length + (willAttachToContext ? 1 : 0);
     var affectedClients = affectedClientsForTemplate(template.id);
     if (affectedClients.length) {
       persistModel();
@@ -1055,19 +1135,21 @@
       subtitle: template.name,
       submitLabel: 'Publică modificările',
       bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + template.steps.length + '</b><span>' + plural(template.steps.length, 'pas', 'pași') + '</span></div>' +
-        '<div><b>Ziua ' + template.steps[template.steps.length - 1].offsetDays + '</b><span>termen final</span></div><div><b>' + usedBy.length + '</b><span>' + plural(usedBy.length, 'tip de client', 'tipuri de clienți') + '</span></div></div>' +
-        '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">verified</span><span>Fluxul va fi salvat în registrul central și va deveni disponibil imediat în Tipuri de clienți și la înrolare.</span></div>',
+        '<div><b>Ziua ' + template.steps[template.steps.length - 1].offsetDays + '</b><span>termen final</span></div><div><b>' + publishedTypeCount + '</b><span>' + plural(publishedTypeCount, 'tip de client', 'tipuri de clienți') + '</span></div></div>' +
+        '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">verified</span><span>' +
+          (willAttachToContext ? 'Fluxul va fi publicat și inclus automat în tipul „' + esc(ct.name) + '”.' : 'Fluxul va fi salvat în registrul central și va deveni disponibil imediat la înrolare.') + '</span></div>',
       onSubmit: function (dialog, close) {
         if (typeof window.scripticaFlowSave !== 'function') {
           toast('error', 'Registrul central nu este disponibil. Reîncarcă pagina și încearcă din nou.');
           return;
         }
         window.scripticaFlowSave('template', clone(template));
+        attachTemplateToContext(template.id);
         removeDraftId('draftTemplateIds', template.id);
         persistModel();
         close();
         renderPage();
-        toast('success', 'Fluxul „' + template.name + '” a fost publicat în registrul central.');
+        toast('success', 'Fluxul „' + template.name + '” a fost publicat' + (willAttachToContext ? ' și inclus în „' + ct.name + '”.' : ' în registrul central.'));
       }
     });
   }
@@ -1267,12 +1349,18 @@
   function openNewTemplate() {
     var current = selectedTemplate();
     var vertical = selectedVertical();
-    var verticalOptions = verticals().map(function (item) {
+    var verticalOptions = libraryVerticals().map(function (item) {
       return '<option value="' + esc(item.id) + '"' + (vertical && item.id === vertical.id ? ' selected' : '') + '>' + esc(item.name) + '</option>';
     }).join('');
+    if (!verticalOptions) {
+      toast('error', 'Creează mai întâi o verticală pentru acest tip de client.');
+      return;
+    }
     openDialog({
       title: 'Flux nou',
-      subtitle: 'Alege domeniul și punctul de pornire; pașii se editează apoi direct în constructor.',
+      subtitle: contextType()
+        ? 'Fluxul va aparține unei verticale din tipul „' + contextType().name + '”.'
+        : 'Alege domeniul și punctul de pornire; pașii se editează apoi direct în constructor.',
       bodyHtml: fieldHtml('Denumire flux', '<input class="input" type="text" data-f="name" placeholder="ex. Închidere anuală">', null, 'name') +
         '<div class="fxv2-dialog-grid">' +
           fieldHtml('Verticală', '<select class="select" data-f="vertical">' + verticalOptions + '</select>') +
@@ -1418,6 +1506,11 @@
 
   function openVerticalEditor(vertical) {
     var isNew = !vertical;
+    var ct = contextType();
+    if (isNew && !ct) {
+      toast('error', 'Alege mai întâi tipul de client pentru care creezi verticala.');
+      return;
+    }
     var originalCategories = clone((vertical && vertical.documentCategories) || []);
     var workingCategories = clone(originalCategories);
     if (isNew) workingCategories = [
@@ -1425,8 +1518,10 @@
       { id: 'necategorisit', name: 'Necategorisit', system: true, documentTypes: [] }
     ];
     var dialog = openDialog({
-      title: isNew ? 'Verticală nouă' : (vertical.builtin ? 'Categorii de documente — ' + vertical.name : 'Configurează verticala'),
-      subtitle: 'Verticala grupează fluxuri și definește vocabularul folosit de clasificarea A.I. Pașii aparțin exclusiv fluxurilor.',
+      title: isNew ? 'Verticală nouă pentru „' + ct.name + '”' : (vertical.builtin ? 'Categorii de documente — ' + vertical.name : 'Configurează verticala'),
+      subtitle: isNew
+        ? 'Pasul 2 din 4: definește un domeniu de lucru al acestui tip de client.'
+        : 'Verticala grupează fluxuri și definește vocabularul folosit de clasificarea A.I. Pașii aparțin exclusiv fluxurilor.',
       wide: true,
       bodyHtml: '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">layers</span><span>Fiecare tip de document are o singură categorie implicită. Fluxurile moștenesc acest vocabular și pot doar să ascundă ce nu folosesc.</span></div>' +
         (vertical && vertical.builtin ? '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>Identitatea acestei verticale este predefinită. Poți configura în continuare categoriile și tipurile sale de documente.</span></div>' : '') +
@@ -1481,6 +1576,7 @@
         syncTemplateCategories(savedVertical, originalCategories);
         if (!affectedClients.length && typeof window.scripticaFlowSave === 'function') {
           window.scripticaFlowSave('vertical', clone(savedVertical));
+          if (isNew) attachVerticalToContext(savedVertical.id);
           removeDraftId('draftVerticalIds', savedVertical.id);
         } else {
           addDraftId('draftVerticalIds', savedVertical.id);
@@ -1490,7 +1586,7 @@
         renderPage();
         toast(affectedClients.length ? 'info' : 'success', affectedClients.length
           ? 'Modificările verticalei au rămas în ciornă; clienții existenți nu au fost modificați.'
-          : (isNew ? 'Verticala a fost creată în registrul central. Definește acum primul ei flux.' : 'Verticala a fost actualizată în registrul central.'));
+          : (isNew ? 'Verticala „' + savedVertical.name + '” a fost adăugată în „' + ct.name + '”. Definește acum primul ei flux.' : 'Verticala a fost actualizată în registrul central.'));
       }
     });
     dialog.addEventListener('click', function (event) {
@@ -1637,12 +1733,22 @@
   function init() {
     root = document.getElementById('fxv2-root');
     if (!root || !SA()) return;
+    var params = new URLSearchParams(window.location.search);
+    var openNewVertical = params.get('new') === 'vertical';
     model = loadModel();
     persistModel();
     initialSelection();
     root.addEventListener('click', handleClick);
     root.addEventListener('input', handleInput);
     renderPage();
+    if (openNewVertical && contextType()) {
+      try {
+        var url = new URL(window.location.href);
+        url.searchParams.delete('new');
+        window.history.replaceState({}, '', url.pathname + '?' + url.searchParams.toString());
+      } catch (e) { /* Relansarea modalului la refresh nu blochează prototipul. */ }
+      window.setTimeout(function () { openVerticalEditor(null); }, 0);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);
