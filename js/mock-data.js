@@ -2790,8 +2790,7 @@ window.SCRIPTICA_MOCK = {
       { id: "dw_pmb_int", widget: "flow_summary", params: { verticalId: "vert_pmb_solicitari_interne" }, size: "half" },
       { id: "dw_pmb_ai", widget: "flow_summary", params: { verticalId: "vert_pmb_asistent_ai" }, size: "half" },
       { id: "dw_pmb_termene", widget: "termene", size: "half" },
-      { id: "dw_pmb_arhiva", widget: "arhiva_recente", params: {}, size: "half" },
-      { id: "dw_pmb_echipa", widget: "echipa", size: "half" }
+      { id: "dw_pmb_arhiva", widget: "arhiva_recente", params: {}, size: "half" }
     ]
   });
 
@@ -4675,6 +4674,32 @@ window.SCRIPTICA_MOCK = {
     d("doc_pmb_023", "fi_pmb_int_04", "pmb_solicitari_interne", "decont_cheltuieli_cluj.pdf", "2026-03-23T16:10:00", "registratura", "Decont de cheltuieli", "Andrei Constantin", "DC-9/2026", "2026-03-23", "deplasari", "Decont de cheltuieli de deplasare: transport, cazare 2 nopți, diurnă; documente justificative atașate.", 6)
   );
 
+  /* Mesaje din fluxurile PMB (panoul Mesagerie) — vizibile când domeniul lor e în scope */
+  M.messages.push(
+    { id: 901, situationId: "fi_pmb_ext_01", clientCompany: "Maria Ionescu", clientContact: "Maria Ionescu", sender: "client", senderName: "Maria Ionescu",
+      date: "2026-04-18", body: "Bună ziua, revin cu fotografii de aseară — șantierul a lucrat din nou după ora 22:00. Vă rog să îmi comunicați ce măsuri s-au dispus.",
+      attachments: [{ count: 3, label: "fotografii la petiția privind zgomotul" }], chips: [{ label: "Petiție", style: "neutral" }], read: false },
+    { id: 902, situationId: "fi_pmb_ap_01", clientCompany: "Luxten Lighting Company S.A.", clientContact: "Dep. Ofertare", sender: "client", senderName: "Luxten Lighting Company S.A.",
+      date: "2026-04-17", body: "Am transmis în SEAP clarificările solicitate la propunerea tehnică (fișele tehnice pentru corpurile de iluminat LED). Rămânem la dispoziție.",
+      attachments: [{ count: 2, label: "documente la evaluarea ofertelor" }], chips: [{ label: "Clarificări SEAP", style: "neutral" }], read: false },
+    { id: 903, situationId: "fi_pmb_inv_02", clientCompany: "Erbașu Construcții S.A.", clientContact: "Diriginte de șantier", sender: "client", senderName: "Erbașu Construcții S.A.",
+      date: "2026-04-16", body: "Situația de lucrări pe luna martie a fost vizată de dirigintele de șantier. Semnalăm o întârziere de 10 zile la lucrările structurale din cauza avizului de la Metrorex.",
+      attachments: [{ count: 1, label: "situație de lucrări martie 2026" }], chips: [{ label: "Întârziere", style: "critical" }], read: true }
+  );
+
+  /* Conversațiile cu asistentul intră și ele în arhivă (I.d.1) ca note ale asistentului */
+  function transcript(id, sitId, filename, at, q, n) {
+    return { id: id, situationId: sitId, domain: "pmb_asistent_ai", filename: filename, uploadedAt: at, source: "generat",
+      pagesCount: 1, multiDoc: false, multiDocConfidence: null, tipDocument: "Notă de răspuns a asistentului", emitent: "Asistentul AI Scriptica",
+      numarDocument: null, dataEmiterii: at.slice(0, 10), perioadaFiscala: at.slice(0, 7), valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: "RON",
+      categoriePropusa: "Notă de răspuns a asistentului", broadCategory: "raspunsuri", subFilter: null, confidenceExtraction: 100, confidenceCategorization: 100,
+      observatieAI: "Transcriptul conversației cu asistentul — " + n + " mesaje. Ultima întrebare: „" + q + "”.", verificat: false, verificatManual: false, pageThumbnails: [], aiTranscript: true };
+  }
+  M.documents.push(
+    transcript("doc_ai_transcript_fi_pmb_ai_01", "fi_pmb_ai_01", "conversatie_asistent_furnizori_iluminat.pdf", "2026-04-17T09:13:13", "Care este stadiul?", 4),
+    transcript("doc_ai_transcript_fi_pmb_ai_02", "fi_pmb_ai_02", "conversatie_asistent_concursuri_recrutare.pdf", "2026-04-19T14:02:03", "Câte concursuri de recrutare sunt în derulare?", 2)
+  );
+
   /* Persona „Utilizator Intern PMB": echipa vizibilă în aplicație (responsabili,
      widgetul Echipa, antetul) devine echipa Primăriei, nu a firmei de contabilitate. */
   var view = typeof window.getCurrentView === 'function' ? window.getCurrentView() : 'complet';
@@ -4761,8 +4786,18 @@ window.SCRIPTICA_MOCK = {
 
   window.getVisibleMessages = function () {
     var all = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.messages) || [];
-    /* Mesajele sunt legate de situații contabile → ascunse fără 'contabil' în scope. */
-    if (typeof window.viewInScope === 'function' && !window.viewInScope('contabil')) return [];
+    /* Mesajele situațiilor contabile cer 'contabil' în scope; mesajele dosarelor
+       generice urmează domeniul verticalei lor (ex. persona PMB). */
+    if (typeof window.viewInScope === 'function' && typeof window.getViewScope === 'function') {
+      var scope = window.getViewScope();
+      var flowItems = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.flowItems) || [];
+      all = all.filter(function (m) {
+        var flowItem = m.situationId ? flowItems.find(function (item) { return item.id === m.situationId; }) : null;
+        if (flowItem) return scope.indexOf(flowItem.domain) !== -1;
+        return scope.indexOf('contabil') !== -1;
+      });
+      if (!all.length) return [];
+    }
     if (!isClientView()) return all;
     var canvas = ((window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.clients) || [])
       .find(function (c) { return c.id === CANVAS_CLIENT_ID; });

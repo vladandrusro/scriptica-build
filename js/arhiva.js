@@ -137,11 +137,25 @@
   }
   /* Eticheta containerului de nivel 1 din arbore: partea externă a contului
      sau, pentru arhiva după nomenclator, structura organizatorică (direcția). */
-  function containerLabel() {
+  function isNomenclator() {
     var clientType = typeof window.scripticaClientTypeById === 'function'
       ? window.scripticaClientTypeById(tenantClientTypeId()) : null;
-    if (clientType && clientType.archiveRouting === 'nomenclator') return 'Direcție';
+    return !!(clientType && clientType.archiveRouting === 'nomenclator');
+  }
+  function containerLabel() {
+    if (isNomenclator()) return 'Verticală';
     return externalParty().singular;
+  }
+  /* Indicativele afișate într-un container: la nomenclator, doar cele ale
+     verticalei respective (+ Necategorisit); altfel toate. */
+  function categoriesFor(clientId) {
+    var node = state.tree[clientId];
+    var name = node && node.client ? node.client.companyName : '';
+    if (!isNomenclator() || !name) return CATEGORY_ORDER;
+    return CATEGORY_ORDER.filter(function (cat) {
+      var g = CATEGORY_GROUPS[cat];
+      return !g || g === name;
+    });
   }
 
   function getArchiveDocs() {
@@ -169,9 +183,13 @@
     }
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
-      /* `archiveContainer` (ex. direcția care ține dosarul) are prioritate față
-         de partea externă — arhiva instituției e organizată pe structuri. */
+      /* Arhivă după nomenclator: nivelul 1 este verticala (fiecare cu indicativele ei);
+         altfel `archiveContainer` (direcția) sau partea externă. */
       var containerName = flowItem.archiveContainer || flowItem.clientName;
+      if (isNomenclator()) {
+        var fv = typeof window.scripticaEffectiveVertical === 'function' ? window.scripticaEffectiveVertical(flowItem.verticalId) : null;
+        if (fv) containerName = fv.name;
+      }
       return { id: 'flow_' + String(containerName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: containerName || externalParty().singular + ' flux', _flow: true };
     }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
@@ -471,15 +489,7 @@
 
     var childrenHtml = '';
     if (expanded) {
-      var lastGroup = null;
-      CATEGORY_ORDER.forEach(function (cat) {
-        var group = CATEGORY_GROUPS[cat] || '';
-        /* arhivă după nomenclator: indicativele sunt grupate pe verticala lor */
-        if (group && group !== lastGroup) {
-          childrenHtml += '<div class="arhiva-tree__group" role="presentation">' +
-            '<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>' + esc(group) + '</div>';
-        }
-        lastGroup = group;
+      categoriesFor(clientId).forEach(function (cat) {
         childrenHtml += categoryNodeHtml(clientId, year, month, cat, (node.categories[cat] || []).length);
       });
     }
@@ -608,7 +618,7 @@
     var activeCat = sel.category || null;
     var html = '<div class="arhiva-main__filters">';
     html += pillHtml('all', 'Toate', counts.all, !activeCat, false);
-    CATEGORY_ORDER.forEach(function (c) {
+    categoriesFor(sel.clientId).forEach(function (c) {
       var empty = counts[c] === 0;
       html += pillHtml(c, CATEGORY_LABELS[c], counts[c], activeCat === c, empty);
     });

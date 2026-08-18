@@ -38,7 +38,14 @@
       return;
     }
     if (routeClientHome()) return;
-    if (routeAuditHome()) { initHeaderWelcome(); return; }
+    if (routeAuditHome()) {
+      /* Mesageria rămâne scopată prin getVisibleMessages (goală pentru audit,
+         mesajele dosarelor proprii pentru personas de instituție). */
+      renderMessaging();
+      initHeaderWelcome();
+      initMessagingBadge();
+      return;
+    }
     renderRegionNew();
     renderRegionAlerts();
     renderRegionClients();
@@ -316,8 +323,11 @@
     var html = '';
     msgs.forEach(function (m) {
       var sitLabel = '';
+      var sitHref = '';
       var sit = MOCK.situations.find(function (s) { return s.id === m.situationId; });
-      if (sit) sitLabel = sit.typeLabel + '_' + sit.clientCompany;
+      if (sit) { sitLabel = sit.typeLabel + '_' + sit.clientCompany; sitHref = 'situatie-detaliu.html?id=' + m.situationId; }
+      var flowItem = !sit ? (MOCK.flowItems || []).find(function (f) { return f.id === m.situationId; }) : null;
+      if (flowItem) { sitLabel = flowItem.name; sitHref = 'situatie-detaliu.html?flowId=' + flowItem.id; }
 
       var attachHtml = '';
       if (m.attachments && m.attachments.length) {
@@ -368,7 +378,7 @@
         attachHtml +
         chipsHtml +
         aiHtml +
-        (sitLabel ? '<a class="message-link" href="situatie-detaliu.html?id=' + esc(m.situationId) + '">Mergi la ' + esc(sitLabel) + '</a>' : '') +
+        (sitLabel ? '<a class="message-link" href="' + esc(sitHref) + '">Mergi la ' + esc(sitLabel) + '</a>' : '') +
       '</article>';
     });
     html += '<a class="messaging__see-all" href="situatii.html">Vezi toate...</a>';
