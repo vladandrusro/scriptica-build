@@ -42,12 +42,14 @@
   }
   function externalPartyLabel(vertical, client) {
     var tenant = selectedTenant(client);
+    var verticalId = vertical && vertical.id;
     if (tenant && typeof window.scripticaEffectiveExternalParty === 'function') {
-      return window.scripticaEffectiveExternalParty(tenant).singular;
+      return window.scripticaEffectiveExternalParty(tenant, verticalId).singular;
     }
     if (typeof window.getCurrentView !== 'function' || window.getCurrentView() !== 'superadmin') {
-      if (typeof window.scripticaEffectiveExternalParty === 'function') return window.scripticaEffectiveExternalParty().singular;
+      if (typeof window.scripticaEffectiveExternalParty === 'function') return window.scripticaEffectiveExternalParty(undefined, verticalId).singular;
     }
+    if (vertical && vertical.externalParty && vertical.externalParty.singular) return vertical.externalParty.singular;
     return vertical.domain === 'audit' ? 'Entitate' : 'Client';
   }
 

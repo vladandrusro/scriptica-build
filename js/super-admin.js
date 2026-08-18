@@ -527,8 +527,11 @@
     var previewButton = root.querySelector('[data-preview-tenant]');
     if (previewButton) previewButton.addEventListener('click', function () {
       if (typeof window.scripticaSetTenantAccountId === 'function') window.scripticaSetTenantAccountId(c.id);
-      if (typeof window.setCurrentView === 'function') window.setCurrentView('complet');
-      window.location.href = 'acasa.html?view=complet';
+      /* Conturile cu utilizator intern propriu (ex. PMB) se previzualizează
+         direct în persona lor, nu în „complet". */
+      var previewView = c.tenantPersona || 'complet';
+      if (typeof window.setCurrentView === 'function') window.setCurrentView(previewView);
+      window.location.href = 'acasa.html?view=' + encodeURIComponent(previewView);
     });
   }
 

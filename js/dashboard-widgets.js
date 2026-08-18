@@ -55,7 +55,7 @@
   }
 
   var STATUS_LABELS = {
-    analiza: 'Analiză', asteapta_documente: 'Așteaptă Documente', in_verificare: 'În Lucru',
+    analiza: 'Analiză', asteapta_documente: 'Așteaptă Documente', in_verificare: 'În Verificare',
     spre_aprobare: 'Spre Aprobare', aprobata: 'Aprobată', finalizat: 'Finalizat',
     inchisa: 'Închisă', anulata: 'Anulată', intarziere: 'În Întârziere'
   };
@@ -243,8 +243,9 @@
         });
       } else {
         var seen = {};
+        var scopedVerticalIds = activeVerticalIds(ct, verticalIds);
         (MOCK().flowItems || []).forEach(function (i) {
-          if (!i.clientName) return;
+          if (!i.clientName || scopedVerticalIds.indexOf(i.verticalId) === -1) return;
           seen[i.clientName] = (seen[i.clientName] || 0) + 1;
         });
         cards = Object.keys(seen).map(function (name) {

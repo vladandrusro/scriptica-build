@@ -69,14 +69,14 @@ Real gaps to be aware of:
 
 ## Known bugs (small, none demo-blocking) ✅
 
-- **Status-label drift**: flux.js labels `in_verificare` "În Lucru" and lacks `aprobata`; list-columns.js says "În Verificare" and has it — same row can read differently depending on render path.
+- ~~Status-label drift between flux.js and list-columns.js~~ — fixed 2026-08-18 (list-columns wording is canonical; `aprobata` added to flux.js).
 - `rapoarte-audit.js` FINAL_STATUSES includes `respinsa` but no code path ever sets it (Respinge maps to `in_verificare`); "changes_requested" sends a chat message but changes no status.
 - `arhiva_recente` widget: for `system` folders the doc filter degenerates to *all* documents.
-- time-tracking session-edit modal **injects phantom tasks into the live situation task list** (mutates `sit.tasks` while building its picker).
+- ~~time-tracking session-edit modal injects phantom tasks into the live situation task list~~ — fixed 2026-08-18 (picker built from a copy).
 - `renderAvatar` fallback HTML contains a stray `">` artifact (brittle nested-quote string in shell.js).
 - New audit objective omits `recomandare` → renders "Nespecificat"; no editing UI.
 - Dead code: `MOCK_DOC_NAMES` (situatie-detaliu.js), `formatDateTime` (documents.js), dead conditional `resultType = type==='number' ? 'decimal' : 'decimal'` (administrare.js:832), leftover `.sa-cols-*` CSS family from the removed column modal.
-- A `#debug-bar` ("DEBUG · Vizualizări demo") ships in situatie-detaliu — intentional dev aid, but it is visible in production.
+- The `#debug-bar` ("DEBUG · Vizualizări demo") on situatie-detaliu is now hidden by default and only appears with `?debug=1` (2026-08-18).
 - caz-utilizare-constructii.html hardcodes `#E8F7E7` (violates its own tokens-only comment); constructor header comment says "21 tipuri de module" but FIELD_TYPES has 22.
 - Slide PNGs have `600` file permissions on disk — fine for wrangler deploys, may surprise a naive copy on another machine.
 
@@ -116,10 +116,10 @@ Simulated AI (setTimeout + seeded confidences, `observatieAI: 'Rezultate AI simu
 ## Next recommended tasks (priority order)
 
 1. ~~**Align cache-bust versions.**~~ ✅ Resolved 2026-08-04; shared dashboard, timer, shell and mock-data references are aligned across the HTML pages.
-2. **Fix the status-label drift** between `js/flux.js` (STATUS_LABELS) and `js/list-columns.js` — pick list-columns' wording as canonical. *Files: js/flux.js, js/list-columns.js.*
+2. ~~**Fix the status-label drift**~~ ✅ Resolved 2026-08-18.
 3. ~~**Decide + implement audit-home behavior on acasa.html.**~~ ✅ Resolved 2026-08-04: dashboard widgets are filtered by both active vertical and persona scope; `routeAuditHome()` is restricted to `acasa.html` and can no longer overwrite generic flow pages.
-4. **Stop the time-tracking modal from mutating live task lists** (build the picker from a copy). *Files: js/time-tracking.js (openSessionEditModal ~line 458).*
-5. **Remove or gate the #debug-bar** on situatie-detaliu behind something explicit. *Files: situatie-detaliu.html, js/situatie-detaliu.js (~line 766).*
+4. ~~**Stop the time-tracking modal from mutating live task lists**~~ ✅ Resolved 2026-08-18.
+5. ~~**Remove or gate the #debug-bar**~~ ✅ Resolved 2026-08-18 — gated behind `?debug=1`.
 6. **Renderer for `repeater_block` in anexa-fill.js** — the Constructor already sells it; the fill modal breaks the illusion. *Files: js/anexa-fill.js (fieldHtml), css/anexe.css; reference: js/constructor-anexe.js preview implementation.*
 7. ~~**Implement per-client vertical assignments and Acasă end to end.**~~ ✅ Resolved 2026-08-04: zero-vertical onboarding remains allowed, step 3 assigns verticals, step 4 configures per-account terminology, and final step 5 configures the per-client dashboard. Active/inactive history is stored per HQ client, tenant preview gates navigation/creation/dashboard surfaces, and archives/layout/terminology remain resolvable after deactivation. Deactivation only hides data; it never deletes the flow history or archive.
 8. Dead-code sweep (MOCK_DOC_NAMES, formatDateTime, `.sa-cols-*` CSS, dead conditional) — cheap hygiene, zero behavior change.

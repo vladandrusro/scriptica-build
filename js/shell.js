@@ -14,8 +14,10 @@
 
   /* --- View flag (personas pe arie de acces) ---
      Personas: complet · contabilitate · audit_stat · client · admin ·
-     autoritate · superadmin. 'accountant' = alias legacy = acces complet. */
-  var VALID_VIEWS = ['accountant', 'complet', 'contabilitate', 'audit_stat', 'client', 'admin', 'autoritate', 'superadmin'];
+     autoritate · superadmin · pmb_intern (Utilizator Intern PMB — angajat
+     al Primăriei Municipiului București, vede doar contul PMB).
+     'accountant' = alias legacy = acces complet. */
+  var VALID_VIEWS = ['accountant', 'complet', 'contabilitate', 'audit_stat', 'client', 'admin', 'autoritate', 'superadmin', 'pmb_intern'];
   window.getCurrentView = function () {
     var params = new URLSearchParams(window.location.search);
     var p = params.get('view');
@@ -37,10 +39,13 @@
     if (v === 'contabilitate') scope = ['contabil'];
     else if (v === 'audit_stat' || v === 'autoritate') scope = ['audit'];
     else if (v === 'client') scope = ['contabil'];
+    /* pmb_intern: niciun domeniu al firmei — doar verticalele contractate de
+       contul PMB (intersecția de mai jos le păstrează exclusiv pe acelea). */
+    else if (v === 'pmb_intern') scope = [];
     /* complet, accountant, admin, superadmin: toate domeniile, inclusiv
        verticalele custom din registrul de fluxuri (definite de HQ). */
     else scope = ['contabil', 'audit'];
-    if ((v === 'complet' || v === 'admin' || v === 'superadmin') &&
+    if ((v === 'complet' || v === 'admin' || v === 'superadmin' || v === 'pmb_intern') &&
         typeof window.scripticaCustomVerticals === 'function') {
       window.scripticaCustomVerticals().forEach(function (cv) {
         if (scope.indexOf(cv.domain) === -1) scope.push(cv.domain);
@@ -272,6 +277,12 @@
       var dom = it.getAttribute('data-domain');
       it.style.display = viewInScope(dom) ? '' : 'none';
     });
+    /* Time Tracking este o funcție a firmei de contabilitate — utilizatorul
+       intern al instituției nu o vede (ar afișa sesiunile contabililor). */
+    if (getCurrentView() === 'pmb_intern') {
+      var tt = nav.querySelector('[href="time-tracking.html"]');
+      if (tt) tt.style.display = 'none';
+    }
   }
 
   function applyViewBodyClass() {
@@ -283,6 +294,7 @@
     document.body.classList.toggle('body--complet', view === 'complet');
     document.body.classList.toggle('body--contabilitate', view === 'contabilitate');
     document.body.classList.toggle('body--audit-stat', view === 'audit_stat');
+    document.body.classList.toggle('body--pmb-intern', view === 'pmb_intern');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -472,7 +484,8 @@
       { view: 'client',        label: 'Vezi ca și client',              href: 'acasa.html?view=client' },
       { view: 'admin',         label: 'Vezi ca administrator',          href: 'administrare.html?view=admin' },
       { view: 'autoritate',    label: 'Vezi ca autoritate decidentă',   href: 'misiuni-audit.html?view=autoritate' },
-      { view: 'superadmin',    label: 'Vezi ca Super Admin',            href: 'super-admin.html?view=superadmin' }
+      { view: 'superadmin',    label: 'Vezi ca Super Admin',            href: 'super-admin.html?view=superadmin' },
+      { view: 'pmb_intern',    label: 'Vezi ca utilizator intern PMB',  href: 'acasa.html?view=pmb_intern' }
     ].filter(function (it) { return it.view !== cur; });
     return items.map(function (it) {
       return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
@@ -502,6 +515,8 @@
       role = 'Contabilitate · Scriptica';
     } else if (view === 'audit_stat') {
       role = 'Audit (stat) · Scriptica';
+    } else if (view === 'pmb_intern') {
+      role = 'Utilizator intern · Primăria Municipiului București';
     } else {
       role = (user.role || 'Contabil') + ' · Scriptica';
     }

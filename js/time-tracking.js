@@ -464,7 +464,8 @@
     // Task list — built from the situation's current-step tasks (fall back to session's own labels)
     var sit = (MOCK.situations || []).find(function (x) { return x.id === session.situationId; });
     var stepKey = sit ? 'step' + sit.currentStep : null;
-    var availableTasks = (sit && sit.tasks && sit.tasks[stepKey]) ? sit.tasks[stepKey] : [];
+    // Copie — lista se completează local mai jos și nu trebuie să mute task-urile reale ale situației
+    var availableTasks = (sit && sit.tasks && sit.tasks[stepKey]) ? sit.tasks[stepKey].slice() : [];
     // Also include any tasks associated with the session but not in the available list (e.g., already completed)
     (session.taskIds || []).forEach(function (tid) {
       if (!availableTasks.find(function (t) { return t.id === tid; })) {

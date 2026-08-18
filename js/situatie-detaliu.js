@@ -1071,14 +1071,23 @@
     return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
 
+  /* Bară de dezvoltare — apare doar cu ?debug=1 în URL, ca să nu fie
+     vizibilă în demo-urile live. */
+  function debugModeEnabled() {
+    try { return new URLSearchParams(window.location.search).get('debug') === '1'; } catch (e) { return false; }
+  }
+
   function renderDebugBar() {
     var el = document.getElementById('debug-bar');
     if (!el) return;
-    if (currentWorkspaceKind === 'flux') {
+    if (currentWorkspaceKind === 'flux' || !debugModeEnabled()) {
+      el.hidden = true;
       el.style.display = 'none';
       el.innerHTML = '';
       return;
     }
+    el.hidden = false;
+    el.style.display = '';
     // Find a situation where the current user has a pending help request
     var helperTarget = MOCK.situations.find(function (s) {
       return s.id !== currentSituation.id && (s.helperRequests || []).some(function (r) {
@@ -1815,7 +1824,7 @@
     var s = currentSituation;
     if (currentWorkspaceKind === 'flux') {
       var view = typeof window.getCurrentView === 'function' ? window.getCurrentView() : 'complet';
-      if ((s.responsibleIds || []).indexOf(currentUserId) !== -1 || view === 'complet' || view === 'admin') return 'responsible';
+      if ((s.responsibleIds || []).indexOf(currentUserId) !== -1 || view === 'complet' || view === 'admin' || view === 'pmb_intern') return 'responsible';
     }
     if (s.responsibleStepId === currentUserId) return 'responsible';
     var stepKey = 'step' + s.currentStep;

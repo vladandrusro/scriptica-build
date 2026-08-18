@@ -60,6 +60,10 @@
       var vertical = typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
       return vertical && !vertical.builtin;
     });
+    /* Instituții publice: arhiva urmează nomenclatorul arhivistic (indicative
+       X.a.1 pe direcții), iar documentele se rutează după tipul lor —
+       fără foldere per șablon de flux. */
+    if (clientType && clientType.archiveRouting === 'nomenclator') customVerticalIds = [];
     ((MOCK.superAdmin && MOCK.superAdmin.flowTemplates) || []).forEach(function (template) {
       if (templateIds.indexOf(template.id) === -1 || customVerticalIds.indexOf(template.verticalId) === -1) return;
       var assignment = assignments.find(function (item) { return item.verticalId === template.verticalId; });
@@ -92,7 +96,12 @@
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
       var flowFolder = ARCH_FOLDERS.find(function (folder) { return folder.flowTemplateId === flowItem.templateId; });
-      return flowFolder ? flowFolder.key : SYSTEM_FOLDER_KEY;
+      if (flowFolder) return flowFolder.key;
+      /* fără folder de flux (arhivă după nomenclator) → rutare după tipul documentului */
+      for (var j = 0; j < ARCH_FOLDERS.length; j++) {
+        if (!ARCH_FOLDERS[j].system && ARCH_FOLDERS[j].typeNames.indexOf(doc.tipDocument) !== -1) return ARCH_FOLDERS[j].key;
+      }
+      return SYSTEM_FOLDER_KEY;
     }
     for (var i = 0; i < ARCH_FOLDERS.length; i++) {
       if (!ARCH_FOLDERS[i].system && ARCH_FOLDERS[i].typeNames.indexOf(doc.tipDocument) !== -1) {
@@ -123,6 +132,14 @@
       ? window.scripticaEffectiveExternalParty()
       : { singular: 'Client', plural: 'Clienți' };
   }
+  /* Eticheta containerului de nivel 1 din arbore: partea externă a contului
+     sau, pentru arhiva după nomenclator, structura organizatorică (direcția). */
+  function containerLabel() {
+    var clientType = typeof window.scripticaClientTypeById === 'function'
+      ? window.scripticaClientTypeById(tenantClientTypeId()) : null;
+    if (clientType && clientType.archiveRouting === 'nomenclator') return 'Direcție';
+    return externalParty().singular;
+  }
 
   function getArchiveDocs() {
     if (typeof window.getVisibleDocuments === 'function') return window.getVisibleDocuments();
@@ -149,7 +166,10 @@
     }
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
-      return { id: 'flow_' + String(flowItem.clientName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: flowItem.clientName || externalParty().singular + ' flux', _flow: true };
+      /* `archiveContainer` (ex. direcția care ține dosarul) are prioritate față
+         de partea externă — arhiva instituției e organizată pe structuri. */
+      var containerName = flowItem.archiveContainer || flowItem.clientName;
+      return { id: 'flow_' + String(containerName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: containerName || externalParty().singular + ' flux', _flow: true };
     }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
     if (!sit) return null;
@@ -323,7 +343,7 @@
     var html =
       '<div class="arhiva-tree__search">' +
         '<span class="material-symbols-outlined" aria-hidden="true">search</span>' +
-        '<input id="arhiva-tree-search" type="search" class="arhiva-tree__search-input" placeholder="Caută ' + esc(externalParty().singular.toLowerCase()) + '..." value="' + esc(state.clientSearch) + '">' +
+        '<input id="arhiva-tree-search" type="search" class="arhiva-tree__search-input" placeholder="Caută ' + esc(containerLabel().toLowerCase()) + '..." value="' + esc(state.clientSearch) + '">' +
       '</div>';
 
     var q = state.clientSearch.toLowerCase().trim();
@@ -338,7 +358,7 @@
       });
 
     if (!clientIds.length) {
-      html += '<div class="arhiva-tree__empty">Niciun ' + esc(externalParty().singular.toLowerCase()) + ' găsit.</div>';
+      html += '<div class="arhiva-tree__empty">Nicio intrare pentru „' + esc(containerLabel().toLowerCase()) + '” găsită.</div>';
       return html;
     }
 
@@ -510,7 +530,7 @@
     return '<div class="arhiva-empty">' +
       '<span class="material-symbols-outlined" aria-hidden="true" style="font-size:64px;">folder_open</span>' +
       '<h2>Selectează un folder pentru a vedea documentele</h2>' +
-      '<p>Navighează în structura din stânga: ' + esc(externalParty().singular) + ' → An → Lună → Categorie</p>' +
+      '<p>Navighează în structura din stânga: ' + esc(containerLabel()) + ' → An → Lună → Categorie</p>' +
     '</div>';
   }
 

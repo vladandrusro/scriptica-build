@@ -17,11 +17,14 @@
   var MOCK = window.SCRIPTICA_MOCK;
   var TODAY = new Date('2026-04-20T00:00:00');
 
+  /* Etichete de status aliniate cu js/list-columns.js (sursa canonică),
+     ca același rând să se citească la fel indiferent de calea de randare. */
   var STATUS_LABELS = {
     analiza:            'Analiză',
     asteapta_documente: 'Așteaptă Documente',
-    in_verificare:      'În Lucru',
+    in_verificare:      'În Verificare',
     spre_aprobare:      'Spre Aprobare',
+    aprobata:           'Aprobată',
     finalizat:          'Finalizat',
     inchisa:            'Închisă',
     anulata:            'Anulată',
@@ -82,21 +85,27 @@
     if (typeof window.scripticaEffectiveVertical === 'function') return window.scripticaEffectiveVertical(verticalOrId);
     return typeof verticalOrId === 'string' ? window.scripticaVerticalById(verticalOrId) : verticalOrId;
   }
+  /* Partea externă a verticalei curente (Petent, Operator economic…), cu
+     fallback pe eticheta contului. Setată de renderListPage. */
+  var currentVerticalId = null;
   function externalParty() {
     return typeof window.scripticaEffectiveExternalParty === 'function'
-      ? window.scripticaEffectiveExternalParty()
+      ? window.scripticaEffectiveExternalParty(undefined, currentVerticalId)
       : { singular: 'Client', plural: 'Clienți' };
   }
   function templatesForTenantVertical(verticalId) {
     var all = window.scripticaTemplatesForVertical(verticalId);
-    if (typeof window.scripticaTenantModuleAssignments !== 'function') return all;
-    var assignment = window.scripticaTenantModuleAssignments(false).find(function (item) {
-      return item.verticalId === verticalId;
-    });
-    if (!assignment) return [];
-    return all.filter(function (template) {
-      return (assignment.templateIds || []).indexOf(template.id) !== -1;
-    });
+    if (typeof window.scripticaTenantModuleAssignments === 'function') {
+      var assignment = window.scripticaTenantModuleAssignments(false).find(function (item) {
+        return item.verticalId === verticalId;
+      });
+      if (!assignment) return [];
+      all = all.filter(function (template) {
+        return (assignment.templateIds || []).indexOf(template.id) !== -1;
+      });
+    }
+    /* Fluxul ad-hoc (definit de utilizator) este întotdeauna prima opțiune. */
+    return all.slice().sort(function (a, b) { return (b.adhoc ? 1 : 0) - (a.adhoc ? 1 : 0); });
   }
   function tenantHasVertical(verticalId) {
     if (typeof window.scripticaTenantActiveVerticalIds !== 'function') return true;
@@ -189,6 +198,7 @@
     if (v.builtin && v.pages && v.pages.list) { window.location.replace(v.pages.list); return; }
     if (!tenantHasVertical(v.id) || (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain))) { scopeBlock(root, v.name); return; }
 
+    currentVerticalId = v.id;
     document.title = v.name + ' — Scriptica';
     markNavActive(v.id);
 
@@ -389,7 +399,7 @@
           '</div>' +
           '<div class="form-field" data-field="client">' +
             '<label class="form-label" for="fxm-client">' + esc(externalParty().singular) + '</label>' +
-            '<input id="fxm-client" type="text" class="input" placeholder="ex. Electro Distrib S.R.L.">' +
+            '<input id="fxm-client" type="text" class="input" placeholder="' + esc(externalParty().singular) + '…">' +
             '<span class="form-error" role="alert"></span>' +
           '</div>' +
           '<div class="form-field" data-field="resp">' +
