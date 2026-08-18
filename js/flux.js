@@ -368,6 +368,11 @@
   /* ---------- modal element nou (construit din JS) ---------- */
 
   function openNewItemModal(root, v) {
+    /* Verticala-asistent: cererea se deschide direct în conversație, fără modal. */
+    if (v.assistant && typeof window.scripticaCreateAiRequest === 'function') {
+      var record = window.scripticaCreateAiRequest('');
+      if (record) { window.location.href = 'situatie-detaliu.html?flowId=' + encodeURIComponent(record.id) + '#asistent'; return; }
+    }
     var tpls = templatesForTenantVertical(v.id)
       .filter(function (t) { return (t.status || 'activ') === 'activ' && t.steps && t.steps.length; });
     var overlay = document.createElement('div');

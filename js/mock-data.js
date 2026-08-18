@@ -2260,6 +2260,25 @@ window.SCRIPTICA_MOCK = {
         ] },
         { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
       ]
+    },
+    /* Asistentul AI Scriptica — conversațiile cu LLM-ul local sunt tratate ca
+       solicitări („cereri de lămuriri”), în același model de flux ca restul
+       aplicației: o cerere = un dosar cu un singur pas, iar panoul lateral devine
+       conversația cu asistentul (js/asistent-ai.js). `assistant: true` marchează
+       verticala pentru butonul din Mesagerie și pentru workspace-ul dedicat. */
+    {
+      id: "vert_pmb_asistent_ai", domain: "pmb_asistent_ai", builtin: false, status: "activ", color: "auriu",
+      name: "Asistentul AI Scriptica", icon: "auto_awesome", assistant: true,
+      itemLabel: "Cerere de lămuriri", itemLabelPlural: "Cereri de lămuriri",
+      externalParty: { singular: "Asistent", plural: "Asistenți" },
+      description: "Cereri de lămuriri adresate asistentului AI: caută în toate evidențele la care utilizatorul are acces, raționează și răspunde cu surse.",
+      documentFilters: [],
+      documentCategories: [
+        { id: "raspunsuri", name: "Răspunsuri generate", documentTypes: [
+          { id: "dt_pmb_ai_nota", name: "Notă de răspuns a asistentului" }
+        ] },
+        { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
+      ]
     }
   );
 
@@ -2582,6 +2601,17 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă avizul emis (favorabil sau cu observații)", "dt_pmb_aviz_legalitate", false)
         ], ["anx_pmb_int_aviz"])
       ] },
+    /* — Asistentul AI (un singur pas: consultarea) — */
+    { id: "ft_pmb_ai_cerere", verticalId: "vert_pmb_asistent_ai", name: "Cerere de lămuriri către Asistentul AI", frequency: "punctual", status: "activ",
+      description: "Conversație cu asistentul AI pe evidențele accesibile utilizatorului: întrebare, raționament, răspuns cu surse; cererea se închide când lămurirea este confirmată.",
+      documentCategoryIds: ["raspunsuri", "necategorisit"],
+      steps: [
+        step("ft_pmb_ai_cerere_step_1", "Consultare", 2, [
+          "Formulează cererea de lămuriri în conversația cu asistentul",
+          "Verifică sursele indicate în răspuns",
+          "Confirmă soluționarea cererii"
+        ], [], "Pas unic: conversația cu asistentul se poartă în panoul din dreapta.")
+      ] },
     { id: "ft_pmb_int_deplasare", verticalId: "vert_pmb_solicitari_interne", name: "Deplasare în interes de serviciu", frequency: "punctual", status: "activ",
       description: "Aprobarea deplasării prin ordin de deplasare și decontarea cheltuielilor (HG 714/2018) în 3 zile lucrătoare de la întoarcere.",
       documentCategoryIds: ["deplasari", "necategorisit"],
@@ -2699,17 +2729,18 @@ window.SCRIPTICA_MOCK = {
     archiveRouting: "nomenclator",
     dashboardLayout: [],
     archiveTree: [
-      { id: "af_pmb_ru_recrutare", name: "X.a.1 — Recrutare și concursuri", docTypeIds: ["dt_pmb_anunt_concurs", "dt_pmb_dosar_inscriere", "dt_pmb_pv_concurs", "dt_pmb_raport_concurs", "dt_pmb_act_numire"], children: [] },
-      { id: "af_pmb_ru_disciplina", name: "X.a.2 — Comisia de disciplină", docTypeIds: ["dt_pmb_sesizare_disciplinara", "dt_pmb_raport_disciplina", "dt_pmb_act_sanctionare"], children: [] },
-      { id: "af_pmb_ru_cariera", name: "X.b.1 — Evoluție în carieră și evaluare", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg", "dt_pmb_fisa_post"], children: [] },
-      { id: "af_pmb_ap_proceduri", name: "V.a.1 — Proceduri de achiziție publică", docTypeIds: ["dt_pmb_referat_necesitate", "dt_pmb_strategie_contractare", "dt_pmb_caiet_sarcini_ap", "dt_pmb_documentatie_atribuire", "dt_pmb_anunt_participare", "dt_pmb_oferta", "dt_pmb_raport_procedura"], children: [] },
-      { id: "af_pmb_ap_contracte", name: "V.a.2 — Contracte de achiziție publică", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional"], children: [] },
-      { id: "af_pmb_inv_docte", name: "VII.a.1 — Documentații tehnico-economice", docTypeIds: ["dt_pmb_nota_conceptuala", "dt_pmb_tema_proiectare", "dt_pmb_sf", "dt_pmb_dali", "dt_pmb_hcgmb", "dt_pmb_aviz_cte", "dt_pmb_pt", "dt_pmb_ac"], children: [] },
-      { id: "af_pmb_inv_executie", name: "VII.b.1 — Execuție lucrări și recepții", docTypeIds: ["dt_pmb_ordin_incepere", "dt_pmb_situatie_lucrari", "dt_pmb_pv_rtl", "dt_pmb_pv_rf"], children: [] },
-      { id: "af_pmb_ext_petitii", name: "I.a.1 — Petiții și răspunsuri (OG 27/2002)", docTypeIds: ["dt_pmb_petitie", "dt_pmb_raspuns_petitie"], children: [] },
-      { id: "af_pmb_ext_544", name: "I.a.2 — Informații de interes public (Legea 544/2001)", docTypeIds: ["dt_pmb_cerere_544", "dt_pmb_raspuns_544"], children: [] },
-      { id: "af_pmb_ext_urbanism", name: "I.b.1 — Certificate de urbanism", docTypeIds: ["dt_pmb_cerere_cu", "dt_pmb_cu"], children: [] },
-      { id: "af_pmb_int_coresp", name: "I.c.1 — Corespondență internă, avize și deplasări", docTypeIds: ["dt_pmb_nota_interna", "dt_pmb_referat", "dt_pmb_adresa_interna", "dt_pmb_aviz_legalitate", "dt_pmb_viza_cfpp", "dt_pmb_ordin_deplasare", "dt_pmb_decont"], children: [] },
+      { id: "af_pmb_ru_recrutare", group: "Resurse Umane", name: "X.a.1 — Recrutare și concursuri", docTypeIds: ["dt_pmb_anunt_concurs", "dt_pmb_dosar_inscriere", "dt_pmb_pv_concurs", "dt_pmb_raport_concurs", "dt_pmb_act_numire"], children: [] },
+      { id: "af_pmb_ru_disciplina", group: "Resurse Umane", name: "X.a.2 — Comisia de disciplină", docTypeIds: ["dt_pmb_sesizare_disciplinara", "dt_pmb_raport_disciplina", "dt_pmb_act_sanctionare"], children: [] },
+      { id: "af_pmb_ru_cariera", group: "Resurse Umane", name: "X.b.1 — Evoluție în carieră și evaluare", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg", "dt_pmb_fisa_post"], children: [] },
+      { id: "af_pmb_ap_proceduri", group: "Achiziții Publice", name: "V.a.1 — Proceduri de achiziție publică", docTypeIds: ["dt_pmb_referat_necesitate", "dt_pmb_strategie_contractare", "dt_pmb_caiet_sarcini_ap", "dt_pmb_documentatie_atribuire", "dt_pmb_anunt_participare", "dt_pmb_oferta", "dt_pmb_raport_procedura"], children: [] },
+      { id: "af_pmb_ap_contracte", group: "Achiziții Publice", name: "V.a.2 — Contracte de achiziție publică", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional"], children: [] },
+      { id: "af_pmb_inv_docte", group: "Investiții și Lucrări", name: "VII.a.1 — Documentații tehnico-economice", docTypeIds: ["dt_pmb_nota_conceptuala", "dt_pmb_tema_proiectare", "dt_pmb_sf", "dt_pmb_dali", "dt_pmb_hcgmb", "dt_pmb_aviz_cte", "dt_pmb_pt", "dt_pmb_ac"], children: [] },
+      { id: "af_pmb_inv_executie", group: "Investiții și Lucrări", name: "VII.b.1 — Execuție lucrări și recepții", docTypeIds: ["dt_pmb_ordin_incepere", "dt_pmb_situatie_lucrari", "dt_pmb_pv_rtl", "dt_pmb_pv_rf"], children: [] },
+      { id: "af_pmb_ext_petitii", group: "Solicitări Externe", name: "I.a.1 — Petiții și răspunsuri (OG 27/2002)", docTypeIds: ["dt_pmb_petitie", "dt_pmb_raspuns_petitie"], children: [] },
+      { id: "af_pmb_ext_544", group: "Solicitări Externe", name: "I.a.2 — Informații de interes public (Legea 544/2001)", docTypeIds: ["dt_pmb_cerere_544", "dt_pmb_raspuns_544"], children: [] },
+      { id: "af_pmb_ext_urbanism", group: "Solicitări Externe", name: "I.b.1 — Certificate de urbanism", docTypeIds: ["dt_pmb_cerere_cu", "dt_pmb_cu"], children: [] },
+      { id: "af_pmb_int_coresp", group: "Solicitări Interne", name: "I.c.1 — Corespondență internă, avize și deplasări", docTypeIds: ["dt_pmb_nota_interna", "dt_pmb_referat", "dt_pmb_adresa_interna", "dt_pmb_aviz_legalitate", "dt_pmb_viza_cfpp", "dt_pmb_ordin_deplasare", "dt_pmb_decont"], children: [] },
+      { id: "af_pmb_ai_lamuriri", group: "Asistentul AI Scriptica", name: "I.d.1 — Cereri de lămuriri către Asistentul AI", docTypeIds: ["dt_pmb_ai_nota"], children: [] },
       { id: "af_pmb_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
     ]
   });
@@ -2745,7 +2776,8 @@ window.SCRIPTICA_MOCK = {
       assignment("vert_pmb_achizitii", ["ft_pmb_ap_directa", "ft_pmb_ap_simplificata", "ft_pmb_ap_act_aditional"]),
       assignment("vert_pmb_investitii", ["ft_pmb_inv_obiectiv_nou", "ft_pmb_inv_executie", "ft_pmb_inv_reparatii"]),
       assignment("vert_pmb_solicitari_externe", ["ft_pmb_ext_petitie", "ft_pmb_ext_544", "ft_pmb_ext_cu"]),
-      assignment("vert_pmb_solicitari_interne", ["ft_pmb_int_adhoc", "ft_pmb_int_referat", "ft_pmb_int_aviz", "ft_pmb_int_deplasare"])
+      assignment("vert_pmb_solicitari_interne", ["ft_pmb_int_adhoc", "ft_pmb_int_referat", "ft_pmb_int_aviz", "ft_pmb_int_deplasare"]),
+      assignment("vert_pmb_asistent_ai", ["ft_pmb_ai_cerere"])
     ],
     terminologyVersion: 1,
     terminologyOverrides: {},
@@ -2756,6 +2788,7 @@ window.SCRIPTICA_MOCK = {
       { id: "dw_pmb_inv", widget: "flow_summary", params: { verticalId: "vert_pmb_investitii" }, size: "half" },
       { id: "dw_pmb_ext", widget: "flow_summary", params: { verticalId: "vert_pmb_solicitari_externe" }, size: "half" },
       { id: "dw_pmb_int", widget: "flow_summary", params: { verticalId: "vert_pmb_solicitari_interne" }, size: "half" },
+      { id: "dw_pmb_ai", widget: "flow_summary", params: { verticalId: "vert_pmb_asistent_ai" }, size: "half" },
       { id: "dw_pmb_termene", widget: "termene", size: "half" },
       { id: "dw_pmb_arhiva", widget: "arhiva_recente", params: {}, size: "half" },
       { id: "dw_pmb_echipa", widget: "echipa", size: "half" }
@@ -2821,6 +2854,59 @@ window.SCRIPTICA_MOCK = {
     fi("fi_pmb_int_04", "vert_pmb_solicitari_interne", "pmb_solicitari_interne", "ft_pmb_int_deplasare", "Deplasare în interes de serviciu",
       "Deplasare Cluj-Napoca — conferință achiziții publice", DGAP, "Andrei Constantin", DGAP, "2026-03-16", 2, 2, "finalizat", [503])
   );
+
+  /* ---- Cereri de lămuriri către Asistentul AI (conversații seed) ---- */
+  var AI = "Asistentul AI Scriptica";
+  var aiReq1 = fi("fi_pmb_ai_01", "vert_pmb_asistent_ai", "pmb_asistent_ai", "ft_pmb_ai_cerere", "Cerere de lămuriri către Asistentul AI",
+    "Ce furnizori avem pentru servicii de iluminat public?", AI, "Mihai Dumitrescu", DMRU, "2026-04-17", 1, 1, "finalizat", [501]);
+  aiReq1.aiContext = { label: "1 dosar · Achiziții Publice", itemIds: ["fi_pmb_ap_01"] };
+  aiReq1.aiMessages = [
+    { id: "aim_1", role: "user", at: "2026-04-17T09:12:00", text: "Ce furnizori avem pentru servicii de iluminat public?" },
+    { id: "aim_2", role: "assistant", at: "2026-04-17T09:12:04",
+      reasoning: [
+        "Am identificat termenii-cheie: «furnizori», «iluminat public».",
+        "Am căutat în evidențele accesibile rolului tău: 20 de dosare și 23 de documente din 5 verticale.",
+        "Am găsit potriviri în Achiziții Publice și am corelat dosarul cu ofertele depuse."
+      ],
+      answerHtml: "Am găsit <b>1 procedură</b> de achiziție pentru servicii de iluminat public: <b>Servicii de mentenanță iluminat public — sector central</b> (procedură simplificată, în evaluarea ofertelor). Operatorul economic cu ofertă depusă este <b>Luxten Lighting Company S.A.</b>, propunere financiară 1.712.400 RON fără TVA.",
+      references: [
+        { kind: "dosar", label: "Servicii de mentenanță iluminat public — sector central", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" },
+        { kind: "document", label: "oferta_luxten_lighting.pdf", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" }
+      ],
+      contextShift: { label: "1 dosar · Achiziții Publice", names: ["Servicii de mentenanță iluminat public — sector central"] },
+      chips: ["Rezumă dosarul din context", "Care este stadiul?", "Cine este responsabil?"] },
+    { id: "aim_3", role: "user", at: "2026-04-17T09:13:10", text: "Care este stadiul?" },
+    { id: "aim_4", role: "assistant", at: "2026-04-17T09:13:13",
+      reasoning: [
+        "Întrebarea se referă la stadiul dosarului din context.",
+        "Am citit pasul curent și termenul din șablonul procedurii simplificate."
+      ],
+      answerHtml: "<b>Servicii de mentenanță iluminat public — sector central</b> este la pasul <b>4/5 — Evaluarea ofertelor</b>, status <b>În Verificare</b>. Următorul pas este atribuirea și semnarea contractului; responsabil: <b>Andrei Constantin</b>.",
+      references: [
+        { kind: "dosar", label: "Servicii de mentenanță iluminat public — sector central", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" }
+      ],
+      contextShift: null,
+      chips: ["Ce documente conține?", "Ce termene se apropie?", "Resetează contextul"] }
+  ];
+  var aiReq2 = fi("fi_pmb_ai_02", "vert_pmb_asistent_ai", "pmb_asistent_ai", "ft_pmb_ai_cerere", "Cerere de lămuriri către Asistentul AI",
+    "Câte concursuri de recrutare sunt în derulare?", AI, "Elena Radu", DMRU, "2026-04-19", 1, 0, "in_verificare", [502]);
+  aiReq2.aiMessages = [
+    { id: "aim_5", role: "user", at: "2026-04-19T14:02:00", text: "Câte concursuri de recrutare sunt în derulare?" },
+    { id: "aim_6", role: "assistant", at: "2026-04-19T14:02:03",
+      reasoning: [
+        "Am identificat termenii-cheie: «concursuri», «recrutare», «în derulare».",
+        "Am numărat dosarele din Resurse Umane cu șablonul de concurs care nu sunt finalizate."
+      ],
+      answerHtml: "Sunt <b>2 concursuri de recrutare</b> în derulare în Resurse Umane: <b>Concurs consilier superior — Serviciul Buget</b> (pasul 4/5, proba scrisă și interviul) și <b>Concurs inspector debutant — Direcția Urbanism</b> (pasul 2/5, publicitatea concursului, așteaptă documente).",
+      references: [
+        { kind: "dosar", label: "Concurs consilier superior — Serviciul Buget", href: "situatie-detaliu.html?flowId=fi_pmb_ru_01" },
+        { kind: "dosar", label: "Concurs inspector debutant — Direcția Urbanism", href: "situatie-detaliu.html?flowId=fi_pmb_ru_02" }
+      ],
+      contextShift: { label: "2 dosare · Resurse Umane", names: ["Concurs consilier superior — Serviciul Buget", "Concurs inspector debutant — Direcția Urbanism"] },
+      chips: ["Ce termene au?", "Cine face parte din comisii?", "Resetează contextul"] }
+  ];
+  aiReq2.aiContext = { label: "2 dosare · Resurse Umane", itemIds: ["fi_pmb_ru_01", "fi_pmb_ru_02"] };
+  M.flowItems.push(aiReq1, aiReq2);
 })();
 
 /* ------------------------------------------------------------
@@ -3318,6 +3404,42 @@ window.SCRIPTICA_MOCK = {
     var client = terminologyClient(clientOrId);
     var names = terminologyOverrides(client).archiveFolders || {};
     return terminologyText(names[folderKey], terminologyText(defaultName, 'Folder'));
+  };
+  /* ---- Asistentul AI (verticala marcată `assistant`) ----
+     Butonul din Mesagerie și lista verticalei creează o cerere de lămuriri
+     goală și deschid workspace-ul ei; conversația se poartă acolo. */
+  window.scripticaAssistantVertical = function () {
+    if (typeof window.scripticaTenantActiveVerticalIds !== 'function') return null;
+    var ids = window.scripticaTenantActiveVerticalIds();
+    var vertical = window.scripticaFlowVerticals().find(function (v) { return v.assistant && ids.indexOf(v.id) !== -1; }) || null;
+    if (!vertical) return null;
+    if (typeof window.viewInScope === 'function' && !window.viewInScope(vertical.domain)) return null;
+    return vertical;
+  };
+  window.scripticaCreateAiRequest = function (initialQuestion) {
+    var vertical = window.scripticaAssistantVertical();
+    if (!vertical) return null;
+    var template = window.scripticaTemplatesForVertical(vertical.id)[0];
+    if (!template) return null;
+    var M = window.SCRIPTICA_MOCK;
+    var me = (M.employees || []).find(function (e) { return e.id === M.currentUserId; });
+    var now = new Date();
+    var iso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    var question = String(initialQuestion || '').trim();
+    var record = {
+      id: 'fi_ai_' + now.getTime(),
+      verticalId: vertical.id, domain: vertical.domain,
+      tenantAccountId: window.scripticaTenantAccountId() || null,
+      name: question ? (question.length > 80 ? question.slice(0, 77) + '…' : question) : (vertical.itemLabel + ' nouă'),
+      clientName: 'Asistentul AI Scriptica', clientContact: me ? me.name : '',
+      archiveContainer: me && me.role ? me.role.split(' · ').pop() : '',
+      templateId: template.id, templateName: template.name,
+      startDate: '2026-04-20', currentStep: 1, stepsCompleted: 0,
+      status: 'analiza', responsibleIds: me ? [me.id] : [],
+      aiMessages: [], aiContext: null, aiPendingQuestion: question || null
+    };
+    window.scripticaFlowSave('flowItem', record);
+    return record;
   };
   window.scripticaFlowItemsForVertical = function (verticalId) {
     return (window.SCRIPTICA_MOCK.flowItems || [])

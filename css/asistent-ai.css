@@ -1,0 +1,177 @@
+/* ============================================================
+   Scriptica — Asistentul AI Scriptica (panoul de conversație)
+   Prefix .ai-  ·  extinde .messaging / .composer din components.css.
+   Tokeni doar; identitatea verticalei-asistent = auriu (--vertical-auriu).
+   ============================================================ */
+
+/* Panoul este mai lat decât Mesageria clasică — răspunsurile au liste și surse. */
+body.ai-workspace { --messaging-panel-width: 440px; }
+
+.ai-panel { display: flex; flex-direction: column; }
+.ai-panel__header { align-items: flex-start; }
+.ai-panel__header .messaging__title-group { align-items: flex-start; }
+.ai-panel__icon {
+  color: var(--vertical-auriu);
+  background: var(--vertical-auriu-surface);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  font-size: 20px;
+  font-variation-settings: 'FILL' 1;
+}
+.ai-panel__context {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: 2px;
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+.ai-panel__context .material-symbols-outlined { font-size: 14px; color: var(--vertical-auriu); }
+
+.ai-panel__list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+
+/* ---- mesaje ---- */
+.ai-msg { display: flex; gap: var(--space-2); align-items: flex-start; }
+.ai-msg--user { justify-content: flex-end; }
+.ai-msg__avatar {
+  flex: 0 0 28px;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--vertical-auriu-surface);
+  color: var(--vertical-auriu);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ai-msg__avatar .material-symbols-outlined { font-size: 16px; font-variation-settings: 'FILL' 1; }
+.ai-msg__bubble {
+  max-width: 100%;
+  min-width: 0;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+}
+.ai-msg--user .ai-msg__bubble {
+  background: var(--color-chat-right);
+  border-color: transparent;
+  max-width: 88%;
+}
+.ai-msg__text { white-space: pre-wrap; }
+.ai-msg__time { font-size: var(--font-size-tiny); color: var(--color-text-muted); }
+.ai-msg--user .ai-msg__time { text-align: right; }
+.ai-msg__answer a { color: var(--color-default-highlight); }
+.ai-msg__answer b { font-weight: var(--font-weight-bold); }
+.ai-msg__disclaimer {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+}
+.ai-msg__disclaimer .material-symbols-outlined { font-size: 14px; }
+.ai-msg--stopped .ai-msg__answer { color: var(--color-text-secondary); font-style: italic; }
+
+.ai-list { margin: var(--space-2) 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: var(--space-1); }
+.ai-sub { margin-top: var(--space-2); font-size: var(--font-size-small); color: var(--color-text-secondary); font-weight: var(--font-weight-bold); }
+.ai-late { color: var(--color-critical); font-weight: var(--font-weight-bold); }
+
+/* ---- acțiuni sub răspuns ---- */
+.ai-msg__actions { display: flex; align-items: center; gap: var(--space-1); }
+.ai-msg__actions .ai-msg__time { margin-left: auto; }
+.ai-icon-btn {
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  background: transparent; border: none; cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.ai-icon-btn:hover { background: var(--color-surface-1); color: var(--color-default-highlight); }
+.ai-icon-btn.is-active { color: var(--color-default-highlight); background: var(--color-chat-right); }
+.ai-icon-btn .material-symbols-outlined { font-size: 16px; }
+
+/* ---- pliabile: raționament + surse ---- */
+.ai-fold { border-top: 1px dashed var(--color-border); padding-top: var(--space-2); }
+.ai-fold__toggle {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  background: transparent; border: none; cursor: pointer; padding: 0;
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+.ai-fold__toggle:hover { color: var(--color-default-highlight); }
+.ai-fold__toggle .material-symbols-outlined { font-size: 16px; }
+.ai-fold__chevron { transition: transform var(--transition-fast); }
+.ai-fold__toggle[aria-expanded="true"] .ai-fold__chevron { transform: rotate(180deg); }
+.ai-fold__body { margin-top: var(--space-2); }
+.ai-reasoning {
+  margin: 0; padding-left: 18px;
+  display: flex; flex-direction: column; gap: var(--space-1);
+  font-size: var(--font-size-small); color: var(--color-text-secondary);
+}
+.ai-refs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.ai-refs__item {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--font-size-small);
+}
+a.ai-refs__item:hover { background: var(--color-surface-1); }
+.ai-refs__item > .material-symbols-outlined { font-size: 16px; color: var(--color-default-highlight); flex: 0 0 auto; }
+.ai-refs__main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.ai-refs__label { font-weight: var(--font-weight-bold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-refs__sub { color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-refs__go { color: var(--color-text-muted) !important; }
+
+/* ---- schimbarea contextului ---- */
+.ai-shift {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  margin-left: 36px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--vertical-auriu-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+.ai-shift .material-symbols-outlined { font-size: 16px; color: var(--color-success); flex: 0 0 auto; }
+.ai-shift b { color: var(--color-text-primary); }
+.ai-msg + .ai-shift { margin-top: calc(-1 * var(--space-1)); }
+
+/* ---- „se gândește” ---- */
+.ai-typing { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
+.ai-typing span {
+  width: 6px; height: 6px; border-radius: var(--radius-pill);
+  background: var(--color-default-highlight);
+  animation: ai-bounce 1.2s infinite ease-in-out;
+}
+.ai-typing span:nth-child(2) { animation-delay: 0.15s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ai-bounce { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.ai-stop { align-self: flex-start; padding: 2px var(--space-2); height: 28px; font-size: var(--font-size-small); gap: var(--space-1); }
+.ai-stop .material-symbols-outlined { font-size: 16px; }
+
+/* ---- sugestii de prompt ---- */
+.ai-panel__chips { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-2) 0 0; }
+.ai-chip {
+  border: 1px solid var(--color-default-highlight);
+  color: var(--color-default-highlight);
+  background: var(--color-surface-white);
+  border-radius: var(--radius-pill);
+  padding: 4px var(--space-3);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.ai-chip:hover { background: var(--color-default-highlight); color: var(--color-surface-white); }
+
+/* ---- compozitor ---- */
+.ai-composer .composer__row { justify-content: space-between; }
+.ai-composer__counter { font-size: var(--font-size-tiny); color: var(--color-text-muted); }

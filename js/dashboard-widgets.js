@@ -468,8 +468,10 @@
      Vederea „client" (portal extern) și superadmin rămân neatinse. */
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK()) return;
-    var filename = window.location.pathname.split('/').pop() || 'index.html';
-    if (filename !== 'acasa.html') return;
+    /* Pe Cloudflare Pages URL-urile sunt „curate” (/acasa, fără .html) — normalizăm. */
+    var filename = (window.location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
+    if (filename === '' || filename === 'index') filename = 'acasa';
+    if (filename !== 'acasa') return;
     var view = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
     if (view === 'client' || view === 'superadmin') return;
     var ct = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());

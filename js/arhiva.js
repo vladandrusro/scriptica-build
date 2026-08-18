@@ -42,7 +42,8 @@
       })(f);
       var label = typeof window.scripticaEffectiveArchiveFolderName === 'function'
         ? window.scripticaEffectiveArchiveFolderName(f.id, f.name, tenantAccount) : f.name;
-      return { key: f.id, label: label, system: !!f.system, typeNames: names };
+      /* `group` = verticala căreia îi aparține indicativul (arhivă după nomenclator) */
+      return { key: f.id, label: label, system: !!f.system, typeNames: names, group: f.group || '' };
     });
     var assignments = typeof window.scripticaTenantModuleAssignments === 'function'
       ? window.scripticaTenantModuleAssignments(true) : [];
@@ -84,11 +85,13 @@
 
   var ARCH_FOLDERS = buildArchiveFolders();
   var CATEGORY_LABELS = {};
+  var CATEGORY_GROUPS = {};
   var CATEGORY_ORDER = [];
   var SYSTEM_FOLDER_KEY = null;
   ARCH_FOLDERS.forEach(function (f) {
     CATEGORY_ORDER.push(f.key);
     CATEGORY_LABELS[f.key] = f.label;
+    CATEGORY_GROUPS[f.key] = f.group || '';
     if (f.system) SYSTEM_FOLDER_KEY = f.key;
   });
 
@@ -468,7 +471,15 @@
 
     var childrenHtml = '';
     if (expanded) {
+      var lastGroup = null;
       CATEGORY_ORDER.forEach(function (cat) {
+        var group = CATEGORY_GROUPS[cat] || '';
+        /* arhivă după nomenclator: indicativele sunt grupate pe verticala lor */
+        if (group && group !== lastGroup) {
+          childrenHtml += '<div class="arhiva-tree__group" role="presentation">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>' + esc(group) + '</div>';
+        }
+        lastGroup = group;
         childrenHtml += categoryNodeHtml(clientId, year, month, cat, (node.categories[cat] || []).length);
       });
     }

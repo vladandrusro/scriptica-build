@@ -4859,6 +4859,20 @@ img.avatar { background: var(--color-surface-1); }
   display: none;
 }
 
+/* Grupare pe verticală a indicativelor (arhivă după nomenclator) */
+.arhiva-tree__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) var(--space-1) 44px;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.arhiva-tree__group .material-symbols-outlined { font-size: 14px; }
+
 .arhiva-tree__node--category .arhiva-tree__bullet {
   font-size: 14px;
   color: var(--color-text-muted);
@@ -5540,3 +5554,23 @@ body:not(.body--client) [data-client-only] {
 
 /* Pictogramă în culoarea verticalei (se combină cu o clasă .va-*). */
 .region-card__header .material-symbols-outlined.va-ico { color: var(--va, var(--color-default-highlight)); }
+
+/* ============================================================
+   Asistentul AI Scriptica — butonul din antetul panoului Mesagerie
+   (shell.js îl injectează când contul are o verticală-asistent activă;
+   panoul de conversație propriu-zis e în css/asistent-ai.css)
+   ============================================================ */
+.messaging__ai-btn {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  height: 28px; padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--vertical-auriu);
+  background: var(--vertical-auriu-surface);
+  color: var(--vertical-auriu);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  cursor: pointer; white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.messaging__ai-btn:hover { background: var(--vertical-auriu); color: var(--color-surface-white); }
+.messaging__ai-btn .material-symbols-outlined { font-size: 16px; font-variation-settings: 'FILL' 1; }
+.messaging.is-collapsed .messaging__ai-btn-label { display: none; }

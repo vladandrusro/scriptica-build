@@ -148,9 +148,36 @@
     gateNavByScope();
     initActiveNav();
     initMessagingToggle();
+    injectAssistantButton();
     buildUserMenu();
     initNonFunctionalStubs();
   });
+
+  /* „Asistentul AI Scriptica" — buton în antetul panoului Mesagerie, doar când
+     contul are activă o verticală-asistent (ex. PMB). Deschide o cerere de
+     lămuriri nouă (un flux cu un singur pas) în workspace-ul dedicat. */
+  function injectAssistantButton() {
+    var header = document.querySelector('.messaging__header');
+    if (!header || header.querySelector('[data-ai-open]')) return;
+    if (typeof window.scripticaAssistantVertical !== 'function') return;
+    var vertical = window.scripticaAssistantVertical();
+    if (!vertical) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'messaging__ai-btn';
+    btn.setAttribute('data-ai-open', vertical.id);
+    btn.setAttribute('title', vertical.name + ' — deschide o ' + (vertical.itemLabel || 'cerere').toLowerCase());
+    btn.setAttribute('aria-label', vertical.name);
+    btn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">' + (vertical.icon || 'auto_awesome') + '</span>' +
+      '<span class="messaging__ai-btn-label">Asistent AI</span>';
+    var toggle = header.querySelector('.messaging__toggle');
+    if (toggle) header.insertBefore(btn, toggle); else header.appendChild(btn);
+    btn.addEventListener('click', function () {
+      if (typeof window.scripticaCreateAiRequest !== 'function') return;
+      var record = window.scripticaCreateAiRequest('');
+      if (record) window.location.href = 'situatie-detaliu.html?flowId=' + encodeURIComponent(record.id) + '#asistent';
+    });
+  }
 
   function effectiveVertical(verticalId) {
     if (typeof window.scripticaEffectiveVertical === 'function') {
@@ -332,15 +359,17 @@
     if (!items.length) return;
 
     var pathname = window.location.pathname;
-    var filename = pathname.split('/').pop() || 'index.html';
-    if (filename === '' || filename === 'index.html') filename = 'acasa.html';
+    /* URL-uri „curate” pe Cloudflare Pages (/acasa) sau cu extensie (local) — comparăm fără .html */
+    var filename = (pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
+    if (filename === '' || filename === 'index') filename = 'acasa';
 
     items.forEach(function (item) {
       var href = item.getAttribute('href') || '';
-      var hrefFile = href.split('/').pop();
-      var slug = (hrefFile || '').replace(/\.html$/, '');
+      var hrefRaw = href.split('/').pop() || '';
+      var slug = hrefRaw.split('?')[0].replace(/\.html$/, '');
       if (slug && !item.getAttribute('data-nav')) item.setAttribute('data-nav', slug);
-      if (hrefFile && hrefFile === filename) {
+      /* itemii cu query (flux.html?vertical=…) sunt marcați activi de pagina lor, nu aici */
+      if (slug && hrefRaw.indexOf('?') === -1 && slug === filename) {
         item.classList.add('nav-item--active');
         var icon = item.querySelector('.material-symbols-outlined');
         if (icon) icon.classList.add('filled');
