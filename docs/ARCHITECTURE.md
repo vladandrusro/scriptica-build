@@ -68,6 +68,7 @@ flowchart TD
 | `js/super-admin.js` | HQ ops dashboard, clients, client detail, legacy client types, dashboard builder and table builder | — |
 | `js/super-admin-fluxuri-v2.js` | canonical HQ flow constructor: per-template steps/tasks/anexe, local drafts, validation/preview, guarded publish into the shared registry | — |
 | `js/super-admin-tipuri-clienti-v2.js` | client-category editor and its base archive routing; Acasă is deliberately absent because its owner is the individual client | — |
+| `js/asistent-ai.js` | Asistentul AI Scriptica: on situatie-detaliu for flow items of the `assistant` vertical, replaces the Mesagerie panel with the chat (reasoning, sources, context shift, chips); deterministic search engine over persona-accessible flow items/documents/people; persists `aiMessages`/`aiContext` on the flow item | — |
 | `js/prezentare.js` | slide deck (exposes nothing) | — |
 
 ## Component boundaries and data flow
@@ -146,13 +147,15 @@ The Fluxuri V2 surface is a global catalog: publishing a vertical or template ma
 
 Vertical removal is non-destructive. An assignment must move from active to inactive/retired rather than be deleted. Operational records, documents, conversations, anexă responses, archive entries and the client's saved Acasă layout created while the vertical was active remain stored; ordinary work surfaces and the vertical's widgets may be hidden while inactive, but the archive and historical integrity remain intact. Reactivating the same vertical must restore access to the same history and saved layout.
 
+Client types with `archiveRouting: 'nomenclator'` (public institutions) get no per-template flow folders: their `archiveTree` holds nomenclator indicatives (`group` = vertical name, rendered as headings), documents route by document type and the level-1 container is `flowItem.archiveContainer` (the direcție). Verticals may carry `externalParty {singular, plural}` — `scripticaEffectiveExternalParty(client, verticalId)` prefers it over the account label. Verticals with `assistant: true` are served by js/asistent-ai.js.
+
 Archive folders are resolved from active **and inactive** assignments, while normal navigation, creation actions and dashboard vertical cards use active assignments only. Used verticals/templates are archived (`status: inactiv`) instead of tombstoned. One prototype limitation remains: most pre-seeded operational records are shared demo data rather than fully owned by an HQ client; newly created generic flow records receive `tenantAccountId`, but a production data model would enforce tenant ownership on every operational record.
 
 Vertical deactivation is non-destructive. It hides the vertical, its dashboard widgets and current working surfaces for that account, but never deletes its flow records, documents, archive contents or terminology overrides. Inactive assignments stay in `moduleAssignments[]`, remain editable in the account terminology editor and become visible again when reactivated.
 
 ## Authentication and permissions
 
-**There is no authentication.** "Login" is simulated by the persona switcher: `scriptica.view` ∈ {complet (default), contabilitate, audit_stat, client, admin, autoritate, superadmin} (+ legacy alias `accountant` → complet). URL `?view=` overrides per-load without persisting.
+**There is no authentication.** "Login" is simulated by the persona switcher: `scriptica.view` ∈ {complet (default), contabilitate, audit_stat, client, admin, autoritate, superadmin, pmb_intern} (+ legacy alias `accountant` → complet). `pmb_intern` is the internal user of the HQ client `cli_pmb` (`clients[].tenantPersona`): `scripticaTenantAccountId()` always resolves that account for its persona and never for other personas; `MOCK.employees`/`currentUserId` are swapped to the PMB staff at load. URL `?view=` overrides per-load without persisting.
 
 Authorization = **domain scoping**, enforced in three cooperating layers (all client-side, all cosmetic — this is a prototype):
 1. `getViewScope()` maps persona → domains (`contabil`, `audit`, + custom vertical domains for complet/admin/superadmin).
