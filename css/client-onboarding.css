@@ -110,10 +110,8 @@
 
 .co-progress__item::after {
   content: "";
-  position: absolute;
-  left: calc(var(--space-6) + var(--space-1));
-  right: calc(-1 * var(--space-2));
-  top: calc(var(--space-6) / 2);
+  flex: 1 1 var(--space-4);
+  min-width: var(--space-2);
   height: 1px;
   background: var(--color-border);
 }
@@ -664,8 +662,10 @@
   }
 
   .co-progress__item::after {
+    position: absolute;
     left: calc(50% + var(--space-4));
     right: calc(-50% + var(--space-4));
+    top: calc(var(--space-6) / 2);
   }
 
   .co-endpoint-row {

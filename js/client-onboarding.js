@@ -50,6 +50,18 @@
   var tbody;
   var searchInput;
 
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty()
+      : { singular: 'Client', plural: 'Clienți' };
+  }
+
+  function beneficiarySchema() {
+    return typeof window.scripticaEffectiveBeneficiaryProfileSchema === 'function'
+      ? window.scripticaEffectiveBeneficiaryProfileSchema()
+      : { version: 1, fields: [] };
+  }
+
   document.addEventListener('DOMContentLoaded', init);
 
   function init() {
@@ -62,6 +74,7 @@
     searchInput = document.getElementById('ue-search');
     if (!modal || !form || !tbody || !searchInput) return;
 
+    applyTerminology();
     serviceCatalog = buildServiceCatalog();
     buildClients();
     bindPage();
@@ -74,6 +87,29 @@
         setTimeout(renderClients, 0);
       }
     });
+  }
+
+  function applyTerminology() {
+    var party = externalParty();
+    var add = document.getElementById('ue-add');
+    var panel = document.getElementById('panel-utilizatori-externi');
+    var title = document.getElementById('co-step-1-title');
+    var typeLabel = document.querySelector('label[for="co-person-type"]');
+    var modalSubtitle = modal.querySelector('.modal__subtitle');
+    var activate = document.getElementById('co-activate');
+    if (add) add.innerHTML = party.singular + ' nou<span class="material-symbols-outlined" aria-hidden="true">person_add</span>';
+    if (panel) {
+      var helper = panel.querySelector('.admin-helper');
+      var firstHeader = panel.querySelector('thead th');
+      var empty = panel.querySelector('#ue-empty p');
+      if (helper) helper.textContent = 'Configurează identitatea pentru ' + party.singular.toLowerCase() + ', persoanele de contact, accesul în Scriptica și sursele autorizate pentru documente.';
+      if (firstHeader) firstHeader.textContent = party.singular;
+      if (empty) empty.textContent = 'Nu există ' + party.plural.toLowerCase() + ' care să corespundă căutării.';
+    }
+    if (title) title.textContent = 'Identitatea pentru ' + party.singular.toLowerCase();
+    if (typeLabel) typeLabel.textContent = 'Tip ' + party.singular.toLowerCase() + '*';
+    if (modalSubtitle) modalSubtitle.textContent = 'Creează profilul folosit pentru fluxuri, conversații, documente și accesul părții externe.';
+    if (activate) activate.innerHTML = 'Activează ' + party.singular.toLowerCase() + '<span class="material-symbols-outlined" aria-hidden="true">check_circle</span>';
   }
 
   /* ============================================================
@@ -147,6 +183,10 @@
       serviceIds: serviceIds,
       documentSources: ['scriptica', 'email', 'whatsapp'],
       notificationChannels: ['scriptica', 'email', 'whatsapp'],
+      profileValues: {
+        cpf_default_code: 'BEN-' + String(client.id).padStart(3, '0'),
+        cpf_default_category: Number(client.id) % 3 === 0 ? 'Prioritar' : 'Standard'
+      },
       contacts: [{
         id: contactId,
         name: client.contactName || '',
@@ -192,6 +232,7 @@
     out.documentSources = Array.isArray(out.documentSources) ? out.documentSources : ['scriptica', 'email', 'whatsapp'];
     out.notificationChannels = Array.isArray(out.notificationChannels) ? out.notificationChannels : ['scriptica', 'email', 'whatsapp'];
     out.responsibleId = out.responsibleId == null ? '' : out.responsibleId;
+    out.profileValues = out.profileValues && typeof out.profileValues === 'object' ? out.profileValues : {};
 
     out.contacts = out.contacts.map(function (contact, index) {
       var c = clone(contact || {});
@@ -268,6 +309,7 @@
       documentSources: ['scriptica', 'email', 'whatsapp'],
       notificationChannels: ['scriptica', 'email', 'whatsapp'],
       contacts: [contact],
+      profileValues: {},
       createdAt: TODAY_ISO
     });
   }
@@ -362,11 +404,34 @@
         (contact.emails || []).forEach(function (item) { haystack.push(item.value); });
         (contact.phones || []).forEach(function (item) { haystack.push(item.value); });
       });
+      Object.keys(client.profileValues || {}).forEach(function (key) {
+        var value = client.profileValues[key];
+        haystack.push(typeof value === 'object' ? JSON.stringify(value) : value);
+      });
       return normalizeText(haystack.join(' ')).indexOf(query) !== -1;
     });
 
+    renderClientTableHeader();
     tbody.innerHTML = list.map(clientRowHtml).join('');
     toggleExternalEmpty(list.length);
+  }
+
+  function profileTableFields() {
+    var schema = beneficiarySchema();
+    return (schema.fields || []).filter(function (field) {
+      return field.type !== 'section_title' && !!field.showInTable;
+    });
+  }
+
+  function renderClientTableHeader() {
+    var head = document.getElementById('ue-thead');
+    if (!head) return;
+    var dynamic = profileTableFields().map(function (field) {
+      return '<th>' + esc(field.label || 'Profil') + (field.sensitive ? '<span class="material-symbols-outlined co-sensitive-head" aria-label="Date sensibile" title="Date sensibile">lock</span>' : '') + '</th>';
+    }).join('');
+    head.innerHTML = '<tr><th style="min-width:220px;">' + esc(externalParty().singular) + '</th>' +
+      '<th style="width:180px;">Contact principal</th><th style="width:140px;">Identificator</th>' + dynamic +
+      '<th>Surse documente</th><th style="width:160px;">Fluxuri</th><th style="width:110px;">Status</th><th style="width:80px;">Acțiuni</th></tr>';
   }
 
   function clientRowHtml(client) {
@@ -396,6 +461,12 @@
           avatarId: client.avatarId
         }, 32)
       : esc((client.companyName || '?').charAt(0));
+    var profileCells = profileTableFields().map(function (field) {
+      var value = (client.profileValues || {})[field.id];
+      var formatted = window.SCRIPTICA_BENEFICIARY_PROFILE
+        ? window.SCRIPTICA_BENEFICIARY_PROFILE.formatValue(field, value) : (value || '—');
+      return '<td>' + esc(formatted) + '</td>';
+    }).join('');
 
     return '<tr>' +
       '<td><div class="co-client-main">' +
@@ -406,6 +477,7 @@
       '<td>' + (primary ? esc(primary.name || '—') : '—') +
         (extraContacts ? '<div class="co-table-subline">+' + extraContacts + ' contacte</div>' : '') + '</td>' +
       '<td>' + esc(client.identifier || '—') + '</td>' +
+      profileCells +
       '<td><div class="co-table-chips">' + (sourceChips || '<span class="admin-table__muted">Nicio sursă</span>') + '</div></td>' +
       '<td>' + esc(serviceText) + '</td>' +
       '<td>' + onboardingStatusHtml(client.status) + '</td>' +
@@ -492,8 +564,11 @@
     draft = client ? normalizeRecord(client) : newDraft();
     currentStep = 1;
 
-    document.getElementById('co-title').textContent = client ? 'Gestionează clientul' : 'Client nou';
+    document.getElementById('co-title').textContent = client
+      ? 'Gestionează ' + externalParty().singular.toLowerCase()
+      : externalParty().singular + ' nou';
     populateIdentity();
+    renderProfileFields();
     renderContacts();
     renderAccess();
     renderServices();
@@ -506,6 +581,20 @@
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     setTimeout(function () { document.getElementById('co-person-type').focus(); }, 0);
+  }
+
+  function renderProfileFields() {
+    var host = document.getElementById('co-profile-fields');
+    var wrap = document.getElementById('co-profile-schema');
+    if (!host || !wrap || !draft || !window.SCRIPTICA_BENEFICIARY_PROFILE) return;
+    var schema = beneficiarySchema();
+    var scope = editingId != null ? 'profile' : 'onboarding';
+    window.SCRIPTICA_BENEFICIARY_PROFILE.renderInto(host, schema, draft.profileValues, {
+      scope: scope,
+      idPrefix: 'co_profile',
+      onChange: function () {}
+    });
+    wrap.hidden = !window.SCRIPTICA_BENEFICIARY_PROFILE.visibleFields(schema, scope).some(function (field) { return field.type !== 'section_title'; });
   }
 
   function closeOnboarding() {
@@ -927,7 +1016,7 @@
     }).join('');
 
     document.getElementById('co-review').innerHTML =
-      reviewCardHtml('domain', 'Client', [
+      reviewCardHtml('domain', externalParty().singular, [
         ['Denumire', draft.companyName || '—'],
         ['Tip', PERSON_TYPE_LABELS[draft.personType] || '—'],
         ['Identificator', draft.identifier || '—'],
@@ -985,8 +1074,8 @@
     if (step === 1) {
       syncIdentity();
       if (!draft.personType) {
-        setFieldError('personType', 'Selectează tipul clientului.');
-        errors.push('tipul clientului');
+        setFieldError('personType', 'Selectează tipul pentru ' + externalParty().singular.toLowerCase() + '.');
+        errors.push('tipul pentru ' + externalParty().singular.toLowerCase());
       }
       if (!draft.identifier) {
         setFieldError('identifier', 'Introdu CUI-ul, CNP-ul sau identificatorul relevant.');
@@ -997,7 +1086,7 @@
             normalizeText(client.identifier) === normalizeText(draft.identifier);
         });
         if (duplicate) {
-          setFieldError('identifier', 'Există deja un client cu acest identificator.');
+          setFieldError('identifier', 'Există deja o înregistrare pentru ' + externalParty().singular.toLowerCase() + ' cu acest identificator.');
           errors.push('identificator unic');
         }
       }
@@ -1012,6 +1101,13 @@
       if (!draft.startDate) {
         setFieldError('startDate', 'Alege data începerii colaborării.');
         errors.push('data colaborării');
+      }
+      if (window.SCRIPTICA_BENEFICIARY_PROFILE) {
+        var profileValid = window.SCRIPTICA_BENEFICIARY_PROFILE.validate(
+          document.getElementById('co-profile-fields'), beneficiarySchema(), draft.profileValues,
+          { scope: editingId != null ? 'profile' : 'onboarding' }
+        );
+        if (!profileValid) errors.push('câmpurile obligatorii din profil');
       }
       valid = errors.length === 0;
     }
@@ -1276,7 +1372,7 @@
     writeRecord(draft);
     closeOnboarding();
     renderClients();
-    toast('success', 'Ciorna clientului a fost salvată.');
+    toast('success', 'Ciorna pentru ' + externalParty().singular.toLowerCase() + ' a fost salvată.');
   }
 
   function activateClient() {
@@ -1303,8 +1399,8 @@
     closeOnboarding();
     renderClients();
     toast('success', wasEditing
-      ? 'Profilul clientului a fost actualizat.'
-      : 'Clientul a fost activat. ' + invited + (invited === 1 ? ' invitație este pregătită.' : ' invitații sunt pregătite.'));
+      ? 'Profilul pentru ' + externalParty().singular.toLowerCase() + ' a fost actualizat.'
+      : externalParty().singular + ' a fost activat. ' + invited + (invited === 1 ? ' invitație este pregătită.' : ' invitații sunt pregătite.'));
   }
 
   /* ============================================================

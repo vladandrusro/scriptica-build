@@ -3,7 +3,7 @@
    Controller unic pentru cele 5 ecrane (router pe body[data-page]):
      super-admin               → Dashboard global
      super-admin-clienti       → Listă clienți (+ înrolare cu provisioning)
-     super-admin-client        → Detaliu client (comercial + tehnic + module)
+     super-admin-client        → Detaliu client (comercial + tehnic + verticale)
      super-admin-fluxuri       → Registrul de fluxuri (verticale + șabloane)
      super-admin-tipuri-clienti→ Categorii stabile de clienți
    Date: window.SCRIPTICA_MOCK.superAdmin (mock din seed).
@@ -73,7 +73,7 @@
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-labelledby', titleId);
     overlay.innerHTML =
-      '<div class="modal__dialog' + (opts.wide ? ' modal__dialog--wide' : '') + '" role="document">' +
+      '<div class="modal__dialog' + (opts.wide ? ' modal__dialog--wide' : '') + (opts.dialogClass ? ' ' + esc(opts.dialogClass) : '') + '" role="document">' +
         '<button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">' +
           '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
         '<header class="modal__header">' +
@@ -475,6 +475,9 @@
             kv('Ultima plată', esc(cm.lastPay)) +
           '</div>' +
           provisionedFlowsHtml(c) +
+          clientTerminologyHtml(c) +
+          clientProfileHtml(c) +
+          clientDashboardHtml(c) +
           '<div class="sa-sec">' +
             '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">tune</span>Funcționalități (tier)</div>' +
             '<div class="sa-flags">' + c.flags.map(flagRow).join('') + '</div>' +
@@ -507,6 +510,20 @@
     if (chg) chg.addEventListener('click', function () { openChangeTypeModal(root, c); });
     var modulesButton = root.querySelector('[data-manage-modules]');
     if (modulesButton) modulesButton.addEventListener('click', function () { openModuleManagerModal(root, c); });
+    var terminologyButton = root.querySelector('[data-manage-terminology]');
+    if (terminologyButton) terminologyButton.addEventListener('click', function () { openTerminologyModal(root, c); });
+    var profileButton = root.querySelector('[data-manage-beneficiary-profile]');
+    if (profileButton) profileButton.addEventListener('click', function () { openClientBeneficiaryProfile(root, c); });
+    var externalPreviewButton = root.querySelector('[data-preview-beneficiary-form]');
+    if (externalPreviewButton) externalPreviewButton.addEventListener('click', function () { openBeneficiaryExternalPreview(c); });
+    var resetProfileButton = root.querySelector('[data-reset-beneficiary-profile]');
+    if (resetProfileButton) resetProfileButton.addEventListener('click', function () {
+      var current = Object.assign({}, clientById(c.id) || c);
+      delete current.clientProfileSchema;
+      scripticaFlowSave('saClient', current);
+      toast('success', 'Profilul propriu a fost eliminat. Contul moștenește din nou tipul de client.');
+      renderClientDetail(root);
+    });
     var previewButton = root.querySelector('[data-preview-tenant]');
     if (previewButton) previewButton.addEventListener('click', function () {
       if (typeof window.scripticaSetTenantAccountId === 'function') window.scripticaSetTenantAccountId(c.id);
@@ -656,7 +673,7 @@
 
     saModal({
       title: v ? 'Editează verticala' : 'Verticală nouă',
-      subtitle: v ? v.name : 'Definește un nou modul de lucru — devine navigabil imediat prin motorul generic.',
+      subtitle: v ? v.name : 'Definește o nouă verticală de lucru — devine navigabilă imediat prin motorul generic.',
       bodyHtml: body, wide: true,
       submitLabel: v ? 'Salvează modificările' : 'Creează verticala',
       onOpen: function (m) {
@@ -877,15 +894,20 @@
      ============================================================ */
   function renderTableBuilder(root) {
     var v = verticalById(qs('vertical'));
+    var client = qs('client') ? clientById(qs('client')) : null;
     if (!v || !window.SCRIPTICA_LISTVIEW) {
       root.innerHTML = '<p class="sa-subtitle">Verticala nu a fost găsită. <a href="super-admin-fluxuri-v2.html' + vq() + '">Înapoi la Verticale și fluxuri</a></p>';
       return;
     }
-    markFluxuriNavActive();
+    if (client) markClientsNavActive(); else markFluxuriNavActive();
     var LV = window.SCRIPTICA_LISTVIEW;
-    var cols = LV.effectiveFor(v).slice();
+    var displayV = client && typeof window.scripticaEffectiveVertical === 'function' ? window.scripticaEffectiveVertical(v, client) : v;
+    var cols = (client ? LV.effectiveConfigFor(v, client) : LV.sharedConfigFor(v)).map(function (column) {
+      return { sourceKey: column.sourceKey, labelOverride: column.labelOverride || '' };
+    });
     var savedSnapshot = JSON.stringify(cols);
-    var samples = LV.sampleItems(v, 6);
+    var samples = LV.sampleItems(displayV, 6);
+    var selectedIndex = cols.length ? 0 : -1;
 
     function isDirty() { return JSON.stringify(cols) !== savedSnapshot; }
     function markDirty() {
@@ -896,31 +918,57 @@
       if (isDirty()) { e.preventDefault(); e.returnValue = ''; }
     });
 
+    function sourceFor(column) {
+      return LV.sourceByKey(displayV, column.sourceKey, client || null) || {
+        sourceKey: column.sourceKey, label: 'Sursă indisponibilă', icon: 'link_off',
+        desc: 'Câmpul original a fost retras sau nu mai este disponibil.', typeLabel: 'Indisponibil',
+        sourcePath: column.sourceKey, unavailable: true, supported: false
+      };
+    }
     function paletteHtml() {
-      return LV.availableFor(v).map(function (c) {
-        var placed = cols.indexOf(c.id) !== -1;
-        return '<button type="button" class="sa-dwb-pal' + (placed ? ' is-placed' : '') + '" data-tbl-add="' + esc(c.id) + '"' + (placed ? ' disabled' : '') + '>' +
-          '<span class="material-symbols-outlined sa-dwb-pal__ico" aria-hidden="true">' + esc(c.icon || 'view_column') + '</span>' +
-          '<span class="sa-dwb-pal__main"><b>' + esc(c.label(v)) + '</b><small>' + esc(c.desc) + '</small></span>' +
-          '<span class="material-symbols-outlined sa-dwb-pal__add" aria-hidden="true">' + (placed ? 'check' : 'add') + '</span>' +
-        '</button>';
+      return LV.sourceGroupsFor(displayV, client || null).map(function (group) {
+        return '<section class="sa-tbl-source-group"><h3>' + esc(group.label) + '</h3>' + group.sources.map(function (source) {
+          var placed = cols.some(function (column) { return column.sourceKey === source.sourceKey; });
+          var disabled = placed || !source.supported;
+          return '<button type="button" class="sa-dwb-pal' + (placed ? ' is-placed' : '') + (!source.supported ? ' is-unsupported' : '') + '" data-tbl-add="' + esc(source.sourceKey) + '"' + (disabled ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined sa-dwb-pal__ico" aria-hidden="true">' + esc(source.icon || 'view_column') + '</span>' +
+            '<span class="sa-dwb-pal__main"><b>' + esc(source.label) + '</b><small>' + esc(source.sourcePath || source.desc) + '</small>' +
+              '<em>' + esc(source.typeLabel || source.fieldType || 'Câmp') + (!source.supported ? ' · indisponibil în tabel' : '') + '</em></span>' +
+            '<span class="material-symbols-outlined sa-dwb-pal__add" aria-hidden="true">' + (placed ? 'check' : (!source.supported ? 'block' : 'add')) + '</span>' +
+          '</button>';
+        }).join('') + '</section>';
       }).join('');
     }
 
-    /* capul de tabel al simulării — etichete + controale de manipulare directă */
+    function propertiesHtml() {
+      if (selectedIndex < 0 || !cols[selectedIndex]) {
+        return '<div class="sa-tbl-properties is-empty"><span class="material-symbols-outlined" aria-hidden="true">tune</span><span>Selectează o coloană din antet pentru a-i schimba denumirea.</span></div>';
+      }
+      var column = cols[selectedIndex];
+      var source = sourceFor(column);
+      return '<div class="sa-tbl-properties"><div class="sa-tbl-properties__head"><span class="material-symbols-outlined" aria-hidden="true">tune</span><b>Coloană selectată</b></div>' +
+        '<div class="sa-tbl-properties__grid"><div class="form-field"><label class="form-label" for="tbl-label-override">Antet vizibil</label>' +
+          '<input class="input" id="tbl-label-override" data-tbl-label value="' + esc(column.labelOverride || '') + '" placeholder="' + esc(source.label) + '">' +
+          '<span class="form-helper">Lasă gol pentru denumirea moștenită.</span></div>' +
+          '<div class="sa-tbl-readonly"><span>Tip moștenit</span><b>' + esc(source.typeLabel || 'Indisponibil') + '</b></div>' +
+          '<div class="sa-tbl-readonly sa-tbl-readonly--source"><span>Sursă</span><b>' + esc(source.sourcePath || source.sourceKey) + '</b></div></div>' +
+        (source.sensitive ? '<div class="sa-cpf-sensitive-warning"><span class="material-symbols-outlined" aria-hidden="true">warning</span>Această coloană poate expune date marcate ca sensibile tuturor utilizatorilor contului.</div>' : '') +
+        (source.unavailable ? '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">link_off</span><span>Sursă indisponibilă. Referința este păstrată, iar tabelul va afișa „—”.</span></div>' : '') +
+      '</div>';
+    }
+
     function simHeaderHtml() {
       var ths = '<th style="width:44px;"></th>';
-      cols.forEach(function (id, i) {
-        var c = LV.colById(id);
-        if (!c) return;
-        ths += '<th' + (c.width ? ' style="width:' + c.width + 'px;"' : '') + '>' +
-          '<span class="sa-th"><span class="sa-th__label">' + esc(c.label(v)) + '</span>' +
+      cols.forEach(function (column, i) {
+        var source = sourceFor(column);
+        ths += '<th' + (source.width ? ' style="width:' + source.width + 'px;"' : '') + ' class="' + (i === selectedIndex ? 'is-selected' : '') + '">' +
+          '<span class="sa-th"><button type="button" class="sa-th__label" data-tbl-select="' + i + '">' + esc(column.labelOverride || source.label) + '</button>' +
           '<span class="sa-th__ctrl">' +
             '<button type="button" class="sa-th-btn" data-tbl-move="-1" data-i="' + i + '" title="Mută spre stânga"' + (i === 0 ? ' disabled' : '') + '>' +
               '<span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button>' +
             '<button type="button" class="sa-th-btn" data-tbl-move="1" data-i="' + i + '" title="Mută spre dreapta"' + (i === cols.length - 1 ? ' disabled' : '') + '>' +
               '<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>' +
-            '<button type="button" class="sa-th-btn sa-th-btn--danger" data-tbl-remove="' + i + '" title="Scoate coloana"' + (cols.length <= 2 ? ' disabled' : '') + '>' +
+            '<button type="button" class="sa-th-btn sa-th-btn--danger" data-tbl-remove="' + i + '" title="Scoate coloana"' + (cols.length <= 1 ? ' disabled' : '') + '>' +
               '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
           '</span></span></th>';
       });
@@ -928,18 +976,18 @@
     }
 
     function simHtml() {
-      var vv = Object.assign({}, v, { listView: cols });
       var rows = samples.map(function (n) {
         return '<tr class="sit-row"><td class="sit-cell--chevron"><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></td>' +
-          LV.cellsHtml(vv, n) + '</tr>';
+          LV.cellsHtml(displayV, n, { columns: cols, client: client || null }) + '</tr>';
       }).join('');
       return '<div class="sa-tbl-sim__chrome">' +
           '<span class="material-symbols-outlined" aria-hidden="true">visibility</span>' +
-          'Simulare — așa va arăta pagina pentru clienți (date de exemplu)' +
+          'Previzualizare live · date de exemplu' +
         '</div>' +
+        propertiesHtml() +
         '<div class="sa-tbl-sim__page">' +
           '<div class="sa-tbl-sim__header">' +
-            '<span class="sa-tbl-sim__title">' + esc(v.name) + '</span>' +
+            '<span class="sa-tbl-sim__title">' + esc(displayV.name) + '</span>' +
             '<span class="btn btn--primary sa-tbl-sim__inert">Adaugă<span class="material-symbols-outlined" aria-hidden="true">add</span></span>' +
           '</div>' +
           '<div class="sa-tbl-sim__filters">' +
@@ -967,15 +1015,20 @@
       markDirty();
     }
 
+    var contextLabel = client ? 'Configurație pentru ' + client.name : 'Configurație implicită a verticalei';
+    var resetLabel = client ? 'Revino la configurația verticalei' : 'Restaurează standardul Scriptica';
+    var crumb = client
+      ? '<a href="super-admin-clienti.html?view=superadmin">Clienți</a> › <a href="super-admin-client.html?id=' + encodeURIComponent(client.id) + '&view=superadmin">' + esc(client.name) + '</a> › ' + esc(displayV.name) + ' · Tabel'
+      : '<a href="super-admin-fluxuri-v2.html?view=superadmin&vertical=' + encodeURIComponent(v.id) + '">Verticale și fluxuri</a> › ' + esc(v.name) + ' · Tabel';
     root.innerHTML =
-      '<div class="sa-crumb"><a href="super-admin-fluxuri-v2.html?view=superadmin&vertical=' + encodeURIComponent(v.id) + '">Verticale și fluxuri</a> › ' + esc(v.name) + ' · Tabel</div>' +
-      '<header class="page-header"><h1 class="page-header__title">Tabelul verticalei — ' + esc(v.name) + '</h1>' +
+      '<div class="sa-crumb">' + crumb + '</div>' +
+      '<header class="page-header"><div><div class="sa-tbl-context">' + esc(contextLabel) + '</div><h1 class="page-header__title">Tabelul verticalei — ' + esc(displayV.name) + '</h1></div>' +
         '<div class="sa-tbl-actions">' +
-          '<button class="btn btn--ghost" type="button" id="tbl-reset">Revino la implicit<span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>' +
+          '<button class="btn btn--ghost" type="button" id="tbl-reset">' + esc(resetLabel) + '<span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>' +
           '<button class="btn btn--primary" type="button" id="tbl-save">Salvează coloanele<span class="material-symbols-outlined" aria-hidden="true">save</span></button>' +
         '</div>' +
       '</header>' +
-      '<p class="sa-subtitle">Adaugă coloane din paleta din stânga; mută-le sau scoate-le direct din capul tabelului simulat. Se aplică oriunde apare tabelul acestei verticale. <span class="sa-cols-hint" data-tbl-hint></span></p>' +
+      '<p class="sa-subtitle">Alege sursele din stânga, ordonează coloanele și modifică doar antetul vizibil. Tipul și originea datelor rămân moștenite. <span class="sa-cols-hint" data-tbl-hint></span></p>' +
       '<div class="sa-dwb">' +
         '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Coloane disponibile</div><div data-tbl-palette></div></aside>' +
         '<div class="sa-dwb-preview sa-tbl-sim" data-tbl-sim></div>' +
@@ -983,19 +1036,50 @@
     draw();
 
     root.querySelector('#tbl-save').addEventListener('click', function () {
-      scripticaFlowSave('vertical', Object.assign({}, verticalById(v.id) || v, { listView: cols }));
+      if (client) {
+        var currentClient = clientById(client.id) || client;
+        var overrides = deepCopy(currentClient.verticalTableOverrides || {});
+        overrides[v.id] = { version: 1, columns: deepCopy(cols) };
+        scripticaFlowSave('saClient', Object.assign({}, currentClient, { verticalTableOverrides: overrides }));
+      } else {
+        scripticaFlowSave('vertical', Object.assign({}, verticalById(v.id) || v, {
+          listViewConfig: { version: 1, columns: deepCopy(cols) }
+        }));
+      }
       savedSnapshot = JSON.stringify(cols);
       markDirty();
-      toast('success', 'Coloanele tabelului „' + v.name + '" au fost salvate.');
+      toast('success', client ? 'Tabelul pentru „' + client.name + '” a fost salvat fără să afecteze alți clienți.' : 'Configurația implicită pentru „' + v.name + '” a fost salvată.');
     });
     root.querySelector('#tbl-reset').addEventListener('click', function () {
-      cols = LV.defaultsFor(v);
+      if (client) {
+        var currentClient = clientById(client.id) || client;
+        var overrides = deepCopy(currentClient.verticalTableOverrides || {});
+        delete overrides[v.id];
+        scripticaFlowSave('saClient', Object.assign({}, currentClient, { verticalTableOverrides: overrides }));
+        cols = LV.sharedConfigFor(v).map(function (column) { return { sourceKey: column.sourceKey, labelOverride: column.labelOverride || '' }; });
+        savedSnapshot = JSON.stringify(cols);
+        toast('success', 'Configurația proprie a fost eliminată. „' + client.name + '” moștenește din nou verticala.');
+      } else {
+        cols = LV.defaultsConfigFor(v);
+      }
+      selectedIndex = cols.length ? 0 : -1;
       draw();
+    });
+    root.addEventListener('input', function (e) {
+      if (!e.target.hasAttribute('data-tbl-label') || selectedIndex < 0) return;
+      cols[selectedIndex].labelOverride = e.target.value;
+      var label = root.querySelector('[data-tbl-select="' + selectedIndex + '"]');
+      if (label) label.textContent = e.target.value || sourceFor(cols[selectedIndex]).label;
+      markDirty();
     });
     root.addEventListener('click', function (e) {
       var b;
       if ((b = e.target.closest('[data-tbl-add]'))) {
-        cols.push(b.getAttribute('data-tbl-add'));
+        cols.push({ sourceKey: b.getAttribute('data-tbl-add'), labelOverride: '' });
+        selectedIndex = cols.length - 1;
+        draw();
+      } else if ((b = e.target.closest('[data-tbl-select]'))) {
+        selectedIndex = parseInt(b.getAttribute('data-tbl-select'), 10);
         draw();
       } else if ((b = e.target.closest('[data-tbl-move]'))) {
         var i = parseInt(b.getAttribute('data-i'), 10);
@@ -1003,10 +1087,16 @@
         if (j >= 0 && j < cols.length) {
           var mv = cols.splice(i, 1)[0];
           cols.splice(j, 0, mv);
+          selectedIndex = j;
           draw();
         }
       } else if ((b = e.target.closest('[data-tbl-remove]'))) {
-        if (cols.length > 2) { cols.splice(parseInt(b.getAttribute('data-tbl-remove'), 10), 1); draw(); }
+        if (cols.length > 1) {
+          var removed = parseInt(b.getAttribute('data-tbl-remove'), 10);
+          cols.splice(removed, 1);
+          selectedIndex = Math.min(removed, cols.length - 1);
+          draw();
+        }
       }
     });
   }
@@ -1157,16 +1247,6 @@
           '</span>' +
           '<span class="material-symbols-outlined sa-ct-cfg__go" aria-hidden="true">arrow_forward</span>' +
         '</button>' +
-        '<a class="sa-ct-cfg__row" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) +
-          (getCurrentView() === 'superadmin' ? '&view=superadmin' : '') + '">' +
-          '<span class="material-symbols-outlined sa-ct-cfg__ico" aria-hidden="true">space_dashboard</span>' +
-          '<span class="sa-ct-cfg__text">' +
-            '<span class="sa-ct-cfg__label">Ecranul Acasă' +
-              (t.needsReview && t.needsReview.dashboard ? ' <span class="pill pill--pending">de revizuit</span>' : '') + '</span>' +
-            '<span class="sa-ct-cfg__meta">' + ((t.dashboardLayout || []).length) + ' widget-uri · „' + esc(t.clientLabel || 'Client') + '"</span>' +
-          '</span>' +
-          '<span class="material-symbols-outlined sa-ct-cfg__go" aria-hidden="true">arrow_forward</span>' +
-        '</a>' +
       '</div>' +
       '<div class="sa-ct-foot"><span class="material-symbols-outlined" aria-hidden="true">apartment</span>' + n + (n === 1 ? ' client' : ' clienți') + ' cu acest tip</div>' +
     '</div>';
@@ -1244,18 +1324,11 @@
           verticalIds: vids,
           defaultTemplateIds: tids,
           archiveTree: t ? (t.archiveTree || []) : window.scripticaDefaultArchiveTree(),
-          /* tip nou → arhiva și dashboard-ul pornesc din valori implicite și
-             cer o trecere de revizuire (pastile pe card până la prima salvare) */
-          needsReview: t ? (t.needsReview || null) : { archive: true, dashboard: true },
+          /* tip nou → arhiva pornește din valori implicite și cere o revizuire */
+          needsReview: t ? (t.needsReview || null) : { archive: true },
           clientLabel: clientLabel,
           clientLabelPlural: fval(m, 'clientLabelPlural') || (clientLabel + 'i'),
-          /* tip nou → dashboard de pornire: un widget per verticală + genericele */
-          dashboardLayout: t ? (t.dashboardLayout || []) : vids.map(function (vid, i) {
-            return { id: 'dw_' + Date.now().toString(36) + '_' + i, widget: 'flow_summary', params: { verticalId: vid }, size: 'half' };
-          }).concat([
-            { id: 'dw_' + Date.now().toString(36) + '_t', widget: 'termene', size: 'half' },
-            { id: 'dw_' + Date.now().toString(36) + '_c', widget: 'clienti', size: 'full' }
-          ])
+          clientProfileSchema: t ? t.clientProfileSchema : undefined
         };
         scripticaFlowSave('clientType', rec);
         close();
@@ -1477,20 +1550,24 @@
   }
 
   /* ============================================================
-     DASHBOARD BUILDER — layout-ul de Acasă per tip de client.
-     Paletă în stânga (widget-urile permise de verticalele tipului),
+     DASHBOARD BUILDER — layout-ul de Acasă per client.
+     Paletă în stânga (widget-urile permise de verticalele clientului),
      preview live în dreapta (aceleași renderere ca pe Acasă, prin
      SCRIPTICA_WIDGETS). Reordonare prin drag & drop; size half/full.
      ============================================================ */
   function renderDashboardBuilder(root) {
-    var ct = clientTypeById(qs('ct'));
-    if (!ct || !window.SCRIPTICA_WIDGETS) {
-      root.innerHTML = '<p class="sa-subtitle">Tipul de client nu a fost găsit. <a href="super-admin-tipuri-clienti-v2.html' + vq() + '">Înapoi la Tipuri de clienți</a></p>';
+    var client = clientById(qs('client'));
+    var ct = client && clientTypeById(client.clientTypeId);
+    if (!client || !ct || !window.SCRIPTICA_WIDGETS) {
+      root.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
+        '<h2>Alege un client</h2><p>Ecranul Acasă se configurează individual din profilul fiecărui client, nu din tipul său.</p>' +
+        '<a class="btn btn--primary" href="super-admin-clienti.html' + vq() + '">Vezi clienții</a></div>';
       return;
     }
-    markTipuriNavActive();
-    var layout = JSON.parse(JSON.stringify(ct.dashboardLayout || []));
-    var palette = window.SCRIPTICA_WIDGETS.paletteFor(ct);
+    markClientsNavActive();
+    var layout = JSON.parse(JSON.stringify(client.dashboardLayout || []));
+    var verticalIds = moduleAssignments(client, false).map(function (assignment) { return assignment.verticalId; });
+    var palette = window.SCRIPTICA_WIDGETS.paletteFor(ct, verticalIds, client);
     var dragIdx = null;
     var savedSnapshot = JSON.stringify(layout);
 
@@ -1546,7 +1623,7 @@
             '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-dwb-remove="' + i + '" title="Elimină widget-ul">' +
               '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
           '</div>' +
-          window.SCRIPTICA_WIDGETS.cardHtml(item, ct) +
+          window.SCRIPTICA_WIDGETS.cardHtml(item, ct, verticalIds, client) +
         '</div>';
       }).join('');
     }
@@ -1558,11 +1635,12 @@
     }
 
     root.innerHTML =
-      '<div class="sa-crumb"><a href="super-admin-tipuri-clienti-v2.html?view=superadmin&ct=' + encodeURIComponent(ct.id) + '">Tipuri de clienți</a> › ' + esc(ct.name) + ' › Ecranul Acasă</div>' +
-      '<header class="page-header"><h1 class="page-header__title">Ecranul Acasă — ' + esc(ct.name) + '</h1>' +
+      '<div class="sa-crumb"><a href="super-admin-clienti.html?view=superadmin">Clienți</a> › ' +
+        '<a href="super-admin-client.html?id=' + encodeURIComponent(client.id) + '&view=superadmin">' + esc(client.name) + '</a> › Ecranul Acasă</div>' +
+      '<header class="page-header"><h1 class="page-header__title">Ecranul Acasă — ' + esc(client.name) + '</h1>' +
         '<button class="btn btn--primary" type="button" id="dwb-save">Salvează layout-ul<span class="material-symbols-outlined" aria-hidden="true">save</span></button>' +
       '</header>' +
-      '<p class="sa-subtitle">Adaugă widget-uri din paletă și aranjează-le prin tragere sau cu săgețile. Clienții de tip „' + esc(ct.name) + '" primesc acest ecran pe Acasă. Paleta oferă doar conținutul acoperit de verticalele tipului.</p>' +
+      '<p class="sa-subtitle">Adaugă widget-uri și aranjează-le prin tragere sau cu săgețile. Paleta conține doar componentele disponibile pentru verticalele active ale acestui client.</p>' +
       '<div class="sa-dwb">' +
         '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Widget-uri disponibile</div><div data-dwb-palette></div></aside>' +
         '<div class="sa-dwb-preview"><div class="dw-grid" data-dwb-grid></div></div>' +
@@ -1570,13 +1648,12 @@
     draw();
 
     root.querySelector('#dwb-save').addEventListener('click', function () {
-      var current = clientTypeById(ct.id) || ct;
-      var upd = Object.assign({}, current, { dashboardLayout: layout });
-      if (upd.needsReview) upd.needsReview = Object.assign({}, upd.needsReview, { dashboard: false });
-      scripticaFlowSave('clientType', upd);
+      var current = clientById(client.id) || client;
+      var upd = Object.assign({}, current, { dashboardLayout: layout, dashboardLayoutVersion: 1 });
+      scripticaFlowSave('saClient', upd);
       savedSnapshot = JSON.stringify(layout);
       markDirty();
-      toast('success', 'Ecranul Acasă pentru „' + ct.name + '" a fost salvat.');
+      toast('success', 'Ecranul Acasă pentru „' + client.name + '" a fost salvat.');
     });
 
     root.addEventListener('click', function (e) {
@@ -1689,8 +1766,15 @@
     field.type = type;
     field.scope = 'onboarding_profile';
     field.sensitive = false;
+    field.showInTable = false;
+    field.showInExternalForm = true;
     Object.keys(props || {}).forEach(function (k) { field[k] = props[k]; });
     return field;
+  }
+
+  function markClientProfileDraftDirty(draft) {
+    draft.dirty = true;
+    draft.profileCustomized = true;
   }
 
   function clientProfileToolboxHtml() {
@@ -1772,7 +1856,12 @@
         fieldHtml('Text de ajutor', '<textarea class="input sa-cpf-prop-textarea" data-cpf-prop="help">' + esc(field.help || '') + '</textarea>') +
         '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="required"' + (field.required ? ' checked' : '') + '> Câmp obligatoriu</label>' +
         '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="sensitive"' + (field.sensitive ? ' checked' : '') + '> Date sensibile</label>' +
-        fieldHtml('Apare', '<select class="select" data-cpf-prop="scope"><option value="onboarding_profile"' + (field.scope === 'onboarding_profile' ? ' selected' : '') + '>La înrolare și în profil</option><option value="onboarding"' + (field.scope === 'onboarding' ? ' selected' : '') + '>Doar la înrolare</option><option value="profile"' + (field.scope === 'profile' ? ' selected' : '') + '>Doar în profil</option></select>');
+        fieldHtml('Apare', '<select class="select" data-cpf-prop="scope"><option value="onboarding_profile"' + (field.scope === 'onboarding_profile' ? ' selected' : '') + '>La înrolare și în profil</option><option value="onboarding"' + (field.scope === 'onboarding' ? ' selected' : '') + '>Doar la înrolare</option><option value="profile"' + (field.scope === 'profile' ? ' selected' : '') + '>Doar în profil</option></select>') +
+        '<div class="sa-cpf-visibility"><b>Vizibilitate</b>' +
+          '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="showInTable"' + (field.showInTable ? ' checked' : '') + '> Apare în tabel</label>' +
+          '<label class="checkbox sa-cpf-checkbox"><input type="checkbox" data-cpf-prop="showInExternalForm"' + (field.showInExternalForm !== false ? ' checked' : '') + '> Apare în formularul extern</label>' +
+          (field.sensitive && field.showInTable ? '<div class="sa-cpf-sensitive-warning"><span class="material-symbols-outlined" aria-hidden="true">warning</span>Datele sensibile vor fi vizibile tuturor utilizatorilor contului care pot vedea tabelul de beneficiari.</div>' : '') +
+        '</div>';
       if (field.type === 'dropdown') {
         html += fieldHtml('Opțiuni', '<textarea class="input sa-cpf-options" data-cpf-prop="options" aria-label="Câte o opțiune pe rând">' + esc((field.options || []).join('\n')) + '</textarea>', 'Câte o opțiune pe rând.');
       }
@@ -1808,7 +1897,7 @@
       var field = clientProfileField(type, null, {});
       var index = typeof at === 'number' ? at : draft.fields.length;
       draft.fields.splice(index, 0, field);
-      draft.dirty = true;
+      markClientProfileDraftDirty(draft);
       selectAndRender(field.id);
     }
     function fieldIndexFromEvent(e) {
@@ -1826,7 +1915,7 @@
       if (move && idx !== -1) {
         var to = idx + parseInt(move.getAttribute('data-cpf-move'), 10);
         if (to >= 0 && to < draft.fields.length) draft.fields.splice(to, 0, draft.fields.splice(idx, 1)[0]);
-        draft.dirty = true;
+        markClientProfileDraftDirty(draft);
       }
       var duplicate = e.target.closest('[data-cpf-duplicate]');
       if (duplicate && idx !== -1) {
@@ -1834,14 +1923,14 @@
         copy.id = 'cpf_custom_' + Date.now() + '_' + (++clientProfileFieldSeq);
         draft.fields.splice(idx + 1, 0, copy);
         draft.selectedFieldId = copy.id;
-        draft.dirty = true;
+        markClientProfileDraftDirty(draft);
       }
       var remove = e.target.closest('[data-cpf-delete]');
       if (remove) {
         var selectedIdx = idx !== -1 ? idx : draft.fields.findIndex(function (field) { return field.id === draft.selectedFieldId; });
         if (selectedIdx !== -1) draft.fields.splice(selectedIdx, 1);
         draft.selectedFieldId = draft.fields[Math.min(selectedIdx, draft.fields.length - 1)] ? draft.fields[Math.min(selectedIdx, draft.fields.length - 1)].id : null;
-        draft.dirty = true;
+        markClientProfileDraftDirty(draft);
       }
       if (item || move || duplicate || remove) renderClientProfileBuilder(modal, draft);
     });
@@ -1850,10 +1939,10 @@
       var prop = e.target.getAttribute('data-cpf-prop');
       var field = findClientProfileField(draft, draft.selectedFieldId);
       if (!prop || !field) return;
-      if (prop === 'required' || prop === 'sensitive') field[prop] = e.target.checked;
+      if (prop === 'required' || prop === 'sensitive' || prop === 'showInTable' || prop === 'showInExternalForm') field[prop] = e.target.checked;
       else if (prop === 'options') field.options = e.target.value.split('\n').map(function (v) { return v.trim(); }).filter(Boolean);
       else field[prop] = e.target.value;
-      draft.dirty = true;
+      markClientProfileDraftDirty(draft);
       var card = canvas.querySelector('[data-cpf-id="' + field.id + '"] [data-cpf-card-label]');
       if (card && (prop === 'label' || prop === 'text')) card.textContent = e.target.value || 'Fără etichetă';
     });
@@ -1891,7 +1980,7 @@
           if (from < targetIdx) targetIdx--;
           draft.fields.splice(targetIdx, 0, moved);
           draft.selectedFieldId = moved.id;
-          draft.dirty = true;
+          markClientProfileDraftDirty(draft);
         }
         renderClientProfileBuilder(modal, draft);
       }
@@ -1905,11 +1994,438 @@
     });
   }
 
+  /* Același builder este deschis din tipul de client, onboarding și profilul
+     unui cont existent. Contextul decide doar unde se salvează schema. */
+  function openBeneficiarySchemaEditor(options) {
+    var opts = options || {};
+    var initialSchema = opts.schema || { version: 1, fields: [] };
+    var draft = {
+      fields: deepCopy(initialSchema.fields || []), selectedFieldId: null,
+      dirty: false, profileCustomized: false, dragType: null, dragFieldId: null
+    };
+    if (draft.fields.length) draft.selectedFieldId = draft.fields[0].id;
+    var inheritedNote = opts.inherited
+      ? '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><span>Această schemă este moștenită. Salvarea creează o configurație proprie pentru contextul curent.</span></div>'
+      : '';
+    var resetButton = opts.defaultSchema
+      ? '<button class="btn btn--ghost" type="button" data-cpf-use-default><span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>' + esc(opts.defaultLabel || 'Pornește de la valorile implicite') + '</button>'
+      : '';
+    saModal({
+      title: opts.title || 'Profil beneficiari',
+      subtitle: opts.subtitle || 'Definește câmpurile suplimentare folosite pentru beneficiarii contului.',
+      wide: true,
+      dialogClass: 'sa-cpf-modal',
+      submitLabel: opts.submitLabel || 'Salvează profilul',
+      isDirty: function () { return draft.profileCustomized; },
+      bodyHtml: inheritedNote +
+        '<div class="sa-cpf-head"><div><b>Schema profilului</b><p>Definiția câmpului este separată de locurile în care apare.</p></div>' +
+          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-cpf-count>0 câmpuri</span>' + resetButton + '</div></div>' +
+        '<div class="sa-cpf-builder" data-cpf-builder>' +
+          '<aside class="sa-cpf-toolbox" aria-label="Componente disponibile">' + clientProfileToolboxHtml() + '</aside>' +
+          '<section class="sa-cpf-canvas-wrap" aria-label="Ordinea câmpurilor"><div class="sa-cpf-canvas-meta">Formular și profil</div><div class="sa-cpf-canvas" data-cpf-canvas></div></section>' +
+          '<aside class="sa-cpf-properties" aria-label="Proprietățile câmpului" data-cpf-properties></aside>' +
+        '</div><span class="form-error sa-cpf-error" data-cpf-error role="alert"></span>',
+      onOpen: function (modal) {
+        renderClientProfileBuilder(modal, draft);
+        bindClientProfileBuilder(modal, draft);
+        var reset = modal.querySelector('[data-cpf-use-default]');
+        if (reset) reset.addEventListener('click', function () {
+          draft.fields = deepCopy((opts.defaultSchema && opts.defaultSchema.fields) || []);
+          draft.selectedFieldId = draft.fields[0] ? draft.fields[0].id : null;
+          markClientProfileDraftDirty(draft);
+          renderClientProfileBuilder(modal, draft);
+        });
+      },
+      onSubmit: function (modal, close) {
+        var fields = draft.fields.filter(function (field) { return field.type !== 'section_title'; });
+        var invalid = fields.some(function (field) { return !String(field.label || '').trim(); });
+        var error = modal.querySelector('[data-cpf-error]');
+        error.textContent = !fields.length ? 'Adaugă cel puțin un câmp în profil.' : (invalid ? 'Toate câmpurile trebuie să aibă o etichetă.' : '');
+        error.style.display = error.textContent ? 'block' : '';
+        if (!fields.length || invalid) return;
+        var schema = {
+          id: (initialSchema && initialSchema.id) || ('cps_' + Date.now().toString(36)),
+          version: 1,
+          fields: deepCopy(draft.fields)
+        };
+        if (typeof opts.onSave === 'function') opts.onSave(schema);
+        close();
+      }
+    });
+  }
+
+  window.SCRIPTICA_BENEFICIARY_PROFILE_EDITOR = { open: openBeneficiarySchemaEditor };
+
+  function onboardingVerticalsHtml() {
+    var blocks = activeVerticals().map(function (vertical) {
+      var templateCount = templatesFor(vertical.id).filter(function (template) { return (template.status || 'activ') === 'activ'; }).length;
+      return '<label class="sa-module-option ' + (window.scripticaVerticalAccentClass ? window.scripticaVerticalAccentClass(vertical) : '') + '">' +
+        '<input type="checkbox" data-onboarding-vertical value="' + esc(vertical.id) + '">' +
+        '<span class="sa-module-option__icon"><span class="material-symbols-outlined" aria-hidden="true">' + esc(vertical.icon || 'account_tree') + '</span></span>' +
+        '<span class="sa-module-option__copy"><b>' + esc(vertical.name) + '</b><small>' + templateCount + (templateCount === 1 ? ' tip de flux' : ' tipuri de flux') + '</small></span>' +
+        '<span class="material-symbols-outlined sa-module-option__check" aria-hidden="true">check_circle</span>' +
+      '</label>';
+    }).join('');
+    return blocks || '<div class="empty-state"><p>Nu există verticale active în registru.</p></div>';
+  }
+
+  function onboardingAssignments(draft) {
+    return draft.selectedVerticalIds.map(function (verticalId) {
+      return {
+        id: 'mod_draft_' + verticalId,
+        verticalId: verticalId,
+        templateIds: templatesFor(verticalId).filter(function (template) {
+          return (template.status || 'activ') === 'activ';
+        }).map(function (template) { return template.id; }),
+        status: 'activ', activatedAt: null, deactivatedAt: null
+      };
+    });
+  }
+
+  function terminologyClientDraft(draft) {
+    return {
+      id: 'client_draft',
+      clientTypeId: draft.clientTypeId,
+      moduleAssignments: onboardingAssignments(draft),
+      terminologyOverrides: terminologyOverridesFromValues(draft.terminologyValues, draft.terminologyDefinitions),
+      terminologyVersion: 1
+    };
+  }
+
+  function terminologyDefinitions(client, includeInactive) {
+    var type = clientTypeById(client.clientTypeId) || {};
+    var external = {
+      singular: String(type.clientLabel || 'Client'),
+      plural: String(type.clientLabelPlural || 'Clienți')
+    };
+    var assignments = moduleAssignments(client, !!includeInactive);
+    var verticalDefs = assignments.map(function (assignment) {
+      var vertical = verticalById(assignment.verticalId);
+      if (!vertical) return null;
+      return {
+        id: vertical.id,
+        icon: vertical.icon || 'account_tree',
+        active: assignment.status === 'activ',
+        defaults: {
+          name: String(vertical.name || 'Verticală'),
+          itemLabel: String(vertical.itemLabel || 'Element'),
+          itemLabelPlural: String(vertical.itemLabelPlural || 'Elemente')
+        }
+      };
+    }).filter(Boolean);
+    var archive = typeof window.scripticaArchiveFolderDefinitionsForClient === 'function'
+      ? window.scripticaArchiveFolderDefinitionsForClient(client, !!includeInactive)
+      : [];
+    return { externalParty: external, verticals: verticalDefs, archiveFolders: archive };
+  }
+
+  function terminologyValuesFor(client, definitions, previous) {
+    var overrides = (client && client.terminologyOverrides) || {};
+    var externalOverrides = overrides.externalParty || {};
+    var verticalOverrides = overrides.verticals || {};
+    var archiveOverrides = overrides.archiveFolders || {};
+    var values = previous || { externalParty: {}, verticals: {}, archiveFolders: {} };
+    values.externalParty = values.externalParty || {};
+    if (values.externalParty.singular == null) values.externalParty.singular = externalOverrides.singular || definitions.externalParty.singular;
+    if (values.externalParty.plural == null) values.externalParty.plural = externalOverrides.plural || definitions.externalParty.plural;
+    values.verticals = values.verticals || {};
+    definitions.verticals.forEach(function (vertical) {
+      var own = verticalOverrides[vertical.id] || {};
+      if (!values.verticals[vertical.id]) values.verticals[vertical.id] = {};
+      ['name', 'itemLabel', 'itemLabelPlural'].forEach(function (key) {
+        if (values.verticals[vertical.id][key] == null) {
+          values.verticals[vertical.id][key] = own[key] || vertical.defaults[key];
+        }
+      });
+    });
+    values.archiveFolders = values.archiveFolders || {};
+    definitions.archiveFolders.forEach(function (folder) {
+      if (values.archiveFolders[folder.key] == null) {
+        values.archiveFolders[folder.key] = archiveOverrides[folder.key] || folder.defaultName;
+      }
+    });
+    return values;
+  }
+
+  function terminologyOverridesFromValues(values, definitions) {
+    if (!values || !definitions) return {};
+    var result = {};
+    var external = {};
+    ['singular', 'plural'].forEach(function (key) {
+      var value = String((values.externalParty && values.externalParty[key]) || '').trim();
+      if (value && value !== definitions.externalParty[key]) external[key] = value;
+    });
+    if (Object.keys(external).length) result.externalParty = external;
+    var verticalsResult = {};
+    definitions.verticals.forEach(function (vertical) {
+      var valuesForVertical = (values.verticals && values.verticals[vertical.id]) || {};
+      var own = {};
+      ['name', 'itemLabel', 'itemLabelPlural'].forEach(function (key) {
+        var value = String(valuesForVertical[key] || '').trim();
+        if (value && value !== vertical.defaults[key]) own[key] = value;
+      });
+      if (Object.keys(own).length) verticalsResult[vertical.id] = own;
+    });
+    if (Object.keys(verticalsResult).length) result.verticals = verticalsResult;
+    var archiveResult = {};
+    definitions.archiveFolders.forEach(function (folder) {
+      var value = String((values.archiveFolders && values.archiveFolders[folder.key]) || '').trim();
+      if (value && value !== folder.defaultName) archiveResult[folder.key] = value;
+    });
+    if (Object.keys(archiveResult).length) result.archiveFolders = archiveResult;
+    return result;
+  }
+
+  function terminologyInputHtml(label, kind, key, field, value, defaultValue) {
+    var id = 'term_' + slugify(kind + '_' + key + '_' + field);
+    return '<div class="form-field sa-term-field" data-term-field>' +
+      '<label class="form-label" for="' + esc(id) + '">' + esc(label) + '</label>' +
+      '<div class="sa-term-field__control"><input type="text" class="input" id="' + esc(id) + '" data-term-input data-term-kind="' + esc(kind) + '" data-term-key="' + esc(key) + '" data-term-prop="' + esc(field) + '" value="' + esc(value) + '" data-term-default="' + esc(defaultValue) + '">' +
+        '<button type="button" class="btn btn--ghost sa-term-reset" data-term-reset>Revino la denumirea implicită</button></div>' +
+      '<span class="form-error" role="alert"></span>' +
+    '</div>';
+  }
+
+  function terminologyEditorHtml(client, values, definitions) {
+    var verticalsHtml = definitions.verticals.length ? definitions.verticals.map(function (vertical) {
+      var current = values.verticals[vertical.id];
+      return '<article class="sa-term-card' + (vertical.active ? '' : ' is-inactive') + '">' +
+        '<header class="sa-term-card__head"><span class="material-symbols-outlined" aria-hidden="true">' + esc(vertical.icon) + '</span><b>' + esc(vertical.defaults.name) + '</b>' +
+          (!vertical.active ? '<span class="pill pill--neutral">Verticală inactivă</span>' : '') + '</header>' +
+        '<div class="sa-term-grid sa-term-grid--three">' +
+          terminologyInputHtml('Denumire verticală / navigație', 'vertical', vertical.id, 'name', current.name, vertical.defaults.name) +
+          terminologyInputHtml('Element de lucru — singular', 'vertical', vertical.id, 'itemLabel', current.itemLabel, vertical.defaults.itemLabel) +
+          terminologyInputHtml('Element de lucru — plural', 'vertical', vertical.id, 'itemLabelPlural', current.itemLabelPlural, vertical.defaults.itemLabelPlural) +
+        '</div></article>';
+    }).join('') : '<div class="sa-term-empty"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><span>Nicio verticală selectată. Terminologia verticalelor poate fi configurată după activarea lor.</span></div>';
+    var archiveHtml = definitions.archiveFolders.map(function (folder) {
+      var depthClass = folder.depth > 1 ? ' sa-term-folder--d2' : (folder.depth === 1 ? ' sa-term-folder--d1' : '');
+      return '<div class="sa-term-folder' + depthClass + (folder.inactive ? ' is-inactive' : '') + '">' +
+        '<div class="sa-term-folder__meta"><span class="material-symbols-outlined" aria-hidden="true">' + (folder.system ? 'inventory_2' : 'folder') + '</span><span>' +
+          (folder.system ? 'Folder de sistem' : folder.source === 'flowTemplate' ? 'Generat de flux' : folder.depth ? 'Subfolder moștenit' : 'Folder moștenit') + '</span>' +
+          (folder.inactive ? '<span class="pill pill--neutral">Verticală inactivă</span>' : '') + '</div>' +
+        terminologyInputHtml('Denumire folder', 'archive', folder.key, 'name', values.archiveFolders[folder.key], folder.defaultName) +
+      '</div>';
+    }).join('');
+    return '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span><b>Denumirile se aplică numai acestui cont.</b> Schimbi ce văd utilizatorii, fără să modifici verticalele comune, structura arhivei sau rutarea documentelor.</span></div>' +
+      '<div class="sa-term-editor">' +
+        '<section class="sa-term-section"><header><span class="material-symbols-outlined" aria-hidden="true">group</span><div><b>Partea externă</b><p>Moștenită din tipul de client.</p></div></header><div class="sa-term-grid">' +
+          terminologyInputHtml('Singular', 'external', 'party', 'singular', values.externalParty.singular, definitions.externalParty.singular) +
+          terminologyInputHtml('Plural', 'external', 'party', 'plural', values.externalParty.plural, definitions.externalParty.plural) +
+        '</div></section>' +
+        '<section class="sa-term-section"><header><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><div><b>Verticale și elemente de lucru</b><p>Denumirile implicite vin din registrul global.</p></div></header>' + verticalsHtml + '</section>' +
+        '<section class="sa-term-section"><header><span class="material-symbols-outlined" aria-hidden="true">folder_open</span><div><b>Folderele arhivei</b><p>Poți redenumi inclusiv „Necategorisit”; comportamentul de sistem rămâne neschimbat.</p></div></header><div class="sa-term-folders">' + archiveHtml + '</div></section>' +
+      '</div>';
+  }
+
+  function renderTerminologyEditor(host, client, state, includeInactive) {
+    state.terminologyDefinitions = terminologyDefinitions(client, includeInactive);
+    state.terminologyValues = terminologyValuesFor(client, state.terminologyDefinitions, state.terminologyValues);
+    host.innerHTML = terminologyEditorHtml(client, state.terminologyValues, state.terminologyDefinitions);
+  }
+
+  function setTerminologyValue(state, input, value) {
+    var kind = input.getAttribute('data-term-kind');
+    var key = input.getAttribute('data-term-key');
+    var prop = input.getAttribute('data-term-prop');
+    if (kind === 'external') state.terminologyValues.externalParty[prop] = value;
+    else if (kind === 'vertical') state.terminologyValues.verticals[key][prop] = value;
+    else state.terminologyValues.archiveFolders[key] = value;
+  }
+
+  function bindTerminologyEditor(host, state, onChange) {
+    host.addEventListener('input', function (e) {
+      var input = e.target.closest('[data-term-input]');
+      if (!input) return;
+      setTerminologyValue(state, input, input.value);
+      var field = input.closest('[data-term-field]');
+      if (field) { field.classList.remove('has-error'); field.querySelector('.form-error').textContent = ''; }
+      if (onChange) onChange();
+    });
+    host.addEventListener('click', function (e) {
+      var button = e.target.closest('[data-term-reset]');
+      if (!button) return;
+      var input = button.parentNode.querySelector('[data-term-input]');
+      input.value = input.getAttribute('data-term-default');
+      setTerminologyValue(state, input, input.value);
+      var field = input.closest('[data-term-field]');
+      if (field) { field.classList.remove('has-error'); field.querySelector('.form-error').textContent = ''; }
+      if (onChange) onChange();
+      input.focus();
+    });
+  }
+
+  function validateTerminologyEditor(host) {
+    var firstInvalid = null;
+    host.querySelectorAll('[data-term-input]').forEach(function (input) {
+      var invalid = !input.value.trim();
+      var field = input.closest('[data-term-field]');
+      field.classList.toggle('has-error', invalid);
+      field.querySelector('.form-error').textContent = invalid ? 'Denumirea este obligatorie.' : '';
+      if (invalid && !firstInvalid) firstInvalid = input;
+    });
+    if (firstInvalid) firstInvalid.focus();
+    return !firstInvalid;
+  }
+
+  function dashboardItemKey(item) {
+    var params = item.params && Object.keys(item.params).length ? item.params : null;
+    return item.widget + '|' + JSON.stringify(params);
+  }
+
+  function defaultClientDashboardLayout(verticalIds) {
+    var layout = verticalIds.map(function (verticalId, index) {
+      return {
+        id: 'dw_onb_vertical_' + index,
+        widget: 'flow_summary', params: { verticalId: verticalId }, size: 'half'
+      };
+    });
+    if (!verticalIds.length) return layout;
+    return layout.concat([
+      { id: 'dw_onb_termene', widget: 'termene', size: 'half' },
+      { id: 'dw_onb_clienti', widget: 'clienti', size: 'full' },
+      { id: 'dw_onb_arhiva', widget: 'arhiva_recente', params: {}, size: 'half' },
+      { id: 'dw_onb_notificari', widget: 'notificari', size: 'half' }
+    ]);
+  }
+
+  function syncOnboardingDashboard(draft) {
+    var selected = draft.selectedVerticalIds.slice();
+    if (!draft.dashboardInitialized) {
+      draft.dashboardLayout = defaultClientDashboardLayout(selected);
+      draft.dashboardInitialized = true;
+      return;
+    }
+    var domains = selected.map(function (verticalId) {
+      var vertical = verticalById(verticalId);
+      return vertical ? vertical.domain : null;
+    }).filter(Boolean);
+    draft.dashboardLayout = draft.dashboardLayout.filter(function (item) {
+      if (item.widget === 'flow_summary') {
+        return item.params && selected.indexOf(item.params.verticalId) !== -1;
+      }
+      if (item.widget === 'situatii_noi' || item.widget === 'alerte' || item.widget === 'mesaje') {
+        return domains.indexOf('contabil') !== -1;
+      }
+      if (item.widget === 'rapoarte_audit') return domains.indexOf('audit') !== -1;
+      return true;
+    });
+    selected.slice().reverse().forEach(function (verticalId) {
+      var exists = draft.dashboardLayout.some(function (item) {
+        return item.widget === 'flow_summary' && item.params && item.params.verticalId === verticalId;
+      });
+      if (!exists) {
+        draft.dashboardLayout.unshift({
+          id: 'dw_onb_vertical_' + verticalId,
+          widget: 'flow_summary', params: { verticalId: verticalId }, size: 'half'
+        });
+      }
+    });
+  }
+
+  function onboardingDashboardPreviewHtml(clientType, draft) {
+    if (!draft.dashboardLayout.length) {
+      return '<div class="sa-dwb-empty"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
+        '<b>Ecran Acasă gol</b><span>Adaugă o verticală în pasul anterior pentru a genera widget-urile sale.</span></div>';
+    }
+    return draft.dashboardLayout.map(function (item, index) {
+      return '<div class="sa-dwb-item' + (item.size === 'full' ? ' dw-card--full' : '') + '" data-onboarding-dashboard-index="' + index + '">' +
+        '<div class="sa-dwb-item__bar">' +
+          '<span class="material-symbols-outlined sa-dwb-item__grip" aria-hidden="true">drag_indicator</span>' +
+          '<span class="sa-dwb-item__hint">ordonează și dimensionează</span>' +
+          '<button type="button" class="sa-mini-btn" data-onboarding-dashboard-move="-1" data-i="' + index + '" aria-label="Mută widget-ul mai sus"' + (index === 0 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>' +
+          '<button type="button" class="sa-mini-btn" data-onboarding-dashboard-move="1" data-i="' + index + '" aria-label="Mută widget-ul mai jos"' + (index === draft.dashboardLayout.length - 1 ? ' disabled' : '') + '>' +
+            '<span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>' +
+          '<button type="button" class="sa-mini-btn" data-onboarding-dashboard-size="' + index + '" aria-label="' + (item.size === 'full' ? 'Micșorează widget-ul' : 'Extinde widget-ul pe tot rândul') + '">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">' + (item.size === 'full' ? 'collapse_content' : 'expand_content') + '</span></button>' +
+          '<button type="button" class="sa-mini-btn sa-mini-btn--danger" data-onboarding-dashboard-remove="' + index + '" aria-label="Elimină widget-ul">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
+        '</div>' +
+        window.SCRIPTICA_WIDGETS.cardHtml(item, clientType, draft.selectedVerticalIds, terminologyClientDraft(draft)) +
+      '</div>';
+    }).join('');
+  }
+
+  function renderOnboardingDashboard(modal, draft) {
+    var host = modal.querySelector('[data-onboarding-dashboard]');
+    var count = modal.querySelector('[data-onboarding-dashboard-count]');
+    var clientType = clientTypeById(modal.querySelector('[data-f="ctype"]').value);
+    if (!host || !clientType || !window.SCRIPTICA_WIDGETS) return;
+    syncOnboardingDashboard(draft);
+    if (!draft.selectedVerticalIds.length) {
+      host.innerHTML = '<div class="sa-onboarding-dashboard-empty">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>' +
+        '<div><b>Ecranul Acasă va rămâne gol</b><p>Clientul poate fi creat fără verticale. Revino la pasul anterior dacă vrei să îi configurezi acum verticalele și widget-urile.</p></div>' +
+      '</div>';
+      if (count) count.textContent = '0 widget-uri';
+      return;
+    }
+    var previewClient = terminologyClientDraft(draft);
+    var palette = window.SCRIPTICA_WIDGETS.paletteFor(clientType, draft.selectedVerticalIds, previewClient);
+    var placed = draft.dashboardLayout.map(dashboardItemKey);
+    var paletteHtml = palette.map(function (item, index) {
+      var key = item.widget + '|' + JSON.stringify(item.params && Object.keys(item.params).length ? item.params : null);
+      var isPlaced = placed.indexOf(key) !== -1;
+      return '<button type="button" class="sa-dwb-pal' + (isPlaced ? ' is-placed' : '') + '" data-onboarding-dashboard-add="' + index + '"' + (isPlaced ? ' disabled' : '') + '>' +
+        '<span class="material-symbols-outlined sa-dwb-pal__ico" aria-hidden="true">' + esc(item.icon) + '</span>' +
+        '<span class="sa-dwb-pal__main"><b>' + esc(item.label) + '</b><small>' + esc(item.desc) + '</small></span>' +
+        '<span class="material-symbols-outlined sa-dwb-pal__add" aria-hidden="true">' + (isPlaced ? 'check' : 'add') + '</span>' +
+      '</button>';
+    }).join('');
+    host.innerHTML = '<div class="sa-dwb sa-dwb--onboarding">' +
+      '<aside class="sa-dwb-palette"><div class="sa-dwb-palette__title">Widget-uri disponibile</div><div data-onboarding-dashboard-palette>' + paletteHtml + '</div></aside>' +
+      '<div class="sa-dwb-preview"><div class="dw-grid" data-onboarding-dashboard-grid>' + onboardingDashboardPreviewHtml(clientType, draft) + '</div></div>' +
+    '</div>';
+    if (count) count.textContent = draft.dashboardLayout.length + (draft.dashboardLayout.length === 1 ? ' widget' : ' widget-uri');
+  }
+
+  function bindOnboardingDashboard(modal, draft) {
+    var host = modal.querySelector('[data-onboarding-dashboard]');
+    if (!host) return;
+    host.addEventListener('click', function (e) {
+      var clientType = clientTypeById(modal.querySelector('[data-f="ctype"]').value);
+      var palette = clientType && window.SCRIPTICA_WIDGETS
+        ? window.SCRIPTICA_WIDGETS.paletteFor(clientType, draft.selectedVerticalIds, terminologyClientDraft(draft)) : [];
+      var button;
+      if ((button = e.target.closest('[data-onboarding-dashboard-add]'))) {
+        var entry = palette[parseInt(button.getAttribute('data-onboarding-dashboard-add'), 10)];
+        if (!entry) return;
+        draft.dashboardLayout.push({
+          id: 'dw_onb_' + Date.now().toString(36) + '_' + draft.dashboardLayout.length,
+          widget: entry.widget,
+          params: entry.params && Object.keys(entry.params).length ? deepCopy(entry.params) : undefined,
+          size: entry.widget === 'clienti' ? 'full' : 'half'
+        });
+      } else if ((button = e.target.closest('[data-onboarding-dashboard-move]'))) {
+        var from = parseInt(button.getAttribute('data-i'), 10);
+        var to = from + parseInt(button.getAttribute('data-onboarding-dashboard-move'), 10);
+        if (to < 0 || to >= draft.dashboardLayout.length) return;
+        var moved = draft.dashboardLayout.splice(from, 1)[0];
+        draft.dashboardLayout.splice(to, 0, moved);
+      } else if ((button = e.target.closest('[data-onboarding-dashboard-size]'))) {
+        var sizeIndex = parseInt(button.getAttribute('data-onboarding-dashboard-size'), 10);
+        draft.dashboardLayout[sizeIndex].size = draft.dashboardLayout[sizeIndex].size === 'full' ? 'half' : 'full';
+      } else if ((button = e.target.closest('[data-onboarding-dashboard-remove]'))) {
+        draft.dashboardLayout.splice(parseInt(button.getAttribute('data-onboarding-dashboard-remove'), 10), 1);
+      } else return;
+      draft.dashboardTouched = true;
+      draft.dirty = true;
+      renderOnboardingDashboard(modal, draft);
+    });
+  }
+
   function newClientModalBody(ctOptions) {
     return '<div class="sa-onboarding-progress" aria-label="Pașii creării contului">' +
         '<div class="sa-onboarding-progress__step is-active" data-onboarding-progress="1"><span>1</span><div><b>Contul de business</b><small>Identitate și plan</small></div></div>' +
         '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
         '<div class="sa-onboarding-progress__step" data-onboarding-progress="2"><span>2</span><div><b>Formularul de înrolare</b><small>Datele clienților săi</small></div></div>' +
+        '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
+        '<div class="sa-onboarding-progress__step" data-onboarding-progress="3"><span>3</span><div><b>Verticalele clientului</b><small>Domeniile contractate</small></div></div>' +
+        '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
+        '<div class="sa-onboarding-progress__step" data-onboarding-progress="4"><span>4</span><div><b>Terminologie și arhivă</b><small>Denumiri per cont</small></div></div>' +
+        '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' +
+        '<div class="sa-onboarding-progress__step" data-onboarding-progress="5"><span>5</span><div><b>Ecranul Acasă</b><small>Widget-uri și ordine</small></div></div>' +
       '</div>' +
       '<section class="sa-onboarding-step" data-onboarding-step="1">' +
         fieldHtml('Denumire firmă', '<input type="text" class="input" data-f="name" placeholder="ex. FiscalPro S.R.L.">', null, 'nume') +
@@ -1926,6 +2442,24 @@
           '<aside class="sa-cpf-properties" aria-label="Proprietățile câmpului" data-cpf-properties></aside>' +
         '</div>' +
         '<span class="form-error sa-cpf-error" data-cpf-error role="alert"></span>' +
+      '</section>' +
+      '<section class="sa-onboarding-step" data-onboarding-step="3" hidden>' +
+        '<div class="sa-cpf-head"><div><b>Alege verticalele disponibile în cont</b><p>Fiecare verticală aduce tipurile sale de flux în navigație, Acasă și Arhivă.</p></div>' +
+          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-onboarding-vertical-count>0 selectate</span></div></div>' +
+        '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>' +
+          'Selectarea este opțională. Contul poate fi creat fără verticale și configurat ulterior, fără să schimbi categoria clientului.</span></div>' +
+        '<div class="sa-module-options" data-onboarding-verticals>' + onboardingVerticalsHtml() + '</div>' +
+      '</section>' +
+      '<section class="sa-onboarding-step" data-onboarding-step="4" hidden>' +
+        '<div class="sa-cpf-head"><div><b>Adaptează denumirile pentru acest cont</b><p>Valorile sunt precompletate din tipul de client și verticalele selectate.</p></div></div>' +
+        '<div data-onboarding-terminology></div>' +
+      '</section>' +
+      '<section class="sa-onboarding-step" data-onboarding-step="5" hidden>' +
+        '<div class="sa-cpf-head"><div><b>Configurează ecranul Acasă al clientului</b><p>Layout-ul pornește automat de la verticalele selectate și poate fi ajustat acum.</p></div>' +
+          '<div class="sa-cpf-head__actions"><span class="pill pill--neutral" data-onboarding-dashboard-count>0 widget-uri</span></div></div>' +
+        '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>' +
+          'Această configurație aparține exclusiv clientului. Dezactivarea unei verticale îi ascunde widget-urile fără să șteargă layout-ul salvat.</span></div>' +
+        '<div class="sa-onboarding-dashboard" data-onboarding-dashboard></div>' +
       '</section>';
   }
 
@@ -1933,7 +2467,13 @@
     var ctOptions = clientTypesAll().map(function (t) {
       return '<option value="' + esc(t.id) + '"' + (t.id === preferredTypeId ? ' selected' : '') + '>' + esc(t.name) + '</option>';
     }).join('');
-    var draft = { step: 1, fields: [], selectedFieldId: null, clientTypeId: '', dirty: false, dragType: null, dragFieldId: null };
+    var draft = {
+      step: 1, fields: [], selectedFieldId: null, clientTypeId: '', selectedVerticalIds: [],
+      profileInitialized: false, profileTypeId: '', profileCustomized: false,
+      dashboardLayout: [], dashboardInitialized: false, dashboardTouched: false,
+      terminologyValues: null, terminologyDefinitions: null,
+      dirty: false, dragType: null, dragFieldId: null
+    };
     saModal({
       title: 'Cont de business nou',
       subtitle: 'Definește contul care intră în Scriptica.',
@@ -1963,7 +2503,10 @@
 
         function showStep(step) {
           draft.step = step;
-          shell.classList.toggle('is-builder-step', step === 2);
+          shell.classList.toggle('is-builder-step', step === 2 || step === 4 || step === 5);
+          shell.classList.toggle('is-verticals-step', step === 3);
+          shell.classList.toggle('is-terminology-step', step === 4);
+          shell.classList.toggle('is-dashboard-step', step === 5);
           m.querySelectorAll('[data-onboarding-step]').forEach(function (section) { section.hidden = section.getAttribute('data-onboarding-step') !== String(step); });
           m.querySelectorAll('[data-onboarding-progress]').forEach(function (item) {
             var n = parseInt(item.getAttribute('data-onboarding-progress'), 10);
@@ -1972,14 +2515,58 @@
           });
           back.hidden = step === 1;
           cancel.textContent = step === 1 ? 'Anulează' : 'Renunță';
-          submit.innerHTML = step === 1 ? 'Continuă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' : 'Creează contul<span class="material-symbols-outlined" aria-hidden="true">check</span>';
-          subtitle.textContent = step === 1 ? 'Definește contul care intră în Scriptica.' : 'Configurează datele cerute la înrolarea clienților săi.';
-          helper.textContent = step === 1 ? 'Contul se creează după configurarea ambilor pași.' : 'Formularul poate fi ajustat ulterior din profilul contului.';
+          submit.innerHTML = step < 5 ? 'Continuă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>' : 'Creează contul<span class="material-symbols-outlined" aria-hidden="true">check</span>';
+          subtitle.textContent = step === 1 ? 'Definește contul care intră în Scriptica.' :
+            (step === 2 ? 'Configurează datele cerute la înrolarea clienților săi.' :
+              (step === 3 ? 'Alege verticalele contractate de acest client.' :
+                (step === 4 ? 'Adaptează denumirile folosite numai în acest cont.' : 'Compune ecranul Acasă al acestui client.')));
+          helper.textContent = step === 1 ? 'Contul se creează după configurarea celor cinci pași.' :
+            (step === 2 ? 'Formularul poate fi ajustat ulterior din profilul contului.' :
+              (step === 3 ? 'Verticalele pot fi activate sau dezactivate ulterior din profilul clientului.' :
+                (step === 4 ? 'Redenumirea nu schimbă rutarea sau structura arhivei.' : 'Layout-ul poate fi modificat ulterior din profilul clientului.')));
+          var modalBody = m.querySelector('.modal__body');
+          if (modalBody) modalBody.scrollTop = 0;
           if (step === 2) {
+            if (!draft.profileInitialized || draft.profileTypeId !== draft.clientTypeId) {
+              var inheritedProfile = typeof window.scripticaEffectiveBeneficiaryProfileSchema === 'function'
+                ? window.scripticaEffectiveBeneficiaryProfileSchema({ clientTypeId: draft.clientTypeId })
+                : { fields: [] };
+              draft.fields = deepCopy(inheritedProfile.fields || []);
+              draft.selectedFieldId = draft.fields[0] ? draft.fields[0].id : null;
+              draft.profileInitialized = true;
+              draft.profileTypeId = draft.clientTypeId;
+              draft.profileCustomized = false;
+            }
             renderClientProfileBuilder(m, draft);
             window.setTimeout(function () {
               var first = m.querySelector('[data-cpf-add]');
               if (first) first.focus();
+            }, 0);
+          } else if (step === 3) {
+            window.setTimeout(function () {
+              var firstVertical = m.querySelector('[data-onboarding-vertical]');
+              if (firstVertical) firstVertical.focus();
+              else submit.focus();
+            }, 0);
+          } else if (step === 4) {
+            var terminologyHost = m.querySelector('[data-onboarding-terminology]');
+            var terminologyClient = {
+              clientTypeId: draft.clientTypeId,
+              moduleAssignments: onboardingAssignments(draft),
+              terminologyOverrides: terminologyOverridesFromValues(draft.terminologyValues, draft.terminologyDefinitions)
+            };
+            renderTerminologyEditor(terminologyHost, terminologyClient, draft, false);
+            window.setTimeout(function () {
+              var firstTerm = terminologyHost.querySelector('[data-term-input]');
+              if (firstTerm) firstTerm.focus();
+              else submit.focus();
+            }, 0);
+          } else if (step === 5) {
+            renderOnboardingDashboard(m, draft);
+            window.setTimeout(function () {
+              var firstWidget = m.querySelector('[data-onboarding-dashboard-add]:not(:disabled)');
+              if (firstWidget) firstWidget.focus({ preventScroll: true });
+              else submit.focus();
             }, 0);
           }
         }
@@ -1988,15 +2575,33 @@
           var t = clientTypeById(sel.value);
           if (!t) { prev.innerHTML = ''; return; }
           prev.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">category</span>' +
-            'Categoria <b>' + esc(t.name) + '</b> descrie organizația. Contul se creează fără module; verticalele contractate se activează apoi din profilul lui.';
+            'Categoria <b>' + esc(t.name) + '</b> descrie organizația. Verticalele contractate se aleg separat în pasul 3.';
         }
         sel.addEventListener('change', updatePreview);
+        sel.addEventListener('change', function () {
+          draft.clientTypeId = sel.value;
+          draft.profileInitialized = false;
+          draft.profileCustomized = false;
+          draft.terminologyValues = null;
+          draft.terminologyDefinitions = null;
+        });
         m.querySelectorAll('[data-onboarding-step="1"] input, [data-onboarding-step="1"] select').forEach(function (control) {
           control.addEventListener('input', function () { draft.dirty = true; });
           control.addEventListener('change', function () { draft.dirty = true; });
         });
-        back.addEventListener('click', function () { showStep(1); });
+        m.querySelectorAll('[data-onboarding-vertical]').forEach(function (checkbox) {
+          checkbox.addEventListener('change', function () {
+            draft.selectedVerticalIds = Array.prototype.map.call(m.querySelectorAll('[data-onboarding-vertical]:checked'), function (input) { return input.value; });
+            var count = m.querySelector('[data-onboarding-vertical-count]');
+            if (count) count.textContent = draft.selectedVerticalIds.length + (draft.selectedVerticalIds.length === 1 ? ' selectată' : ' selectate');
+            draft.terminologyDefinitions = null;
+            draft.dirty = true;
+          });
+        });
+        back.addEventListener('click', function () { showStep(Math.max(1, draft.step - 1)); });
         bindClientProfileBuilder(m, draft);
+        bindTerminologyEditor(m.querySelector('[data-onboarding-terminology]'), draft, function () { draft.dirty = true; });
+        bindOnboardingDashboard(m, draft);
         updatePreview();
         showStep(1);
       },
@@ -2015,21 +2620,54 @@
           draft.showStep(2);
           return;
         }
-        var inputFields = draft.fields.filter(function (field) { return field.type !== 'section_title'; });
-        var builderError = m.querySelector('[data-cpf-error]');
-        if (!inputFields.length) {
-          builderError.textContent = 'Adaugă cel puțin un câmp în formularul de înrolare.';
-          builderError.style.display = 'block';
+        if (draft.step === 2) {
+          var inputFields = draft.fields.filter(function (field) { return field.type !== 'section_title'; });
+          var unnamedFields = inputFields.some(function (field) { return !String(field.label || '').trim(); });
+          var builderError = m.querySelector('[data-cpf-error]');
+          if (!inputFields.length) {
+            builderError.textContent = 'Adaugă cel puțin un câmp în formularul de înrolare.';
+            builderError.style.display = 'block';
+            return;
+          }
+          if (unnamedFields) {
+            builderError.textContent = 'Toate câmpurile trebuie să aibă o etichetă.';
+            builderError.style.display = 'block';
+            return;
+          }
+          builderError.textContent = '';
+          builderError.style.display = '';
+          draft.showStep(3);
           return;
         }
-        builderError.textContent = '';
-        builderError.style.display = '';
+        if (draft.step === 3) {
+          draft.showStep(4);
+          return;
+        }
+        if (draft.step === 4) {
+          if (!validateTerminologyEditor(m.querySelector('[data-onboarding-terminology]'))) return;
+          draft.showStep(5);
+          return;
+        }
         var tier = m.querySelector('[data-f="tier"]').value;
-        var hasAudit = false;
         var recordId = uid('cli', name, clients());
+        var assignments = draft.selectedVerticalIds.map(function (verticalId) {
+          return {
+            id: 'mod_' + recordId + '_' + verticalId,
+            verticalId: verticalId,
+            templateIds: templatesFor(verticalId).filter(function (template) { return (template.status || 'activ') === 'activ'; }).map(function (template) { return template.id; }),
+            status: 'activ', activatedAt: '2026-04-20', deactivatedAt: null
+          };
+        });
+        var hasAudit = draft.selectedVerticalIds.indexOf('vert_audit') !== -1;
         var rec = {
           id: recordId, name: name, domain: t.name, clientTypeId: t.id,
-          moduleAssignments: [], moduleAssignmentsVersion: 1,
+          moduleAssignments: assignments, moduleAssignmentsVersion: 1,
+          terminologyOverrides: terminologyOverridesFromValues(draft.terminologyValues, draft.terminologyDefinitions),
+          terminologyVersion: 1,
+          dashboardLayout: draft.dashboardLayout.map(function (item, index) {
+            return Object.assign({}, deepCopy(item), { id: 'dw_' + recordId + '_' + index });
+          }),
+          dashboardLayoutVersion: 1,
           instance: slugify(name).replace(/_/g, '') + '.scriptica.ro',
           users: 1, enrolled: '20.04.2026', tier: tier, contract: 'activ', aiLoad: 5,
           commercial: {
@@ -2044,25 +2682,26 @@
             { name: 'Vertical Audit', tier: 'Enterprise', on: hasAudit },
             { name: 'Backup local', tier: 'Plus · add-on', on: false }
           ],
-          clientProfileSchema: {
-            id: 'cps_' + recordId,
-            version: 1,
-            sourceClientTypeId: t.id,
-            configuredAt: '20.04.2026',
-            fields: deepCopy(draft.fields)
-          },
           technical: { vmLoad: [4, 6, 5, 9, 7, 6, 4, 3], vmPeakIdx: 3, aiPerMonth: '0', docsStored: '0', uptime30: 100, lastIncident: '—' },
           downtime: { incidents: [] }
         };
+        if (draft.profileCustomized) {
+          rec.clientProfileSchema = {
+            id: 'cps_' + recordId, version: 1, sourceClientTypeId: t.id,
+            configuredAt: '20.04.2026', fields: deepCopy(draft.fields)
+          };
+        }
         scripticaFlowSave('saClient', rec);
         close();
-        toast('success', 'Contul „' + name + '” a fost creat. Modulele pot fi activate acum din profilul clientului.');
+        toast('success', draft.selectedVerticalIds.length
+          ? 'Contul „' + name + '” a fost creat cu ' + draft.selectedVerticalIds.length + (draft.selectedVerticalIds.length === 1 ? ' verticală activă.' : ' verticale active.')
+          : 'Contul „' + name + '” a fost creat fără verticale. Acestea pot fi activate ulterior.');
         renderClients(root);
       }
     });
   }
 
-  /* Modulele contractate aparțin clientului, nu categoriei sale. O asignare
+  /* Verticalele contractate aparțin clientului, nu categoriei sale. O asignare
      inactivă rămâne în record ca istoric și poate fi reactivată fără pierderi. */
   function provisionedFlowsHtml(c) {
     var t = clientTypeById(c.clientTypeId);
@@ -2072,25 +2711,145 @@
     var inner = assignments.map(function (assignment) {
       var v = verticalById(assignment.verticalId);
       if (!v) return '';
+      var effective = typeof window.scripticaEffectiveVertical === 'function' ? window.scripticaEffectiveVertical(v, c) : v;
       var tpls = (assignment.templateIds || []).map(templateById).filter(Boolean);
       var active = assignment.status === 'activ';
       return '<div class="sa-prov-vert' + (active ? '' : ' is-inactive') + '">' +
-        '<div class="sa-prov-vert__head"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(v.name) +
-          '<span class="pill ' + (active ? 'pill--success' : 'pill--neutral') + '">' + (active ? 'Activ' : 'Inactiv') + '</span></div>' +
+        '<div class="sa-prov-vert__head"><span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' + esc(effective.name) +
+          '<span class="pill ' + (active ? 'pill--success' : 'pill--neutral') + '">' + (active ? 'Activ' : 'Inactiv') + '</span>' +
+          '<a class="btn btn--ghost sa-prov-vert__table" href="super-admin-tabel.html?vertical=' + encodeURIComponent(v.id) + '&client=' + encodeURIComponent(c.id) + '&view=superadmin">Configurează tabelul<span class="material-symbols-outlined" aria-hidden="true">view_column</span></a></div>' +
         '<ul class="sa-ct-tpllist">' + tpls.map(function (x) { return '<li>' + esc(x.name) + ' <small>(' + esc(x.frequency) + ')</small></li>'; }).join('') + '</ul>' +
-        (!active ? '<div class="sa-module-history"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>Datele și arhiva modulului sunt păstrate.</div>' : '') +
+        (!active ? '<div class="sa-module-history"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>Datele, arhiva și widget-urile verticalei sunt păstrate.</div>' : '') +
       '</div>';
     }).join('');
     return '<div class="sa-sec">' +
-      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">extension</span>Modulele clientului' +
-        '<button class="btn btn--secondary sa-sec__action" type="button" data-manage-modules>Gestionează modulele</button></div>' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Verticalele clientului' +
+        '<button class="btn btn--secondary sa-sec__action" type="button" data-manage-modules>Gestionează verticalele</button></div>' +
       kv('Tip client', ctPill(c.clientTypeId)) +
-      '<div class="sa-module-summary"><b>' + activeCount + '</b> ' + (activeCount === 1 ? 'modul activ' : 'module active') + '</div>' +
-      (inner || '<div class="sa-module-empty"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><b>Niciun modul activat</b><span>Clientul există și poate fi configurat mai târziu.</span></div>') +
+      '<div class="sa-module-summary"><b>' + activeCount + '</b> ' + (activeCount === 1 ? 'verticală activă' : 'verticale active') + '</div>' +
+      (inner || '<div class="sa-module-empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><b>Nicio verticală activată</b><span>Clientul există și poate fi configurat mai târziu.</span></div>') +
       '<div class="sa-dt-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-        'Dezactivarea ascunde modulul din lucru, dar nu șterge fluxurile, documentele sau arhiva lui.</div>' +
+        'Dezactivarea ascunde verticala din lucru, dar nu șterge fluxurile, documentele, arhiva sau configurația ei de pe Acasă.</div>' +
       '<button class="btn btn--ghost" type="button" data-change-ct>Schimbă categoria clientului</button>' +
     '</div>';
+  }
+
+  function clientDashboardHtml(c) {
+    var count = Array.isArray(c.dashboardLayout) ? c.dashboardLayout.length : 0;
+    return '<div class="sa-sec">' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">space_dashboard</span>Ecranul Acasă' +
+        '<a class="btn btn--secondary sa-sec__action" href="super-admin-dashboard.html?client=' + encodeURIComponent(c.id) + '&view=superadmin">Configurează Acasă</a></div>' +
+      '<div class="sa-module-summary"><b>' + count + '</b> ' + (count === 1 ? 'widget configurat' : 'widget-uri configurate') + '</div>' +
+      '<div class="sa-dt-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
+        'Layout-ul aparține acestui client. Widget-urile verticalelor inactive rămân salvate, dar sunt ascunse.</div>' +
+    '</div>';
+  }
+
+  function clientProfileHtml(c) {
+    var schema = typeof window.scripticaEffectiveBeneficiaryProfileSchema === 'function'
+      ? window.scripticaEffectiveBeneficiaryProfileSchema(c) : { fields: [], inherited: true };
+    var fields = (schema.fields || []).filter(function (field) { return field.type !== 'section_title'; });
+    var tableCount = fields.filter(function (field) { return !!field.showInTable; }).length;
+    var externalCount = fields.filter(function (field) { return field.showInExternalForm !== false; }).length;
+    return '<div class="sa-sec">' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">badge</span>Profil beneficiari</div>' +
+      '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">' + (schema.inherited ? 'account_tree' : 'tune') + '</span><span>' +
+        (schema.inherited ? 'Moștenește schema tipului de client până la prima personalizare.' : 'Configurație proprie acestui cont de business.') + '</span></div>' +
+      '<div class="sa-profile-summary"><span><b>' + fields.length + '</b> câmpuri</span><span><b>' + tableCount + '</b> în tabel</span><span><b>' + externalCount + '</b> în formularul extern</span></div>' +
+      '<div class="sa-sec__actions">' +
+        '<button class="btn btn--secondary" type="button" data-manage-beneficiary-profile>Configurează profilul<span class="material-symbols-outlined" aria-hidden="true">tune</span></button>' +
+        '<button class="btn btn--ghost" type="button" data-preview-beneficiary-form>Previzualizează formularul extern<span class="material-symbols-outlined" aria-hidden="true">visibility</span></button>' +
+        (!schema.inherited ? '<button class="btn btn--ghost" type="button" data-reset-beneficiary-profile>Revino la profilul tipului<span class="material-symbols-outlined" aria-hidden="true">restart_alt</span></button>' : '') +
+      '</div></div>';
+  }
+
+  function openClientBeneficiaryProfile(root, c) {
+    if (!window.SCRIPTICA_BENEFICIARY_PROFILE_EDITOR || typeof window.scripticaEffectiveBeneficiaryProfileSchema !== 'function') return;
+    var schema = window.scripticaEffectiveBeneficiaryProfileSchema(c);
+    var type = clientTypeById(c.clientTypeId);
+    var typeSchema = type && type.clientProfileSchema
+      ? deepCopy(type.clientProfileSchema)
+      : (typeof window.scripticaDefaultBeneficiaryProfileSchema === 'function' ? window.scripticaDefaultBeneficiaryProfileSchema(type) : { version: 1, fields: [] });
+    window.SCRIPTICA_BENEFICIARY_PROFILE_EDITOR.open({
+      title: 'Profil beneficiari — ' + c.name,
+      subtitle: 'Configurația este comună tuturor utilizatorilor acestui cont.',
+      schema: schema,
+      inherited: !!schema.inherited,
+      defaultSchema: typeSchema,
+      defaultLabel: 'Reîncarcă profilul tipului',
+      onSave: function (savedSchema) {
+        var current = clientById(c.id) || c;
+        savedSchema.sourceClientTypeId = c.clientTypeId;
+        savedSchema.configuredAt = '20.04.2026';
+        scripticaFlowSave('saClient', Object.assign({}, current, { clientProfileSchema: savedSchema }));
+        toast('success', 'Profilul beneficiarilor pentru „' + c.name + '” a fost salvat.');
+        renderClientDetail(root);
+      }
+    });
+  }
+
+  function openBeneficiaryExternalPreview(c) {
+    if (!window.SCRIPTICA_BENEFICIARY_PROFILE || typeof window.scripticaEffectiveBeneficiaryProfileSchema !== 'function') return;
+    var schema = window.scripticaEffectiveBeneficiaryProfileSchema(c);
+    var party = typeof window.scripticaEffectiveExternalParty === 'function' ? window.scripticaEffectiveExternalParty(c) : { singular: 'Beneficiar' };
+    saModal({
+      title: 'Formular extern — ' + party.singular,
+      subtitle: 'Previzualizare pentru ' + c.name + ' · fără autentificare sau trimitere reală.',
+      wide: true,
+      submitLabel: 'Închide previzualizarea',
+      bodyHtml: '<div class="sa-external-preview"><div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">visibility</span><span>Aceleași câmpuri și aceleași reguli sunt folosite în formularul intern „' + esc(party.singular) + ' nou”.</span></div><div data-beneficiary-external-preview></div></div>',
+      onOpen: function (modal) {
+        window.SCRIPTICA_BENEFICIARY_PROFILE.renderInto(modal.querySelector('[data-beneficiary-external-preview]'), schema, {}, {
+          scope: 'external', idPrefix: 'external_preview', onChange: function () {}
+        });
+      },
+      onSubmit: function (modal, close) { close(); }
+    });
+  }
+
+  function clientTerminologyHtml(c) {
+    var overrides = c.terminologyOverrides || {};
+    var count = Object.keys(overrides.externalParty || {}).length + Object.keys(overrides.archiveFolders || {}).length;
+    Object.keys(overrides.verticals || {}).forEach(function (verticalId) {
+      count += Object.keys(overrides.verticals[verticalId] || {}).length;
+    });
+    return '<div class="sa-sec">' +
+      '<div class="sa-sec__h"><span class="material-symbols-outlined" aria-hidden="true">translate</span>Terminologie și arhivă' +
+        '<button class="btn btn--secondary sa-sec__action" type="button" data-manage-terminology>Configurează denumirile</button></div>' +
+      '<div class="sa-module-summary"><b>' + count + '</b> ' + (count === 1 ? 'denumire personalizată' : 'denumiri personalizate') + '</div>' +
+      '<div class="sa-dt-hint"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
+        'Denumirile aparțin exclusiv acestui cont. Folderele pot fi redenumite fără să se schimbe structura sau rutarea documentelor.</div>' +
+    '</div>';
+  }
+
+  function openTerminologyModal(root, c) {
+    var state = { terminologyValues: null, terminologyDefinitions: null, dirty: false };
+    saModal({
+      title: 'Terminologie și arhivă',
+      subtitle: c.name,
+      wide: true,
+      bodyHtml: '<div data-client-terminology></div>',
+      submitLabel: 'Salvează denumirile',
+      isDirty: function () { return state.dirty; },
+      onOpen: function (m) {
+        var host = m.querySelector('[data-client-terminology]');
+        renderTerminologyEditor(host, c, state, true);
+        bindTerminologyEditor(host, state, function () { state.dirty = true; });
+      },
+      onSubmit: function (m, close) {
+        var host = m.querySelector('[data-client-terminology]');
+        if (!validateTerminologyEditor(host)) return;
+        var current = clientById(c.id) || c;
+        scripticaFlowSave('saClient', Object.assign({}, current, {
+          terminologyOverrides: terminologyOverridesFromValues(state.terminologyValues, state.terminologyDefinitions),
+          terminologyVersion: 1
+        }));
+        state.dirty = false;
+        close();
+        toast('success', 'Terminologia și denumirile arhivei pentru „' + c.name + '” au fost salvate.');
+        renderClientDetail(root);
+      }
+    });
   }
 
   function openModuleManagerModal(root, c) {
@@ -2108,13 +2867,13 @@
       '</label>';
     }).join('');
     saModal({
-      title: 'Modulele clientului',
+      title: 'Verticalele clientului',
       subtitle: c.name,
       wide: true,
       bodyHtml: '<div class="sa-module-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>' +
-        '<b>Modulele corespund verticalelor din registrul de fluxuri.</b> Dezactivarea lor ascunde activitatea curentă, dar păstrează integral istoricul și arhiva.</span></div>' +
+        '<b>Verticalele provin din registrul global de fluxuri.</b> Dezactivarea lor ascunde activitatea curentă, dar păstrează integral istoricul, arhiva și configurația Acasă.</span></div>' +
         '<div class="sa-module-options">' + (blocks || '<div class="empty-state"><p>Nu există verticale active în registru.</p></div>') + '</div>',
-      submitLabel: 'Salvează modulele',
+      submitLabel: 'Salvează verticalele',
       onSubmit: function (m, close) {
         var selectedIds = Array.prototype.map.call(m.querySelectorAll('[data-module-vertical]:checked'), function (input) { return input.value; });
         var updated = current.map(function (assignment) {
@@ -2143,7 +2902,7 @@
           moduleAssignments: updated, moduleAssignmentsVersion: 1, flags: updatedFlags
         }));
         close();
-        toast('success', 'Modulele clientului au fost actualizate. Istoricul modulelor inactive rămâne păstrat.');
+        toast('success', 'Verticalele clientului au fost actualizate. Istoricul verticalelor inactive rămâne păstrat.');
         renderClientDetail(root);
       }
     });
@@ -2157,7 +2916,7 @@
       title: 'Schimbă tipul clientului',
       subtitle: c.name,
       bodyHtml: fieldHtml('Tip de client', '<select class="select" data-f="ctype">' + opts + '</select>',
-        'Categoria descrie organizația. Modulele active și istoricul lor nu se modifică.'),
+        'Categoria descrie organizația. Verticalele active și istoricul lor nu se modifică.'),
       submitLabel: 'Salvează',
       onSubmit: function (m, close) {
         var t = clientTypeById(m.querySelector('[data-f="ctype"]').value);

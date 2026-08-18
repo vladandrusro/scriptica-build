@@ -750,6 +750,36 @@ window.SCRIPTICA_MOCK = {
               { id: "ft_constr_executie_step_1_task_2", label: "Înregistrează procesele-verbale", required: true },
               { id: "ft_constr_executie_step_1_task_3", label: "Documentează abaterile și justificările", required: false }
             ], anexeIds: ["anx_constr_pv_receptie", "anx_constr_nota_fundamentare"] }
+        ] },
+      { id: "ft_constr_complet", verticalId: "vert_constructii", name: "Proiect complet — ofertare și execuție", frequency: "punctual", status: "activ",
+        description: "Flux demonstrativ cap-coadă: pașii combină task-uri obișnuite, încărcări obligatorii de documente și anexe reutilizabile.",
+        documentCategoryIds: ["licitatie", "contracte", "executie", "corespondenta", "necategorisit"],
+        steps: [
+          { id: "ft_constr_complet_step_1", name: "Pregătirea ofertei", offsetDays: 15,
+            description: "Echipa pregătește oferta și completează propunerea tehnică.",
+            tasks: [
+              { id: "ft_constr_complet_step_1_task_1", label: "Verifică documentația de atribuire", kind: "standard", required: true },
+              { id: "ft_constr_complet_step_1_task_2", label: "Validează oferta financiară", kind: "standard", required: true }
+            ], anexeIds: ["anx_constr_propunere"] },
+          { id: "ft_constr_complet_step_2", name: "Documentație justificativă", offsetDays: 25,
+            description: "Documentele justificative sunt încărcate și legate direct de proiect.",
+            tasks: [
+              { id: "ft_constr_complet_step_2_task_1", label: "Încarcă documentația tehnică și caietul de sarcini", kind: "document_upload", documentTypeId: "dt_caiet_sarcini", allowMultiple: true, minimumFiles: 1, required: true },
+              { id: "ft_constr_complet_step_2_task_2", label: "Confirmă că documentația este completă", kind: "standard", required: true }
+            ], anexeIds: ["anx_constr_nota_fundamentare"] },
+          { id: "ft_constr_complet_step_3", name: "Contractare", offsetDays: 40,
+            description: "Contractul se completează în Scriptica; anexa este singura cerință obligatorie a pasului.",
+            tasks: [], anexeIds: ["anx_constr_contract"] },
+          { id: "ft_constr_complet_step_4", name: "Urmărirea execuției", offsetDays: 75,
+            description: "Situațiile de lucrări sunt încărcate periodic, fără anexă obligatorie.",
+            tasks: [
+              { id: "ft_constr_complet_step_4_task_1", label: "Încarcă situațiile de lucrări aprobate", kind: "document_upload", documentTypeId: "dt_situatie_lucrari", allowMultiple: true, minimumFiles: 1, required: true }
+            ], anexeIds: [] },
+          { id: "ft_constr_complet_step_5", name: "Recepția lucrării", offsetDays: 100,
+            description: "Procesul-verbal semnat și anexa de recepție închid proiectul.",
+            tasks: [
+              { id: "ft_constr_complet_step_5_task_1", label: "Încarcă procesul-verbal semnat", kind: "document_upload", documentTypeId: "dt_pv_receptie", allowMultiple: false, minimumFiles: 1, required: true }
+            ], anexeIds: ["anx_constr_pv_receptie"] }
         ] }
     ],
 
@@ -866,9 +896,9 @@ window.SCRIPTICA_MOCK = {
       },
       {
         id: "ct_constructii", name: "Firmă de construcții", icon: "apartment", builtin: false,
-        description: "Firme de construcții — lucrează pe proiecte cu un singur pas: ofertare, contractare sau execuție, cu anexe generate ori încărcate manual.",
+        description: "Firme de construcții — lucrează pe ofertare, contractare și execuție, ca activități independente sau într-un proiect complet cu task-uri, documente și anexe.",
         verticalIds: ["vert_constructii"],
-        defaultTemplateIds: ["ft_constr_ofertare", "ft_constr_contractare", "ft_constr_executie"],
+        defaultTemplateIds: ["ft_constr_ofertare", "ft_constr_contractare", "ft_constr_executie", "ft_constr_complet"],
         clientLabel: "Beneficiar", clientLabelPlural: "Beneficiari",
         dashboardLayout: [
           { id: "dw_ct5_1", widget: "flow_summary", params: { verticalId: "vert_constructii" }, size: "half" },
@@ -1007,6 +1037,15 @@ window.SCRIPTICA_MOCK = {
       templateId: "ft_constr_ofertare", templateName: "Ofertare licitație publică",
       startDate: "2026-03-10", currentStep: 1, stepsCompleted: 1,
       status: "finalizat", responsibleIds: [3]
+    },
+    {
+      id: "fi_0010", verticalId: "vert_constructii", domain: "constructii",
+      name: "Proiect complet — Modernizare centru comunitar",
+      clientName: "Primăria Municipiului Brașov",
+      templateId: "ft_constr_complet", templateName: "Proiect complet — ofertare și execuție",
+      startDate: "2026-04-05", currentStep: 2, stepsCompleted: 1,
+      status: "asteapta_documente", responsibleIds: [2, 3],
+      clientContact: "Andrei Munteanu"
     }
   ],
 
@@ -2112,6 +2151,33 @@ window.SCRIPTICA_MOCK = {
   ((M.superAdmin && M.superAdmin.flowVerticals) || []).forEach(function (v) { seededVerticals[v.id] = v; });
   ((M.superAdmin && M.superAdmin.flowTemplates) || []).forEach(function (t) { seededTemplates[t.id] = t; });
   M.anexeTypes = mergeInto(M.anexeTypes || [], 'scriptica.anexe');
+  /* Feedback #2 — referințe stabile pentru coloanele provenite din anexe.
+     Răspunsurile rămân indexate exact ca înainte; id-ul este doar metadată
+     aditivă și se regenerează determinist inclusiv peste stări locale vechi. */
+  M.anexeTypes.forEach(function (anexa) {
+    /* Feedback #3 — o anexă rămâne un șablon independent și poate fi
+       disponibilă în mai multe verticale. `verticalIds` este clasificarea
+       explicită; array gol înseamnă „partajată”. Pentru stările vechi o
+       derivăm o singură dată din categoriile legacy, fără a le elimina. */
+    if (!Array.isArray(anexa.verticalIds)) {
+      var aliases = {
+        contabilitate: 'contabil', contabil: 'contabil', salarizare: 'contabil',
+        audit: 'audit', constructii: 'constructii', consultanta: 'consultanta', fiscal: 'consultanta'
+      };
+      anexa.verticalIds = [];
+      (anexa.categories || []).forEach(function (category) {
+        var domain = aliases[category] || category;
+        var vertical = ((M.superAdmin && M.superAdmin.flowVerticals) || []).find(function (item) {
+          return item.domain === domain;
+        });
+        if (vertical && anexa.verticalIds.indexOf(vertical.id) === -1) anexa.verticalIds.push(vertical.id);
+      });
+    }
+    if (!anexa.verticalIdsVersion) anexa.verticalIdsVersion = 1;
+    (((anexa || {}).schema || {}).fields || []).forEach(function (field, index) {
+      if (!field.id) field.id = 'afld_' + anexa.id + '_' + index;
+    });
+  });
   M.situationTypes = mergeInto(M.situationTypes || [], 'scriptica.situationTypes');
 
   /* Registrul de fluxuri + tipuri de clienți (HQ) — același pattern de
@@ -2145,30 +2211,105 @@ window.SCRIPTICA_MOCK = {
       t.documentCategoryIds = seed.documentCategoryIds.slice();
     }
   });
+  /* Feedback #3 — completează clasificarea anexelor vechi din utilizările
+     reale. Nu duplicăm anexa: același id poate apărea în oricâte verticale.
+     Versiunea 2 păstrează ulterior exact selecția făcută în constructor. */
+  M.anexeTypes.forEach(function (anexa) {
+    if (anexa.verticalIdsVersion === 2) return;
+    var verticalIds = Array.isArray(anexa.verticalIds) ? anexa.verticalIds.slice() : [];
+    function addVertical(verticalId) {
+      if (verticalId && verticalIds.indexOf(verticalId) === -1) verticalIds.push(verticalId);
+    }
+    function usedIn(activity) {
+      return (activity.steps || []).some(function (step) {
+        return (step.anexeIds || []).indexOf(anexa.id) !== -1;
+      });
+    }
+    SA.flowTemplates.forEach(function (template) {
+      if (usedIn(template)) addVertical(template.verticalId);
+    });
+    M.situationTypes.forEach(function (type) {
+      if (!usedIn(type)) return;
+      if (type.verticalId) { addVertical(type.verticalId); return; }
+      var domain = type.domain || 'contabil';
+      var vertical = SA.flowVerticals.find(function (item) { return item.domain === domain; });
+      addVertical(vertical && vertical.id);
+    });
+    anexa.verticalIds = verticalIds;
+    anexa.verticalIdsVersion = 2;
+  });
   SA.clientTypes = mergeInto(SA.clientTypes || [], 'scriptica.clientTypes');
   SA.clients = mergeInto(SA.clients || [], 'scriptica.saClients');
-  /* Migrare 2026-08 — tipul de client rămâne categorie, iar modulele
-     (verticalele contractate) aparțin clientului HQ. Pentru înregistrările
-     vechi derivăm o singură dată pachetul existent din tip, fără să confundăm
-     un array gol salvat explicit cu o stare nemigrată. */
+  /* Migrare 2026-08 — tipul de client rămâne categorie, iar verticalele
+     contractate și layout-ul Acasă aparțin clientului HQ. Pentru înregistrările
+     vechi derivăm o singură dată configurația existentă din tip, fără să
+     confundăm un array gol salvat explicit cu o stare nemigrată. */
   SA.clients.forEach(function (client) {
-    if (client.moduleAssignmentsVersion === 1 && Array.isArray(client.moduleAssignments)) return;
     var clientType = (SA.clientTypes || []).find(function (type) { return type.id === client.clientTypeId; });
-    var templateIds = (clientType && clientType.defaultTemplateIds) || [];
-    client.moduleAssignments = ((clientType && clientType.verticalIds) || []).map(function (verticalId) {
-      return {
-        id: 'mod_' + client.id + '_' + verticalId,
-        verticalId: verticalId,
-        templateIds: templateIds.filter(function (templateId) {
-          var template = (SA.flowTemplates || []).find(function (item) { return item.id === templateId; });
-          return template && template.verticalId === verticalId;
-        }),
-        status: 'activ',
-        activatedAt: '2026-04-20',
-        deactivatedAt: null
-      };
-    });
-    client.moduleAssignmentsVersion = 1;
+    if (!(client.moduleAssignmentsVersion === 1 && Array.isArray(client.moduleAssignments))) {
+      var templateIds = (clientType && clientType.defaultTemplateIds) || [];
+      client.moduleAssignments = ((clientType && clientType.verticalIds) || []).map(function (verticalId) {
+        return {
+          id: 'mod_' + client.id + '_' + verticalId,
+          verticalId: verticalId,
+          templateIds: templateIds.filter(function (templateId) {
+            var template = (SA.flowTemplates || []).find(function (item) { return item.id === templateId; });
+            return template && template.verticalId === verticalId;
+          }),
+          status: 'activ',
+          activatedAt: '2026-04-20',
+          deactivatedAt: null
+        };
+      });
+      client.moduleAssignmentsVersion = 1;
+    }
+    /* Feedback #3 — noul flux demonstrativ de construcții trebuie să fie
+       vizibil și pentru conturile deja salvate înainte de apariția lui.
+       Adăugarea este versionată și non-distructivă; niciun șablon existent
+       și nicio instanță istorică nu sunt eliminate. */
+    if (client.clientTypeId === 'ct_constructii' && client.templateCatalogVersion !== 2) {
+      var constructionAssignment = (client.moduleAssignments || []).find(function (assignment) {
+        return assignment.verticalId === 'vert_constructii';
+      });
+      if (constructionAssignment && !Array.isArray(constructionAssignment.templateIds)) constructionAssignment.templateIds = [];
+      if (constructionAssignment && constructionAssignment.templateIds.indexOf('ft_constr_complet') === -1) {
+        constructionAssignment.templateIds.push('ft_constr_complet');
+      }
+      client.templateCatalogVersion = 2;
+    }
+    if (!(client.dashboardLayoutVersion === 1 && Array.isArray(client.dashboardLayout))) {
+      var activeVerticalIds = (client.moduleAssignments || []).filter(function (assignment) {
+        return assignment.status === 'activ';
+      }).map(function (assignment) { return assignment.verticalId; });
+      var activeDomains = activeVerticalIds.map(function (verticalId) {
+        var vertical = (SA.flowVerticals || []).find(function (item) { return item.id === verticalId; });
+        return vertical ? vertical.domain : null;
+      }).filter(Boolean);
+      var legacyLayout = JSON.parse(JSON.stringify((clientType && clientType.dashboardLayout) || []));
+      client.dashboardLayout = legacyLayout.filter(function (item) {
+        if (item.widget === 'flow_summary') {
+          return item.params && activeVerticalIds.indexOf(item.params.verticalId) !== -1;
+        }
+        if (item.widget === 'situatii_noi' || item.widget === 'alerte' || item.widget === 'mesaje') {
+          return activeDomains.indexOf('contabil') !== -1;
+        }
+        if (item.widget === 'rapoarte_audit') return activeDomains.indexOf('audit') !== -1;
+        return true;
+      });
+      activeVerticalIds.slice().reverse().forEach(function (verticalId) {
+        var hasSummary = client.dashboardLayout.some(function (item) {
+          return item.widget === 'flow_summary' && item.params && item.params.verticalId === verticalId;
+        });
+        if (!hasSummary) {
+          client.dashboardLayout.unshift({
+            id: 'dw_' + client.id + '_' + verticalId,
+            widget: 'flow_summary', params: { verticalId: verticalId }, size: 'half'
+          });
+        }
+      });
+      if (!activeVerticalIds.length) client.dashboardLayout = [];
+      client.dashboardLayoutVersion = 1;
+    }
   });
   M.flowItems = mergeInto(M.flowItems || [], 'scriptica.flowItems');
 })();
@@ -2265,6 +2406,200 @@ window.SCRIPTICA_MOCK = {
         return template.id === templateId;
       }) || null;
     }).filter(Boolean);
+  };
+
+  /* ---- Terminologie per cont de business ----
+     Definițiile comune rămân sursa implicită. Contul salvează numai
+     diferențele de afișare; id-urile, ierarhia și rutarea nu sunt atinse. */
+  function terminologyClient(clientOrId) {
+    var clients = (window.SCRIPTICA_MOCK.superAdmin && window.SCRIPTICA_MOCK.superAdmin.clients) || [];
+    if (clientOrId && typeof clientOrId === 'object') return clientOrId;
+    if (typeof clientOrId === 'string') {
+      return clients.find(function (client) { return client.id === clientOrId; }) || null;
+    }
+    return typeof window.scripticaTenantAccount === 'function' ? window.scripticaTenantAccount() : null;
+  }
+  function terminologyOverrides(client) {
+    var value = client && client.terminologyOverrides;
+    return value && typeof value === 'object' ? value : {};
+  }
+  function terminologyText(value, fallback) {
+    var text = String(value == null ? '' : value).trim();
+    return text || fallback;
+  }
+  window.scripticaEffectiveExternalParty = function (clientOrId) {
+    var client = terminologyClient(clientOrId);
+    var typeId = client && client.clientTypeId
+      ? client.clientTypeId
+      : (typeof window.scripticaTenantClientTypeId === 'function' ? window.scripticaTenantClientTypeId() : '');
+    var type = window.scripticaClientTypeById(typeId) || {};
+    var overrides = terminologyOverrides(client).externalParty || {};
+    return {
+      singular: terminologyText(overrides.singular, terminologyText(type.clientLabel, 'Client')),
+      plural: terminologyText(overrides.plural, terminologyText(type.clientLabelPlural, 'Clienți'))
+    };
+  };
+
+  /* ---- Profilul beneficiarilor ----
+     Tipul de client oferă schema comună, iar contul de business păstrează
+     o schemă proprie numai după personalizare. În lipsa ambelor, prototipul
+     pornește cu un profil util care extinde identitatea fixă, fără să o
+     dubleze (CUI, adresă și contacte rămân în câmpurile sistemului). */
+  function defaultBeneficiaryProfileSchema(type) {
+    var party = terminologyText(type && type.clientLabel, 'Beneficiar');
+    return {
+      id: 'cps_default_' + ((type && type.id) || 'general'),
+      version: 1,
+      source: 'scriptica_default',
+      fields: [
+        { id: 'cpf_default_section', type: 'section_title', text: 'Date suplimentare' },
+        { id: 'cpf_default_code', type: 'text_short', label: 'Cod intern ' + party.toLowerCase(),
+          help: 'Codul folosit de echipă în evidențele proprii.', required: false, sensitive: false,
+          scope: 'onboarding_profile', showInTable: true, showInExternalForm: false },
+        { id: 'cpf_default_category', type: 'dropdown', label: 'Categorie de colaborare',
+          help: 'Ajută echipa să grupeze portofoliul.', required: false, sensitive: false,
+          options: ['Standard', 'Prioritar', 'Ocazional'], scope: 'onboarding_profile',
+          showInTable: true, showInExternalForm: true },
+        { id: 'cpf_default_notes', type: 'text_long', label: 'Observații de înrolare',
+          help: 'Context util pentru începerea colaborării.', required: false, sensitive: false,
+          scope: 'onboarding_profile', showInTable: false, showInExternalForm: true },
+        { id: 'cpf_default_consent', type: 'boolean', label: 'Acord pentru comunicare electronică',
+          help: '', required: false, sensitive: false, scope: 'onboarding_profile',
+          showInTable: false, showInExternalForm: true },
+        { id: 'cpf_default_support', type: 'file_upload', label: 'Document justificativ',
+          help: 'Document opțional pentru verificarea datelor transmise.', required: false,
+          sensitive: true, scope: 'onboarding_profile', showInTable: false, showInExternalForm: true }
+      ]
+    };
+  }
+  function profileSchemaCopy(schema, inherited, owner) {
+    var copy = JSON.parse(JSON.stringify(schema || { version: 1, fields: [] }));
+    copy.version = copy.version || 1;
+    copy.fields = Array.isArray(copy.fields) ? copy.fields : [];
+    var stableOwner = String(copy.id || owner || 'profil').replace(/[^a-zA-Z0-9_-]/g, '_');
+    copy.fields.forEach(function (field, index) {
+      if (!field.id) field.id = 'cpf_legacy_' + stableOwner + '_' + index;
+    });
+    copy.inherited = !!inherited;
+    copy.owner = owner || '';
+    return copy;
+  }
+  window.scripticaDefaultBeneficiaryProfileSchema = function (clientTypeOrId) {
+    var type = typeof clientTypeOrId === 'string' ? window.scripticaClientTypeById(clientTypeOrId) : clientTypeOrId;
+    return profileSchemaCopy(defaultBeneficiaryProfileSchema(type || {}), true, 'scriptica:' + ((type && type.id) || 'general'));
+  };
+  window.scripticaEffectiveBeneficiaryProfileSchema = function (clientOrId) {
+    var client = terminologyClient(clientOrId);
+    var typeId = client && client.clientTypeId
+      ? client.clientTypeId
+      : (typeof window.scripticaTenantClientTypeId === 'function' ? window.scripticaTenantClientTypeId() : '');
+    var type = window.scripticaClientTypeById(typeId) || {};
+    if (client && client.clientProfileSchema && Array.isArray(client.clientProfileSchema.fields)) {
+      return profileSchemaCopy(client.clientProfileSchema, false, 'client:' + (client.id || 'nou'));
+    }
+    if (type.clientProfileSchema && Array.isArray(type.clientProfileSchema.fields)) {
+      return profileSchemaCopy(type.clientProfileSchema, true, 'clientType:' + (type.id || 'general'));
+    }
+    return profileSchemaCopy(defaultBeneficiaryProfileSchema(type), true, 'scriptica:' + (type.id || 'general'));
+  };
+  window.scripticaEffectiveVerticalTerminology = function (verticalOrId, clientOrId) {
+    var vertical = typeof verticalOrId === 'string' ? window.scripticaVerticalById(verticalOrId) : verticalOrId;
+    var safe = vertical || {};
+    var client = terminologyClient(clientOrId);
+    var overrides = terminologyOverrides(client).verticals || {};
+    var own = safe.id && overrides[safe.id] ? overrides[safe.id] : {};
+    return {
+      id: safe.id || '',
+      name: terminologyText(own.name, terminologyText(safe.name, 'Verticală')),
+      itemLabel: terminologyText(own.itemLabel, terminologyText(safe.itemLabel, 'Element')),
+      itemLabelPlural: terminologyText(own.itemLabelPlural, terminologyText(safe.itemLabelPlural, 'Elemente'))
+    };
+  };
+  window.scripticaEffectiveVertical = function (verticalOrId, clientOrId) {
+    var vertical = typeof verticalOrId === 'string' ? window.scripticaVerticalById(verticalOrId) : verticalOrId;
+    if (!vertical) return null;
+    var terms = window.scripticaEffectiveVerticalTerminology(vertical, clientOrId);
+    var copy = {};
+    Object.keys(vertical).forEach(function (key) { copy[key] = vertical[key]; });
+    copy.name = terms.name;
+    copy.itemLabel = terms.itemLabel;
+    copy.itemLabelPlural = terms.itemLabelPlural;
+    return copy;
+  };
+
+  function archiveTreeNodes(tree, out, depth, parentKey) {
+    (tree || []).forEach(function (folder) {
+      out.push({
+        key: folder.id,
+        defaultName: terminologyText(folder.name, folder.system ? 'Necategorisit' : 'Folder'),
+        depth: depth,
+        parentKey: parentKey || null,
+        system: !!folder.system,
+        source: 'clientType',
+        inactive: false,
+        docTypeIds: (folder.docTypeIds || []).slice()
+      });
+      archiveTreeNodes(folder.children || [], out, depth + 1, folder.id);
+    });
+  }
+  window.scripticaArchiveFolderDefinitionsForClient = function (clientOrId, includeInactive) {
+    var client = terminologyClient(clientOrId);
+    var typeId = client && client.clientTypeId
+      ? client.clientTypeId
+      : (typeof window.scripticaTenantClientTypeId === 'function' ? window.scripticaTenantClientTypeId() : '');
+    var type = window.scripticaClientTypeById(typeId) || {};
+    var definitions = [];
+    archiveTreeNodes((type.archiveTree && type.archiveTree.length) ? type.archiveTree : window.scripticaDefaultArchiveTree(), definitions, 0, null);
+
+    var assignments;
+    if (client && Array.isArray(client.moduleAssignments)) {
+      assignments = window.scripticaModuleAssignmentsForClient(client, true);
+    } else if (typeof window.scripticaTenantModuleAssignments === 'function') {
+      assignments = window.scripticaTenantModuleAssignments(true);
+    } else {
+      assignments = [];
+    }
+    assignments.forEach(function (assignment) {
+      var vertical = window.scripticaVerticalById(assignment.verticalId);
+      if (!vertical || vertical.builtin) return;
+      if (!includeInactive && assignment.status !== 'activ') return;
+      (assignment.templateIds || []).forEach(function (templateId) {
+        var template = (window.SCRIPTICA_MOCK.superAdmin.flowTemplates || []).find(function (item) {
+          return item.id === templateId && item.verticalId === assignment.verticalId;
+        });
+        if (!template) return;
+        definitions.push({
+          key: 'af_flow_' + template.id,
+          defaultName: terminologyText(template.name, 'Flux'),
+          depth: 0,
+          parentKey: null,
+          system: false,
+          source: 'flowTemplate',
+          inactive: assignment.status !== 'activ',
+          flowTemplateId: template.id,
+          verticalId: assignment.verticalId,
+          docTypeIds: []
+        });
+      });
+    });
+    if (!definitions.some(function (folder) { return folder.system; })) {
+      definitions.push({
+        key: 'af_fallback', defaultName: 'Necategorisit', depth: 0, parentKey: null,
+        system: true, source: 'system', inactive: false, docTypeIds: []
+      });
+    }
+    var names = terminologyOverrides(client).archiveFolders || {};
+    return definitions.map(function (folder) {
+      var result = {};
+      Object.keys(folder).forEach(function (key) { result[key] = folder[key]; });
+      result.name = terminologyText(names[folder.key], folder.defaultName);
+      return result;
+    });
+  };
+  window.scripticaEffectiveArchiveFolderName = function (folderKey, defaultName, clientOrId) {
+    var client = terminologyClient(clientOrId);
+    var names = terminologyOverrides(client).archiveFolders || {};
+    return terminologyText(names[folderKey], terminologyText(defaultName, 'Folder'));
   };
   window.scripticaFlowItemsForVertical = function (verticalId) {
     return (window.SCRIPTICA_MOCK.flowItems || [])
@@ -3419,6 +3754,31 @@ window.SCRIPTICA_MOCK = {
       .map(function (uid) { return { userId: parseInt(uid, 10), seconds: byUser[uid] }; })
       .sort(function (a, b) { return b.seconds - a.seconds; });
   };
+})();
+
+/* Task-urile de încărcare păstrează documentele în recordul instanței de
+   flux. După generarea tuturor documentelor seed le reunim cu colecțiile
+   globale, astfel încât Arhiva și mesageria să le vadă după orice navigare. */
+(function mergeEmbeddedFlowContent() {
+  var M = window.SCRIPTICA_MOCK;
+  function merge(collectionName, propertyName) {
+    M[collectionName] = M[collectionName] || [];
+    (M.flowItems || []).forEach(function (flowItem) {
+      (flowItem[propertyName] || []).forEach(function (record) {
+        var prepared = Object.assign({}, record, {
+          situationId: flowItem.id,
+          domain: record.domain || flowItem.domain
+        });
+        var existingIndex = M[collectionName].findIndex(function (candidate) {
+          return String(candidate.id) === String(prepared.id);
+        });
+        if (existingIndex >= 0) M[collectionName][existingIndex] = Object.assign({}, M[collectionName][existingIndex], prepared);
+        else M[collectionName].push(prepared);
+      });
+    });
+  }
+  merge('documents', 'documents');
+  merge('messages', 'messages');
 })();
 
 /* ============================================================

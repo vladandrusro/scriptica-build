@@ -1,6 +1,6 @@
 /* ============================================================
    Scriptica — Tipuri de clienți V2 (explorare locală)
-   Workspace de configurare: categorie, arhivă de bază și Acasă.
+   Workspace de configurare: categorie și arhivă de bază.
    ============================================================ */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
   function verticalById(id) { return verticals().find(function (v) { return v.id === id; }) || null; }
   function clientsForType(id) { return clients().filter(function (c) { return c.clientTypeId === id; }); }
   /* Compatibilitate pentru editorul de pachet rămas izolat în codul V1;
-     suprafața V2 nu îl mai expune și modulele se gestionează per client. */
+     suprafața V2 nu îl mai expune și verticalele se gestionează per client. */
   function templatesForVertical(id) { return templates().filter(function (t) { return t.verticalId === id; }); }
   function esc(s) {
     return String(s == null ? '' : s)
@@ -72,18 +72,15 @@
     });
     return found;
   }
-  function surfaceStatus(t, key) {
+  function surfaceStatus(t) {
     var review = t.needsReview || {};
-    var missing = key === 'archive'
-      ? !(t.archiveTree && t.archiveTree.length)
-      : !(t.dashboardLayout && t.dashboardLayout.length);
-    return (review[key] || missing)
+    var missing = !(t.archiveTree && t.archiveTree.length);
+    return (review.archive || missing)
       ? { label: 'De revizuit', css: 'pill--pending', icon: 'pending_actions', ready: false }
       : { label: 'Configurat', css: 'pill--success', icon: 'check_circle', ready: true };
   }
   function configuredCount(t) {
-    return [surfaceStatus(t, 'archive'), surfaceStatus(t, 'dashboard')]
-      .filter(function (s) { return s.ready; }).length;
+    return (surfaceStatus(t).ready ? 1 : 0) + 1; /* profilul are mereu un fallback util */
   }
 
   function selectedType() {
@@ -111,37 +108,25 @@
     } catch (e) { /* URL-ul nu este esențial pentru prototip. */ }
   }
 
-  function setupPathHtml(t) {
-    var context = t ? '&ct=' + encodeURIComponent(t.id) : '';
-    return '<nav class="sa-setup" aria-label="Pașii configurării Super Admin">' +
-      '<a class="sa-setup__step is-active" href="super-admin-tipuri-clienti-v2.html?view=superadmin" aria-current="step"><span>1</span><div><small>Clasifică organizația</small><b>Tip de client</b></div></a>' +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin' + context + '&new=client"><span>2</span><div><small>Creează contul</small><b>Client</b></div></a>' +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin' + context + '"><span>3</span><div><small>Activează verticalele</small><b>Module</b></div></a>' +
-    '</nav>';
-  }
-
   function renderPage() {
     var type = selectedType();
     var totalClients = clientTypes().reduce(function (sum, t) { return sum + clientsForType(t.id).length; }, 0);
     root.innerHTML =
       '<header class="page-header ctv2-page-header">' +
         '<div class="ctv2-heading"><div class="ctv2-heading__line">' +
-          '<h1 class="page-header__title">Tipuri de clienți</h1><span class="pill pill--neutral">Pasul 1 din 3</span></div>' +
-          '<p class="ctv2-intro">Tipul descrie organizația, fără să îi impună fluxurile. Clientul poate fi creat imediat, iar modulele se activează ulterior din profilul lui.</p>' +
+          '<h1 class="page-header__title">Tipuri de clienți</h1></div>' +
+          '<p class="ctv2-intro">Tipul descrie organizația, fără să îi impună fluxurile. Clientul poate fi creat imediat, iar verticalele se aleg separat la înrolare sau ulterior din profilul lui.</p>' +
         '</div>' +
         '<div class="ctv2-page-actions">' +
           '<button class="btn btn--primary" type="button" data-new-type>Tip de client nou' +
             '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
         '</div>' +
       '</header>' +
-      setupPathHtml(type) +
       '<div class="ctv2-summary" aria-label="Rezumat tipuri de clienți">' +
         summaryMetric('category', clientTypes().length, 'tipuri definite') +
         summaryMetric('apartment', totalClients, 'clienți înrolați') +
         '<span class="ctv2-summary__explain"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-          'Un client are un singur tip, dar modulele contractate îi aparțin individual.</span>' +
+          'Un client are un singur tip, dar verticalele contractate îi aparțin individual.</span>' +
       '</div>' +
       '<div class="ctv2-workspace">' +
         '<aside class="ctv2-selector" aria-label="Tipuri de clienți">' +
@@ -206,10 +191,10 @@
       '</div>' +
       impactHtml(t, n) +
       '<div class="ctv2-composition-head"><div><span class="ctv2-detail__eyebrow">Configurație de bază</span>' +
-        '<h3>Categoria rămâne separată de module</h3></div>' +
+        '<h3>Categoria rămâne separată de verticale</h3></div>' +
         '<span class="ctv2-progress"><b>' + configured + '/2</b> configurări verificate</span></div>' +
       '<div class="ctv2-modules">' +
-        archiveModuleHtml(t) + dashboardModuleHtml(t) +
+        archiveModuleHtml(t) + profileModuleHtml(t) +
       '</div>';
   }
 
@@ -219,7 +204,7 @@
         '<span><b>Poți experimenta fără impact.</b> Acest tip nu este folosit încă de niciun client.</span></div>';
     }
     return '<div class="ctv2-impact"><span class="material-symbols-outlined" aria-hidden="true">campaign</span>' +
-      '<span><b>' + n + ' ' + plural(n, 'client folosește', 'clienți folosesc') + ' acest tip.</b> Schimbările de categorie nu activează și nu dezactivează modulele clienților existenți.</span></div>';
+      '<span><b>' + n + ' ' + plural(n, 'client folosește', 'clienți folosesc') + ' acest tip.</b> Schimbările de categorie nu activează și nu dezactivează verticalele clienților existenți.</span></div>';
   }
 
   function statusPill(status) {
@@ -253,7 +238,7 @@
     }).join('') + (hidden ? '<span class="ctv2-more">+' + hidden + ' dosare în structură</span>' : '') + '</div>';
   }
   function archiveModuleHtml(t) {
-    var status = surfaceStatus(t, 'archive');
+    var status = surfaceStatus(t);
     return '<article class="ctv2-module' + (status.ready ? '' : ' is-review') + '">' + moduleHead('1', 'folder_open', 'Arhivă și rutare A.I.', 'Configurație de bază', status) +
       '<div class="ctv2-module__body"><p>Definește arborele de dosare și destinația unică a fiecărui tip de document.</p>' +
         '<div class="ctv2-inline-metrics"><span><b>' + countFolders(t.archiveTree) + '</b> dosare</span><span><b>' + countRoutedTypes(t.archiveTree) + '</b> tipuri rutate</span></div>' +
@@ -261,36 +246,18 @@
       '</div><footer class="ctv2-module__foot"><button class="btn btn--secondary" type="button" data-edit-archive="' + esc(t.id) + '">Configurează arhiva<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></footer></article>';
   }
 
-  function widgetLabel(item, t) {
-    var labels = {
-      situatii_noi: 'Situații noi', alerte: 'Alerte', clienti: t.clientLabelPlural || 'Clienți',
-      termene: 'Termene', notificari: 'Notificări', echipa: 'Echipa',
-      arhiva_recente: 'Arhivă', mesaje: 'Mesaje', rapoarte_audit: 'Rapoarte audit'
-    };
-    if (item.widget === 'flow_summary' && item.params) {
-      var v = verticalById(item.params.verticalId);
-      return v ? v.name : 'Verticală';
-    }
-    if (item.widget === 'arhiva_recente' && item.params && item.params.folderId) {
-      var folder = flattenFolders(t.archiveTree || []).find(function (entry) { return entry.folder.id === item.params.folderId; });
-      return folder ? 'Arhivă · ' + folder.folder.name : 'Arhivă';
-    }
-    return labels[item.widget] || item.widget;
-  }
-  function dashboardPreviewHtml(t) {
-    var layout = t.dashboardLayout || [];
-    return '<div class="ctv2-dashboard-preview">' + layout.slice(0, 6).map(function (item) {
-      return '<div class="ctv2-widget' + (item.size === 'full' ? ' is-full' : '') + '"><span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>' +
-        '<b>' + esc(widgetLabel(item, t)) + '</b></div>';
-    }).join('') + '</div>' + (layout.length > 6 ? '<span class="ctv2-more">+' + (layout.length - 6) + ' widget-uri</span>' : '');
-  }
-  function dashboardModuleHtml(t) {
-    var status = surfaceStatus(t, 'dashboard');
-    return '<article class="ctv2-module' + (status.ready ? '' : ' is-review') + '">' + moduleHead('2', 'space_dashboard', 'Ecranul Acasă', 'Configurație de bază', status) +
-      '<div class="ctv2-module__body"><p>Compune baza ecranului Acasă. Modulele verticale active ale fiecărui client se adaugă și se ascund automat.</p>' +
-        '<div class="ctv2-inline-metrics"><span><b>' + ((t.dashboardLayout || []).length) + '</b> widget-uri</span><span>jumătate sau rând complet</span></div>' +
-        dashboardPreviewHtml(t) +
-      '</div><footer class="ctv2-module__foot"><a class="btn btn--secondary" href="super-admin-dashboard.html?ct=' + encodeURIComponent(t.id) + '&view=superadmin">Construiește Acasă<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></footer></article>';
+  function profileModuleHtml(t) {
+    var schema = typeof window.scripticaEffectiveBeneficiaryProfileSchema === 'function'
+      ? window.scripticaEffectiveBeneficiaryProfileSchema({ clientTypeId: t.id }) : { fields: [] };
+    var fields = (schema.fields || []).filter(function (field) { return field.type !== 'section_title'; });
+    var tableCount = fields.filter(function (field) { return !!field.showInTable; }).length;
+    var externalCount = fields.filter(function (field) { return field.showInExternalForm !== false; }).length;
+    var status = { label: t.clientProfileSchema ? 'Configurat' : 'Implicit Scriptica', css: t.clientProfileSchema ? 'pill--success' : 'pill--neutral', icon: t.clientProfileSchema ? 'check_circle' : 'account_tree', ready: true };
+    return '<article class="ctv2-module">' + moduleHead('2', 'badge', 'Profil beneficiari', 'Valori implicite comune', status) +
+      '<div class="ctv2-module__body"><p>Definește câmpurile suplimentare pe care conturile de acest tip le moștenesc la înrolare.</p>' +
+        '<div class="ctv2-inline-metrics"><span><b>' + fields.length + '</b> câmpuri</span><span><b>' + tableCount + '</b> în tabel</span><span><b>' + externalCount + '</b> în formular extern</span></div>' +
+        '<div class="ctv2-editor-note"><span class="material-symbols-outlined" aria-hidden="true">info</span><span>Conturile existente moștenesc schimbarea până când își salvează o configurație proprie.</span></div>' +
+      '</div><footer class="ctv2-module__foot"><button class="btn btn--secondary" type="button" data-edit-profile="' + esc(t.id) + '">Configurează profilul<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></footer></article>';
   }
 
   function handleRootClick(e) {
@@ -307,11 +274,34 @@
       openTypeEditor(typeById(el.getAttribute('data-edit-type')));
     } else if ((el = e.target.closest('[data-edit-archive]'))) {
       openArchiveEditor(typeById(el.getAttribute('data-edit-archive')));
+    } else if ((el = e.target.closest('[data-edit-profile]'))) {
+      openProfileEditor(typeById(el.getAttribute('data-edit-profile')));
     } else if ((el = e.target.closest('[data-show-clients]'))) {
       openClients(typeById(el.getAttribute('data-show-clients')));
     } else if ((el = e.target.closest('[data-delete-type]'))) {
       confirmDelete(typeById(el.getAttribute('data-delete-type')));
     }
+  }
+
+  function openProfileEditor(t) {
+    if (!t || !window.SCRIPTICA_BENEFICIARY_PROFILE_EDITOR || typeof window.scripticaEffectiveBeneficiaryProfileSchema !== 'function') return;
+    var schema = window.scripticaEffectiveBeneficiaryProfileSchema({ clientTypeId: t.id });
+    var fallback = typeof window.scripticaDefaultBeneficiaryProfileSchema === 'function'
+      ? window.scripticaDefaultBeneficiaryProfileSchema(t) : { version: 1, fields: [] };
+    window.SCRIPTICA_BENEFICIARY_PROFILE_EDITOR.open({
+      title: 'Profil beneficiari — ' + t.name,
+      subtitle: 'Schema comună de pornire pentru conturile de business din această categorie.',
+      schema: schema,
+      inherited: !t.clientProfileSchema,
+      defaultSchema: fallback,
+      defaultLabel: 'Restaurează profilul Scriptica',
+      onSave: function (savedSchema) {
+        savedSchema.sourceClientTypeId = t.id;
+        window.scripticaFlowSave('clientType', Object.assign({}, typeById(t.id) || t, { clientProfileSchema: savedSchema }));
+        renderPage();
+        toast('success', 'Profilul beneficiarilor pentru „' + t.name + '” a fost salvat.');
+      }
+    });
   }
 
   function handleRootInput(e) {
@@ -367,11 +357,11 @@
     openDialog({
       title: isNew ? 'Tip de client nou' : 'Editează tipul de client',
       subtitle: isNew
-        ? 'Definește categoria organizației. Clientul poate fi creat fără module.'
+        ? 'Definește categoria organizației. Clientul poate fi creat fără verticale.'
         : t.name,
       bodyHtml:
         '<div class="ctv2-editor-note"><span class="material-symbols-outlined" aria-hidden="true">category</span>' +
-          '<span><b>Tipul de client este doar categoria organizației.</b> Verticalele se activează ca module pe fiecare client, în funcție de plan.</span></div>' +
+          '<span><b>Tipul de client este doar categoria organizației.</b> Verticalele se activează separat pe fiecare client, în funcție de plan.</span></div>' +
         fieldHtml('Denumirea tipului', '<input class="input" type="text" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Firmă de contabilitate">', null, 'name') +
         fieldHtml('Pictogramă', iconPickerHtml(t ? t.icon : CT_ICONS[0])) +
         fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description" placeholder="Ce fel de organizații folosesc acest tip?">' + esc(t ? t.description || '' : '') + '</textarea>') +
@@ -402,8 +392,7 @@
           verticalIds: [],
           defaultTemplateIds: [],
           archiveTree: typeof window.scripticaDefaultArchiveTree === 'function' ? window.scripticaDefaultArchiveTree() : [],
-          dashboardLayout: [],
-          needsReview: { archive: true, dashboard: true }
+          needsReview: { archive: true }
         };
         record.name = name;
         record.icon = selectedIcon ? selectedIcon.getAttribute('data-pick-icon') : 'category';
@@ -471,7 +460,7 @@
       wide: true,
       bodyHtml:
         '<div class="ctv2-editor-note"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>' +
-          '<span>Verticalele și șabloanele sunt copiate la înrolare, apoi pot fi adaptate în workspace-ul clientului. Arhiva și Acasă se configurează separat.</span></div>' +
+          '<span>Verticalele și șabloanele sunt copiate la înrolare, apoi pot fi adaptate în workspace-ul clientului. Arhiva rămâne configurația de bază a categoriei, iar Acasă se configurează individual pentru fiecare client.</span></div>' +
         fieldHtml('Denumirea tipului', '<input class="input" type="text" data-f="name" value="' + esc(t ? t.name : '') + '" placeholder="ex. Cabinet de consultanță fiscală">', null, 'name') +
         fieldHtml('Pictogramă', iconPickerHtml(t ? t.icon : CT_ICONS[0])) +
         fieldHtml('Descriere', '<textarea class="input" rows="2" data-f="description">' + esc(t ? t.description || '' : '') + '</textarea>') +
@@ -513,23 +502,20 @@
         var selectedIcon = dialog.querySelector('[data-pick-icon].is-selected');
         var clientLabel = fval(dialog, 'clientLabel') || 'Client';
         var id = t ? t.id : uniqueId('ct', name, clientTypes());
-        var now = Date.now().toString(36);
         var record = {
           id: id, builtin: t ? !!t.builtin : false, name: name,
           icon: selectedIcon ? selectedIcon.getAttribute('data-pick-icon') : 'category',
           description: fval(dialog, 'description'), verticalIds: vids, defaultTemplateIds: tids,
           clientLabel: clientLabel, clientLabelPlural: fval(dialog, 'clientLabelPlural') || (clientLabel + 'i'),
           archiveTree: t ? (t.archiveTree || []) : window.scripticaDefaultArchiveTree(),
-          dashboardLayout: t ? (t.dashboardLayout || []) : vids.map(function (vid, i) {
-            return { id: 'dw_' + now + '_' + i, widget: 'flow_summary', params: { verticalId: vid }, size: 'half' };
-          }).concat([{ id: 'dw_' + now + '_t', widget: 'termene', size: 'half' }, { id: 'dw_' + now + '_c', widget: 'clienti', size: 'full' }]),
-          needsReview: t ? (t.needsReview || null) : { archive: true, dashboard: true }
+          needsReview: t ? (t.needsReview || null) : { archive: true },
+          clientProfileSchema: t ? t.clientProfileSchema : undefined
         };
         window.scripticaFlowSave('clientType', record);
         rememberSelection(id);
         close();
         renderPage();
-        toast('success', isNew ? 'Tipul „' + name + '” a fost creat. Revizuiește acum Arhiva și Acasă.' : 'Pachetul de lucru pentru „' + name + '” a fost salvat.');
+        toast('success', isNew ? 'Tipul „' + name + '” a fost creat. Revizuiește acum structura Arhivei.' : 'Pachetul de lucru pentru „' + name + '” a fost salvat.');
       }
     });
   }
@@ -692,7 +678,7 @@
     }
     openDialog({
       title: 'Ștergi definitiv tipul?', subtitle: t.name, critical: true, submitLabel: 'Șterge definitiv',
-      bodyHtml: '<div class="ctv2-editor-note ctv2-editor-note--critical"><span class="material-symbols-outlined" aria-hidden="true">delete_forever</span><span>Vor fi eliminate pachetul de lucru, regulile de arhivare și layout-ul Acasă. Acțiunea nu poate fi anulată.</span></div>',
+      bodyHtml: '<div class="ctv2-editor-note ctv2-editor-note--critical"><span class="material-symbols-outlined" aria-hidden="true">delete_forever</span><span>Vor fi eliminate pachetul de lucru și regulile de arhivare ale categoriei. Configurațiile Acasă ale clienților existenți rămân intacte. Acțiunea nu poate fi anulată.</span></div>',
       onSubmit: function (dialog, close) {
         window.scripticaFlowDelete('clientType', t.id);
         state.selectedId = clientTypes()[0] ? clientTypes()[0].id : '';

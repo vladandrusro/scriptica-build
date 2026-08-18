@@ -40,7 +40,8 @@
     /* complet, accountant, admin, superadmin: toate domeniile, inclusiv
        verticalele custom din registrul de fluxuri (definite de HQ). */
     else scope = ['contabil', 'audit'];
-    if (typeof window.scripticaCustomVerticals === 'function') {
+    if ((v === 'complet' || v === 'admin' || v === 'superadmin') &&
+        typeof window.scripticaCustomVerticals === 'function') {
       window.scripticaCustomVerticals().forEach(function (cv) {
         if (scope.indexOf(cv.domain) === -1) scope.push(cv.domain);
       });
@@ -134,6 +135,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     applyViewBodyClass();
     initSidebar();
+    applyTenantTerminologyToNav();
     injectAuditNav();
     injectPlanificareNav();
     injectCustomVerticalNav();
@@ -144,6 +146,21 @@
     buildUserMenu();
     initNonFunctionalStubs();
   });
+
+  function effectiveVertical(verticalId) {
+    if (typeof window.scripticaEffectiveVertical === 'function') {
+      return window.scripticaEffectiveVertical(verticalId);
+    }
+    return typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
+  }
+
+  function applyTenantTerminologyToNav() {
+    if (getCurrentView() === 'superadmin') return;
+    var accounting = effectiveVertical('vert_contabil');
+    var item = document.querySelector('.sidebar__nav [href="situatii.html"]');
+    var label = item && item.querySelector('.nav-item__label');
+    if (label && accounting) label.textContent = accounting.name;
+  }
 
   /* „Misiuni Audit" — item de navigație injectat dinamic lângă „Situații
      Contabile", ca paginile existente să nu necesite fiecare o editare de
@@ -159,9 +176,10 @@
     a.href = 'misiuni-audit.html';
     a.setAttribute('data-nav', 'misiuni-audit');
     a.setAttribute('data-domain', 'audit');
+    var audit = effectiveVertical('vert_audit');
     a.innerHTML =
       '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">verified_user</span>' +
-      '<span class="nav-item__label">Misiuni Audit</span>';
+      '<span class="nav-item__label">' + escapeAttr(audit ? audit.name : 'Misiuni Audit') + '</span>';
     var anchor = nav.querySelector('[href="situatii.html"]');
     if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
     else if (anchor) nav.appendChild(a);
@@ -204,6 +222,7 @@
     window.scripticaCustomVerticals().forEach(function (v) {
       if (activeVerticalIds && activeVerticalIds.indexOf(v.id) === -1) return;
       if (nav.querySelector('[data-nav="flux-' + v.id + '"]')) return;
+      var effective = effectiveVertical(v.id) || v;
       var a = document.createElement('a');
       a.className = 'nav-item';
       a.href = 'flux.html?vertical=' + encodeURIComponent(v.id);
@@ -215,7 +234,7 @@
       icon.textContent = v.icon || 'account_tree';
       var label = document.createElement('span');
       label.className = 'nav-item__label';
-      label.textContent = v.name;
+      label.textContent = effective.name;
       a.appendChild(icon);
       a.appendChild(label);
       if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);

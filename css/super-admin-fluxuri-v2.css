@@ -1018,7 +1018,16 @@ body[data-page="super-admin-fluxuri"] .main {
 .fxv2-task {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+
+.fxv2-task.is-upload {
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
 }
 
 .fxv2-task > .material-symbols-outlined {
@@ -1027,7 +1036,55 @@ body[data-page="super-admin-fluxuri"] .main {
   font-size: var(--font-size-subtitle);
 }
 
-.fxv2-task .input { min-width: 0; }
+.fxv2-task > .input { min-width: 0; flex: 1; }
+
+.fxv2-task__kind {
+  width: calc(var(--space-8) * 2.5);
+  flex: none;
+}
+
+.fxv2-task__upload-config {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-left: calc(var(--space-5) + var(--space-2));
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-white);
+}
+
+.fxv2-task__upload-config > label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+.fxv2-task__multiple {
+  flex-direction: row !important;
+  align-items: center;
+  padding-bottom: var(--space-2);
+  white-space: nowrap;
+}
+
+.fxv2-task__multiple input {
+  width: var(--space-4);
+  height: var(--space-4);
+  accent-color: var(--va, var(--color-default-highlight));
+}
+
+.fxv2-task__minimum {
+  display: grid !important;
+  grid-template-columns: auto var(--space-7) auto;
+  align-items: center;
+}
+
+.fxv2-task__minimum > span:first-child { grid-column: 1 / -1; }
+.fxv2-task__minimum .input { width: var(--space-7); }
 
 .fxv2-task__required {
   flex: none;
@@ -1828,7 +1885,10 @@ body[data-page="super-admin-fluxuri"] .main {
   .fxv2-deadline { grid-template-columns: minmax(0, 1fr); }
   .fxv2-task { flex-wrap: wrap; }
   .fxv2-task > .material-symbols-outlined { display: none; }
-  .fxv2-task .input { width: 100%; flex: 1 0 100%; }
+  .fxv2-task > .input { width: 100%; flex: 1 0 100%; }
+  .fxv2-task__kind { width: auto; flex: 1; }
+  .fxv2-task__upload-config { grid-template-columns: minmax(0, 1fr); margin-left: 0; }
+  .fxv2-task__multiple { padding-bottom: 0; }
   .fxv2-anexa-picker,
   .fxv2-settings-danger { align-items: stretch; flex-direction: column; }
   .fxv2-dialog-grid,

@@ -78,6 +78,15 @@
   function employeeById(id) {
     return (MOCK.employees || []).find(function (e) { return e.id === id; }) || null;
   }
+  function effectiveVertical(verticalOrId) {
+    if (typeof window.scripticaEffectiveVertical === 'function') return window.scripticaEffectiveVertical(verticalOrId);
+    return typeof verticalOrId === 'string' ? window.scripticaVerticalById(verticalOrId) : verticalOrId;
+  }
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty()
+      : { singular: 'Client', plural: 'Clienți' };
+  }
   function templatesForTenantVertical(verticalId) {
     var all = window.scripticaTemplatesForVertical(verticalId);
     if (typeof window.scripticaTenantModuleAssignments !== 'function') return all;
@@ -175,7 +184,7 @@
      ============================================================ */
 
   function renderListPage(root) {
-    var v = window.scripticaVerticalById && window.scripticaVerticalById(qs('vertical'));
+    var v = effectiveVertical(qs('vertical'));
     if (!v) { notFound(root, 'Verticala cerută nu există în registrul de fluxuri.'); return; }
     if (v.builtin && v.pages && v.pages.list) { window.location.replace(v.pages.list); return; }
     if (!tenantHasVertical(v.id) || (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain))) { scopeBlock(root, v.name); return; }
@@ -186,7 +195,7 @@
     root.innerHTML =
       '<header class="page-header">' +
         '<h1 class="page-header__title">' + esc(v.name) + '</h1>' +
-        '<button id="fx-new" class="btn btn--primary" type="button">Adaugă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
+        '<button id="fx-new" class="btn btn--primary" type="button">Adaugă ' + esc((v.itemLabel || 'element').toLowerCase()) + '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
       '</header>' +
       '<p class="fx-subtitle">' + esc(v.description || '') + '</p>' +
       '<section class="filters" aria-label="Filtre">' +
@@ -194,7 +203,7 @@
           '<div class="filter-input-search">' +
             '<span class="material-symbols-outlined" aria-hidden="true">search</span>' +
             '<label for="fx-search" class="sr-only">Caută</label>' +
-            '<input id="fx-search" class="input" type="search" placeholder="Caută ' + esc((v.itemLabel || 'element').toLowerCase()) + ' sau client..." autocomplete="off">' +
+            '<input id="fx-search" class="input" type="search" placeholder="Caută ' + esc((v.itemLabel || 'element').toLowerCase()) + ' sau ' + esc(externalParty().singular.toLowerCase()) + '..." autocomplete="off">' +
           '</div>' +
           '<label for="fx-status" class="sr-only">Status</label>' +
           '<select id="fx-status" class="select" style="width:180px;">' +
@@ -260,8 +269,8 @@
       var noneAtAll = itemsFor(v).length === 0;
       empty.innerHTML = (noneAtAll && !hasFilters)
         ? '<span class="material-symbols-outlined" aria-hidden="true">' + esc(v.icon || 'account_tree') + '</span>' +
-          '<p>' + esc('Niciun ' + (v.itemLabel || 'element').toLowerCase() + ' încă în această verticală.') + '</p>' +
-          '<button type="button" class="btn btn--primary" data-fx-empty-new>' + esc('Creează primul ' + (v.itemLabel || 'element').toLowerCase()) +
+          '<p>' + esc('Nu există încă înregistrări de tip „' + (v.itemLabel || 'Element').toLowerCase() + '” în această verticală.') + '</p>' +
+          '<button type="button" class="btn btn--primary" data-fx-empty-new>' + esc('Creează: ' + (v.itemLabel || 'Element')) +
             '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
         : '<span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
           '<p>Niciun element nu corespunde filtrelor selectate.</p>';
@@ -316,7 +325,7 @@
       '<div class="exp-panel">' +
         '<div class="am-steps" role="list" aria-label="Etape">' + stepsHtml + '</div>' +
         '<div class="exp-footer">' +
-          '<a class="exp-open-link" href="situatie-detaliu.html?flowId=' + esc(it.id) + '">Deschide ' + esc((v.itemLabel || 'elementul').toLowerCase()) + ' →</a>' +
+          '<a class="exp-open-link" href="situatie-detaliu.html?flowId=' + esc(it.id) + '">Deschide: ' + esc(v.itemLabel || 'Element') + ' →</a>' +
         '</div>' +
       '</div>' +
     '</td></tr>';
@@ -360,7 +369,7 @@
         '<button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">' +
           '<span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
         '<header class="modal__header">' +
-          '<h2 class="modal__title">' + esc(v.itemLabel || 'Element') + ' nou — ' + esc(v.name) + '</h2>' +
+          '<h2 class="modal__title">Creează ' + esc((v.itemLabel || 'element').toLowerCase()) + ' — ' + esc(v.name) + '</h2>' +
           '<p class="modal__subtitle">Completează detaliile; termenele se calculează automat din șablon.</p>' +
         '</header>' +
         '<form class="modal__body" novalidate>' +
@@ -375,11 +384,11 @@
           '</div>' +
           '<div class="form-field" data-field="nume">' +
             '<label class="form-label" for="fxm-name">Denumire</label>' +
-            '<input id="fxm-name" type="text" class="input" placeholder="ex. Opinie fiscală — speță TVA">' +
+            '<input id="fxm-name" type="text" class="input" placeholder="ex. Denumire ' + esc((v.itemLabel || 'element').toLowerCase()) + '">' +
             '<span class="form-error" role="alert"></span>' +
           '</div>' +
           '<div class="form-field" data-field="client">' +
-            '<label class="form-label" for="fxm-client">Client / beneficiar</label>' +
+            '<label class="form-label" for="fxm-client">' + esc(externalParty().singular) + '</label>' +
             '<input id="fxm-client" type="text" class="input" placeholder="ex. Electro Distrib S.R.L.">' +
             '<span class="form-error" role="alert"></span>' +
           '</div>' +
@@ -466,7 +475,7 @@
       var dateBad = !dateInp.value || dateInp.value < todayISO();
       setError('tip', t ? '' : 'Selectează șablonul de flux.');
       setError('nume', name ? '' : 'Denumirea este obligatorie.');
-      setError('client', client ? '' : 'Clientul / beneficiarul este obligatoriu.');
+      setError('client', client ? '' : 'Completează câmpul „' + externalParty().singular + '”.');
       setError('resp', resp ? '' : 'Selectează responsabilul.');
       setError('data', dateBad ? 'Alege o dată validă (azi sau ulterioară).' : '');
       if (!t || !name || !client || !resp || dateBad) return;
@@ -482,7 +491,7 @@
       };
       window.scripticaFlowSave('flowItem', rec);
       close();
-      toast('success', (v.itemLabel || 'Elementul') + ' „' + name + '" a fost creat.');
+      toast('success', 'Ai creat ' + (v.itemLabel || 'element').toLowerCase() + ' „' + name + '".');
       renderRows(root, v);
     });
   }
@@ -506,7 +515,7 @@
     }
     var item = (MOCK.flowItems || []).find(function (i) { return i.id === qs('id'); });
     if (!item) { notFound(root, 'Elementul cerut nu există.'); return; }
-    var v = window.scripticaVerticalById(item.verticalId);
+    var v = effectiveVertical(item.verticalId);
     if (!v) { notFound(root, 'Verticala elementului nu mai există în registru.'); return; }
     if (!tenantHasVertical(v.id) || (typeof window.viewInScope === 'function' && !window.viewInScope(v.domain))) { scopeBlock(root, v.name); return; }
 
@@ -534,7 +543,7 @@
           (cls === 'is-current' ? ' · ' + (days < 0 ? Math.abs(days) + ' zile întârziere' : days + ' zile rămase') : '') + '</span>';
       var action = (cls === 'is-current')
         ? '<button class="btn btn--primary" type="button" data-fx-advance>' +
-            (n === total ? 'Finalizează ' + esc((v.itemLabel || 'elementul').toLowerCase()) : 'Finalizează etapa') +
+            (n === total ? 'Finalizează: ' + esc(v.itemLabel || 'Element') : 'Finalizează etapa') +
           '</button>'
         : '';
       var icon = cls === 'is-done' ? 'check_circle' : (cls === 'is-current' ? 'radio_button_checked' : 'radio_button_unchecked');
@@ -556,7 +565,7 @@
         '<div class="fx-head__main">' +
           '<h1 class="fx-head__title">' + esc(item.name) + '</h1>' +
           '<div class="fx-head__meta">' +
-            '<span><b>Client:</b> ' + esc(item.clientName || '—') + '</span>' +
+            '<span><b>' + esc(externalParty().singular) + ':</b> ' + esc(item.clientName || '—') + '</span>' +
             '<span><b>Șablon:</b> ' + esc(item.templateName || '—') + '</span>' +
             '<span><b>Început:</b> ' + esc(formatDateFull(item.startDate)) + '</span>' +
             '<span><b>Responsabili:</b> ' + esc(resp || '—') + '</span>' +
@@ -576,7 +585,7 @@
             'Structura acestui flux este gestionată de administratorul platformei pentru profilul firmei tale.</div>' +
           '<div class="fx-about__note"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>' +
             'Orice verticală nouă definită în registru primește automat această formă standard: etape, termene și status. ' +
-            'Modulele avansate — documente, mesagerie, anexe — se activează per verticală, ca la Situații Contabile și Misiuni de Audit.</div>' +
+            'Componentele avansate — documente, mesagerie, anexe — se activează per verticală, ca la „' + esc((effectiveVertical('vert_contabil') || {}).name || 'Situații Contabile') + '” și „' + esc((effectiveVertical('vert_audit') || {}).name || 'Misiuni de Audit') + '”.</div>' +
         '</div>' +
       '</div>';
 
@@ -593,7 +602,7 @@
       }
       window.scripticaFlowSave('flowItem', upd);
       toast('success', upd.status === 'finalizat'
-        ? (v.itemLabel || 'Elementul') + ' a fost finalizat.'
+        ? 'Ai finalizat ' + (v.itemLabel || 'element').toLowerCase() + ' „' + item.name + '".'
         : 'Etapa a fost finalizată — urmează „' + steps[upd.currentStep - 1].name + '".');
       renderDetailPage(root);
     });

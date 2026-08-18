@@ -1,6 +1,6 @@
 # AGENTS.md — Scriptica prototype
 
-Instructions for AI coding agents (OpenAI Codex) working in this repository. Read this fully before making changes. Deeper references: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (how the code works), [docs/CODEX_HANDOFF.md](docs/CODEX_HANDOFF.md) (current state, debt, next tasks), [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
+Instructions for AI coding agents (including OpenAI Codex and Claude Code) working in this repository. Read this fully before making changes. Deeper references: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (how the code works), [docs/CODEX_HANDOFF.md](docs/CODEX_HANDOFF.md) (current state, debt, next tasks), [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md), [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
 ## Who you are working with
 
@@ -23,7 +23,7 @@ The repository owner (Vlad) is **the product owner and UX designer, not a softwa
 - An internal "Autoritate Decidentă" (top-seniority approver of audit missions — deliberately internal, not external).
 - Scriptica HQ itself (a "Super Admin" zone: commercial ops + a no-code registry that defines client types and flow verticals).
 
-**The product problem it solves:** accounting/audit work is deadline-driven document flows spread across email, Excel and folklore. Scriptica's thesis is that **everything is a flow** ("totul este un flux"): a client type classifies the business, modules activate the verticals/flow types that a specific client has contracted, and each flow template contains steps with tasks, documents, form annexes (anexe) and a conversation. One generic engine can therefore serve any business vertical (accounting, audit, tax consulting, construction) that HQ configures, without new pages.
+**The product problem it solves:** accounting/audit work is deadline-driven document flows spread across email, Excel and folklore. Scriptica's thesis is that **everything is a flow** ("totul este un flux"): a client type classifies the business, each client receives the verticals it has contracted, and each flow template contains steps with tasks, documents, form annexes (anexe) and a conversation. One generic engine can therefore serve any business vertical (accounting, audit, tax consulting, construction) that HQ configures, without new pages.
 
 **Maturity:** advanced prototype, live at https://scriptica.vandrus.dev. Everything visual works and is demo-ready; there is no backend, no real auth, no real AI — data is mock, persistence is browser localStorage, "AI classification" results are seeded. Treat every feature as *demo-real*: it must look and behave convincingly in a walkthrough, and it does not need to survive production loads.
 
@@ -34,10 +34,10 @@ The repository owner (Vlad) is **the product owner and UX designer, not a softwa
 3. **Autoritate**: sees missions "Spre Aprobare" read-only → Aprobă / Cere modificări / Respinge (the one decision that persists across reloads).
 4. **Approved mission** → appears under the Rapoarte tab with the expandable AI-scored final report.
 5. **Client**: logs into a scoped portal (Canvas S.R.L. only), sees friendly statuses and required actions.
-6. **Scriptica HQ**: define the stable client category (Accounting / Audit / Construction) → create the client, even with no work modules yet → add the vertical/flow modules included in that client's plan when they become available. Active modules supply the tenant nav, list page, detail page, dashboard and archive routing; the client category no longer blocks onboarding.
+6. **Scriptica HQ**: define the stable client category (Accounting / Audit / Construction) → create the client and its enrollment form → optionally select that client's contracted verticals in onboarding step 3 → adapt that account's terminology and archive labels in step 4 → configure that client's Acasă layout in the final step 5. The client may still be created with no verticals and an empty dashboard. Active verticals supply the tenant nav, list page, detail page, dashboard and archive routing; the client category no longer blocks onboarding or owns the dashboard. Deactivating a vertical only hides its working surfaces: its records, terminology, documents and archive remain intact and reappear on reactivation.
 7. **Persona switching** via the avatar menu — the whole app re-scopes (nav, data, guards) per persona. Any change must be checked against personas it might leak between.
 
-**Module-lifecycle invariant:** assigning a flow module to a client may create operational records, documents, conversations, anexe and archive entries. Removing that module later (for example, after a plan downgrade) means **deactivating and hiding it, never deleting its data**. Historical records and the archive remain intact, and reactivation must reveal the same history. A vertical/template that has ever been assigned or used must be retired/archived rather than hard-deleted.
+**Vertical-lifecycle invariant:** assigning a vertical to a client may create operational records, documents, conversations, anexe, archive entries and Acasă widgets. Removing that vertical later (for example, after a plan downgrade) means **deactivating and hiding it, never deleting its data**. Historical records, the archive and the client's saved dashboard layout remain intact, and reactivation must reveal the same history and widgets. A vertical/template that has ever been assigned or used must be retired/archived rather than hard-deleted. The current `moduleAssignments[]` property name is retained only as a legacy technical compatibility detail; it represents per-client vertical assignments.
 
 ## UX and visual-design principles
 

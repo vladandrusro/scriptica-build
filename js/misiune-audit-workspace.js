@@ -51,6 +51,11 @@
     return '<span class="' + cls + '" title="' + esc(user.name || '') + '">' + inner + '</span>';
   }
   function toast(variant, msg) { if (typeof window.SCRIPTICA_TOAST === 'function') window.SCRIPTICA_TOAST(variant, msg); }
+  function auditTerms() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_audit') : null;
+    return vertical || { name: 'Misiuni Audit', itemLabel: 'Misiune', itemLabelPlural: 'Misiuni' };
+  }
   function typeOf(mission) { return (MOCK.situationTypes || []).find(function (t) { return t.id === mission.typeId; }) || null; }
   function stepName(mission) {
     var t = typeOf(mission);
@@ -200,7 +205,7 @@
     var el = $('ws-title');
     if (!el) return;
     el.innerHTML =
-      '<button class="detail-title__back" type="button" id="ws-back" aria-label="Înapoi la Misiuni Audit">' +
+      '<button class="detail-title__back" type="button" id="ws-back" aria-label="Înapoi la ' + esc(auditTerms().name) + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>' +
       '</button>' +
       '<span class="detail-title__text">' + esc(mission.entityName) + ' — ' + esc(mission.name) + '</span>';
@@ -256,7 +261,7 @@
     var actionsHtml = ro ? '' :
       '<div class="step-actions">' +
         '<button type="button" class="btn btn--critical" id="ws-cancel">' +
-          '<span class="material-symbols-outlined" aria-hidden="true">cancel</span>Anulează misiunea' +
+          '<span class="material-symbols-outlined" aria-hidden="true">cancel</span>Anulează ' + esc(auditTerms().itemLabel.toLowerCase()) +
         '</button>' +
         '<div class="step-actions__center">' +
           '<button type="button" class="btn btn--pending" id="ws-assist">' +

@@ -1,12 +1,12 @@
 /* ============================================================
    Scriptica — Biblioteca de widget-uri de dashboard
-   Catalogul de „cutii de conținut" configurabile per tip de client
-   (Super Admin → Tipuri de clienți → Dashboard). Folosită de:
-     1. acasa.html — redă layout-ul configurat pentru persona curentă
-        (tipul de client al firmei demo, via scripticaTenantClientTypeId)
-     2. super-admin-dashboard.html — builderul HQ (paletă + preview live)
+   Catalogul de „cutii de conținut" configurabile per client.
+   Folosită de:
+     1. acasa.html — redă layout-ul contului HQ previzualizat
+     2. super-admin-clienti.html — ultimul pas al înrolării
+     3. super-admin-dashboard.html — builderul HQ (paletă + preview live)
    Fiecare widget are un `domain` (null = generic) — paleta oferă doar
-   widget-urile acoperite de verticalele tipului de client.
+   widget-urile acoperite de verticalele clientului configurat.
    Today is pinned to 2026-04-20 for stable prototype data.
    ============================================================ */
 
@@ -75,7 +75,8 @@
       return m.status !== 'aprobata' && m.status !== 'anulata' && m.status !== 'inchisa';
     });
   }
-  function activeVerticalIds(ct) {
+  function activeVerticalIds(ct, verticalIds) {
+    if (Array.isArray(verticalIds)) return verticalIds.slice();
     var view = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : 'complet';
     if (view !== 'superadmin' && typeof window.scripticaTenantActiveVerticalIds === 'function') {
       return window.scripticaTenantActiveVerticalIds().filter(function (verticalId) {
@@ -88,11 +89,31 @@
     }
     return (ct && ct.verticalIds) || [];
   }
-  function ctDomains(ct) {
-    return activeVerticalIds(ct).map(function (vid) {
+  function ctDomains(ct, verticalIds) {
+    return (verticalIds || activeVerticalIds(ct)).map(function (vid) {
       var v = window.scripticaVerticalById(vid);
       return v ? v.domain : null;
     }).filter(Boolean);
+  }
+  function effectiveVertical(verticalOrId, client) {
+    if (typeof window.scripticaEffectiveVertical === 'function') {
+      return window.scripticaEffectiveVertical(verticalOrId, client);
+    }
+    return typeof verticalOrId === 'string' ? window.scripticaVerticalById(verticalOrId) : verticalOrId;
+  }
+  function externalParty(ct, client) {
+    if (typeof window.scripticaEffectiveExternalParty === 'function') {
+      return window.scripticaEffectiveExternalParty(client);
+    }
+    return { singular: (ct && ct.clientLabel) || 'Client', plural: (ct && ct.clientLabelPlural) || 'Clienți' };
+  }
+  function archiveDefinitions(ct, client) {
+    if (typeof window.scripticaArchiveFolderDefinitionsForClient === 'function') {
+      return window.scripticaArchiveFolderDefinitionsForClient(client, true);
+    }
+    return (ct.archiveTree || []).map(function (folder) {
+      return { key: folder.id, name: folder.name, defaultName: folder.name, depth: 0, system: !!folder.system };
+    });
   }
   function findFolder(tree, id) {
     for (var i = 0; i < (tree || []).length; i++) {
@@ -131,18 +152,19 @@
 
   var RENDERERS = {
 
-    situatii_noi: function () {
+    situatii_noi: function (params, ct, verticalIds, client) {
+      var terms = effectiveVertical('vert_contabil', client) || { itemLabel: 'Situație', itemLabelPlural: 'Situații' };
       var items = (MOCK().situations || []).filter(function (s) { return s.isNew; });
       var rows = items.slice(0, 5).map(function (s) {
         return rowHtml('situatie-detaliu.html?id=' + esc(s.id), esc(s.clientCompany), esc(s.typeLabel),
           '<span class="pill pill--progress ' + progressClass(s.stepsCompleted, s.totalSteps) + '">' + s.stepsCompleted + '/' + s.totalSteps + '</span>');
       });
       return {
-        title: 'Situații Contabile Noi', icon: 'description', count: items.length,
-        bodyHtml: items.length ? rowsHtml(rows) : emptyState('inbox', 'Nu există situații contabile noi.'),
-        footerHtml: '<button class="btn btn--primary" type="button" data-dw-open-situation>Situație Nouă' +
+        title: terms.itemLabelPlural + ' noi', icon: 'description', count: items.length,
+        bodyHtml: items.length ? rowsHtml(rows) : emptyState('inbox', 'Nu există ' + terms.itemLabelPlural.toLowerCase() + ' noi.'),
+        footerHtml: '<button class="btn btn--primary" type="button" data-dw-open-situation>' + terms.itemLabel + ' nouă' +
           '<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
-          '<a class="ghost-link" href="situatii.html">Toate situațiile Contabile</a>'
+          '<a class="ghost-link" href="situatii.html">Toate ' + esc(terms.itemLabelPlural.toLowerCase()) + '</a>'
       };
     },
 
@@ -159,8 +181,8 @@
       };
     },
 
-    flow_summary: function (params) {
-      var v = window.scripticaVerticalById(params && params.verticalId);
+    flow_summary: function (params, ct, verticalIds, client) {
+      var v = effectiveVertical(params && params.verticalId, client);
       if (!v) return { title: 'Flux necunoscut', icon: 'help', count: 0, bodyHtml: emptyState('error', 'Verticala nu mai există în registru.') };
       var rows = [], count = 0, listHref;
       if (v.domain === 'contabil') {
@@ -195,10 +217,11 @@
       };
     },
 
-    clienti: function (params, ct) {
-      var label = ct.clientLabelPlural || 'Clienți';
+    clienti: function (params, ct, verticalIds, client) {
+      var party = externalParty(ct, client);
+      var label = party.plural;
       var cards = [];
-      if (ctDomains(ct).indexOf('contabil') !== -1) {
+      if (ctDomains(ct, verticalIds).indexOf('contabil') !== -1) {
         var byClient = {};
         activeSituations().forEach(function (s) {
           if (!byClient[s.clientId]) byClient[s.clientId] = 0;
@@ -209,14 +232,14 @@
           if (!c) return '';
           return '<div class="dw-client"><div class="dw-client__name">' + esc(c.companyName) + '</div>' +
             '<div class="dw-client__meta">Contact: ' + esc(c.contactName || '—') + '</div>' +
-            '<div class="dw-client__count">' + byClient[cid] + ' situații active</div></div>';
+            '<div class="dw-client__count">' + byClient[cid] + ' ' + esc(((effectiveVertical('vert_contabil', client) || {}).itemLabelPlural || 'situații').toLowerCase()) + ' active</div></div>';
         }).filter(Boolean);
-      } else if (ctDomains(ct).indexOf('audit') !== -1) {
+      } else if (ctDomains(ct, verticalIds).indexOf('audit') !== -1) {
         cards = (MOCK().auditEntities || []).map(function (e) {
           var n = activeMissions().filter(function (m) { return m.entityId === e.id; }).length;
           return '<div class="dw-client"><div class="dw-client__name">' + esc(e.name) + '</div>' +
             '<div class="dw-client__meta">Contact: ' + esc(e.contactName || '—') + '</div>' +
-            '<div class="dw-client__count">' + n + ' misiuni active</div></div>';
+            '<div class="dw-client__count">' + n + ' ' + esc(((effectiveVertical('vert_audit', client) || {}).itemLabelPlural || 'misiuni').toLowerCase()) + ' active</div></div>';
         });
       } else {
         var seen = {};
@@ -236,8 +259,8 @@
       };
     },
 
-    termene: function (params, ct) {
-      var doms = ctDomains(ct);
+    termene: function (params, ct, verticalIds) {
+      var doms = ctDomains(ct, verticalIds);
       var rows = [];
       if (doms.indexOf('contabil') !== -1) {
         activeSituations().forEach(function (s) {
@@ -253,7 +276,7 @@
           rows.push({ days: d, title: esc(m.name), sub: esc(m.entityName), href: 'misiune-audit-workspace.html?id=' + esc(m.id) });
         });
       }
-      activeVerticalIds(ct).forEach(function (vid) {
+      activeVerticalIds(ct, verticalIds).forEach(function (vid) {
         var v = window.scripticaVerticalById(vid);
         if (!v || v.builtin) return;
         window.scripticaFlowItemsForVertical(vid).forEach(function (i) {
@@ -276,20 +299,21 @@
       };
     },
 
-    arhiva_recente: function (params, ct) {
-      var doms = ctDomains(ct);
+    arhiva_recente: function (params, ct, verticalIds, client) {
+      var doms = ctDomains(ct, verticalIds);
       var docs = (MOCK().documents || []).filter(function (d) {
         return doms.indexOf(d.domain || 'contabil') !== -1;
       });
       var title = 'Arhivă — recente';
       if (params && params.folderId) {
+        var folderDefinition = archiveDefinitions(ct, client).find(function (item) { return item.key === params.folderId; });
         var folder = findFolder(ct.archiveTree || [], params.folderId);
-        if (folder) {
-          title = 'Arhivă — ' + folder.name;
-          var names = folderTypeNames(folder);
-          docs = folder.system
+        if (folderDefinition) {
+          title = 'Arhivă — ' + folderDefinition.name;
+          var names = folder ? folderTypeNames(folder) : [];
+          docs = folderDefinition.system
             ? docs.filter(function (d) { return true; }) /* fallback-ul: aproximăm cu toate */
-            : docs.filter(function (d) { return names.indexOf(d.tipDocument) !== -1; });
+            : (folderDefinition.flowTemplateId ? docs : docs.filter(function (d) { return names.indexOf(d.tipDocument) !== -1; }));
         }
       }
       docs = docs.slice().sort(function (a, b) { return String(b.uploadedAt).localeCompare(String(a.uploadedAt)); });
@@ -336,18 +360,18 @@
       };
     },
 
-    notificari: function (params, ct) {
-      var doms = ctDomains(ct);
+    notificari: function (params, ct, verticalIds, client) {
+      var doms = ctDomains(ct, verticalIds);
       var items = [];
       if (doms.indexOf('contabil') !== -1) {
         var overdue = (MOCK().situations || []).filter(function (s) { return s.status === 'intarziere'; }).length;
-        if (overdue) items.push({ icon: 'warning', text: overdue + ' situații în întârziere' });
+        if (overdue) items.push({ icon: 'warning', text: overdue + ' ' + ((effectiveVertical('vert_contabil', client) || {}).itemLabelPlural || 'situații').toLowerCase() + ' în întârziere' });
         var unread = (MOCK().messages || []).filter(function (m) { return !m.read; }).length;
         if (unread) items.push({ icon: 'chat', text: unread + ' mesaje necitite' });
       }
       if (doms.indexOf('audit') !== -1) {
         var spre = (MOCK().auditMissions || []).filter(function (m) { return m.status === 'spre_aprobare'; }).length;
-        if (spre) items.push({ icon: 'approval', text: spre + ' misiuni spre aprobare' });
+        if (spre) items.push({ icon: 'approval', text: spre + ' ' + ((effectiveVertical('vert_audit', client) || {}).itemLabelPlural || 'misiuni').toLowerCase() + ' spre aprobare' });
       }
       var rows = items.map(function (i) {
         return rowHtml(null, '<span class="material-symbols-outlined dw-doc-ico" aria-hidden="true">' + i.icon + '</span>' + esc(i.text), '');
@@ -381,41 +405,43 @@
     { widget: 'echipa', icon: 'diversity_3', label: 'Echipa', desc: 'Membrii activi ai firmei.' }
   ];
 
-  function paletteFor(ct) {
+  function paletteFor(ct, verticalIds, client) {
     var entries = [];
-    activeVerticalIds(ct).forEach(function (vid) {
-      var v = window.scripticaVerticalById(vid);
+    var scopedVerticalIds = Array.isArray(verticalIds) ? verticalIds : activeVerticalIds(ct);
+    scopedVerticalIds.forEach(function (vid) {
+      var v = effectiveVertical(vid, client);
       if (!v) return;
       entries.push({ widget: 'flow_summary', params: { verticalId: vid }, label: v.name, icon: v.icon || 'account_tree', desc: 'Elementele active din verticala „' + v.name + '".' });
     });
-    var doms = ctDomains(ct);
+    var doms = ctDomains(ct, scopedVerticalIds);
     if (doms.indexOf('contabil') !== -1) {
-      entries.push({ widget: 'situatii_noi', params: null, label: 'Situații Contabile Noi', icon: 'description', desc: 'Situațiile abia deschise + butonul „Situație Nouă".' });
-      entries.push({ widget: 'alerte', params: null, label: 'Alerte', icon: 'notifications', desc: 'Situațiile contabile în întârziere.' });
+      var accountingTerms = effectiveVertical('vert_contabil', client) || { itemLabel: 'Situație', itemLabelPlural: 'Situații' };
+      entries.push({ widget: 'situatii_noi', params: null, label: accountingTerms.itemLabelPlural + ' noi', icon: 'description', desc: accountingTerms.itemLabelPlural + ' abia deschise + butonul „' + accountingTerms.itemLabel + ' nouă".' });
+      entries.push({ widget: 'alerte', params: null, label: 'Alerte', icon: 'notifications', desc: accountingTerms.itemLabelPlural + ' în întârziere.' });
       entries.push({ widget: 'mesaje', params: null, label: 'Mesaje necitite', icon: 'chat', desc: 'Ultimele mesaje de la clienți și A.I.' });
     }
     if (doms.indexOf('audit') !== -1) {
       entries.push({ widget: 'rapoarte_audit', params: null, label: 'Rapoarte de audit', icon: 'lab_profile', desc: 'Rapoartele finale ale misiunilor încheiate.' });
     }
     GENERIC_DEFS.forEach(function (d) {
-      entries.push({ widget: d.widget, params: null, label: d.label || (ct.clientLabelPlural || 'Clienți'), icon: d.icon, desc: d.desc });
+      entries.push({ widget: d.widget, params: null, label: d.label || externalParty(ct, client).plural, icon: d.icon, desc: d.desc });
     });
     entries.push({ widget: 'arhiva_recente', params: {}, label: 'Arhivă — recente', icon: 'archive', desc: 'Ultimele documente intrate în arhivă.' });
-    (ct.archiveTree || []).forEach(function (f) {
-      if (f.system) return;
-      entries.push({ widget: 'arhiva_recente', params: { folderId: f.id }, label: 'Arhivă — ' + f.name, icon: 'folder', desc: 'Ultimele documente din folderul „' + f.name + '".' });
+    archiveDefinitions(ct, client).forEach(function (f) {
+      if (f.system || f.depth) return;
+      entries.push({ widget: 'arhiva_recente', params: { folderId: f.key }, label: 'Arhivă — ' + f.name, icon: 'folder', desc: 'Ultimele documente din folderul „' + f.name + '".' });
     });
     return entries;
   }
 
-  function render(item, ct) {
+  function render(item, ct, verticalIds, client) {
     var fn = RENDERERS[item.widget];
     if (!fn) return { title: item.widget, icon: 'help', count: 0, bodyHtml: emptyState('error', 'Widget necunoscut.') };
-    return fn(item.params || {}, ct);
+    return fn(item.params || {}, ct, verticalIds, client);
   }
 
-  function cardHtml(item, ct) {
-    var r = render(item, ct);
+  function cardHtml(item, ct, verticalIds, client) {
+    var r = render(item, ct, verticalIds, client);
     /* Widgetul unei verticale preia culoarea ei de identitate (aleasă în HQ). */
     var vaCls = '';
     if (item.widget === 'flow_summary' && item.params && window.scripticaVerticalAccentClass) {
@@ -437,7 +463,7 @@
 
   /* ---------- Acasă (tenant): redă layout-ul configurat ----------
      Rulează după dashboard.js (ordinea scripturilor) → suprascrie
-     dashboard-ul static când tipul de client are un layout definit.
+     dashboard-ul static cu layout-ul contului HQ previzualizat.
      Vederea „client" (portal extern) și superadmin rămân neatinse. */
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK()) return;
@@ -447,7 +473,10 @@
     if (view === 'client' || view === 'superadmin') return;
     var ct = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());
     if (!ct) return;
-    var layout = (ct.dashboardLayout || []).slice();
+    var tenantAccount = typeof window.scripticaTenantAccount === 'function' ? window.scripticaTenantAccount() : null;
+    var layout = (tenantAccount && Array.isArray(tenantAccount.dashboardLayout)
+      ? tenantAccount.dashboardLayout
+      : (ct.dashboardLayout || [])).slice();
     var moduleVerticalIds = activeVerticalIds(ct);
     var contractedVerticalIds = typeof window.scripticaTenantActiveVerticalIds === 'function'
       ? window.scripticaTenantActiveVerticalIds() : moduleVerticalIds;
@@ -483,10 +512,10 @@
 
     main.innerHTML = '<div class="dashboard">' +
       (!moduleVerticalIds.length ? '<div class="scope-block"><span class="material-symbols-outlined" aria-hidden="true">extension_off</span><h2>' +
-        (restrictedByRole ? 'Niciun modul disponibil pentru acest rol' : 'Modulele nu sunt activate încă') + '</h2><p>' +
-        (restrictedByRole ? 'Contul are module active, dar ele nu intră în aria acestei personae.' : 'Contul este creat și poate fi configurat ulterior de Scriptica HQ.') + '</p></div>' : '') +
+        (restrictedByRole ? 'Nicio verticală disponibilă pentru acest rol' : 'Verticalele nu sunt activate încă') + '</h2><p>' +
+        (restrictedByRole ? 'Contul are verticale active, dar ele nu intră în aria acestei personae.' : 'Contul este creat și poate fi configurat ulterior de Scriptica HQ.') + '</p></div>' : '') +
       '<div class="dw-grid">' +
-      layout.map(function (item) { return cardHtml(item, ct); }).join('') +
+      layout.map(function (item) { return cardHtml(item, ct, moduleVerticalIds, tenantAccount); }).join('') +
     '</div>' +
     '<p class="dw-note">Dashboard configurat pentru profilul firmei de către administratorul platformei.</p>' +
     '</div>';

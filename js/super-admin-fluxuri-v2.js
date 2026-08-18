@@ -12,7 +12,7 @@
   var dialogSeq = 0;
   var uidSeq = 0;
   var STORAGE_KEY = 'scriptica.prototype.fluxuriV2';
-  var MODEL_VERSION = 5;
+  var MODEL_VERSION = 7;
   var FREQUENCIES = ['punctual', 'lunar', 'trimestrial', 'semestrial', 'anual'];
   var COLORS = ['mov', 'albastru', 'verde', 'auriu', 'portocaliu', 'roz'];
   var state = {
@@ -113,16 +113,56 @@
   function anexaById(id) {
     return anexeTypes().find(function (a) { return a.id === id; }) || null;
   }
+  function persistAnexaRecord(anexa) {
+    if (!anexa || !anexa.id) return;
+    try {
+      var raw = window.localStorage.getItem('scriptica.anexe');
+      var map = raw ? JSON.parse(raw) : {};
+      if (!map || typeof map !== 'object') map = {};
+      map[anexa.id] = clone(anexa);
+      window.localStorage.setItem('scriptica.anexe', JSON.stringify(map));
+    } catch (e) { /* Clasificarea rămâne activă în memorie. */ }
+  }
+  function anexaBelongsToVertical(anexa, vertical) {
+    if (!anexa || !vertical) return false;
+    if (Array.isArray(anexa.verticalIds)) {
+      return !anexa.verticalIds.length || anexa.verticalIds.indexOf(vertical.id) !== -1;
+    }
+    var categories = anexa.categories || [];
+    if (!categories.length) return true;
+    if (vertical.domain === 'audit') return categories.indexOf('audit') !== -1;
+    if (vertical.domain === 'constructii') return categories.indexOf('constructii') !== -1;
+    if (vertical.domain === 'contabil') return categories.indexOf('contabil') !== -1 || categories.indexOf('contabilitate') !== -1 || categories.indexOf('salarizare') !== -1;
+    return categories.indexOf(vertical.domain) !== -1;
+  }
   function anexeForVertical(vertical) {
     if (!vertical) return [];
     return anexeTypes().filter(function (a) {
-      var categories = a.categories || [];
       if ((a.status || 'activ') !== 'activ') return false;
-      if (vertical.domain === 'audit') return categories.indexOf('audit') !== -1;
-      if (vertical.domain === 'constructii') return categories.indexOf('constructii') !== -1;
-      if (vertical.domain === 'contabil') return !categories.length || categories.indexOf('contabil') !== -1;
-      return categories.indexOf(vertical.domain) !== -1;
+      return anexaBelongsToVertical(a, vertical);
     });
+  }
+
+  function documentTypesForVertical(vertical) {
+    var out = [];
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system) return;
+      (category.documentTypes || []).forEach(function (type) {
+        out.push({ id: type.id, name: type.name, categoryId: category.id, categoryName: category.name });
+      });
+    });
+    return out;
+  }
+
+  function documentTypeOptionsHtml(vertical, selectedId) {
+    var html = '<option value="">Selectează tipul de document...</option>';
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system || !(category.documentTypes || []).length) return;
+      html += '<optgroup label="' + esc(category.name) + '">' + category.documentTypes.map(function (type) {
+        return '<option value="' + esc(type.id) + '"' + (type.id === selectedId ? ' selected' : '') + '>' + esc(type.name) + '</option>';
+      }).join('') + '</optgroup>';
+    });
+    return html;
   }
 
   function requiredFieldCount(anexa) {
@@ -137,10 +177,15 @@
 
   function normalizeTasks(tasks, stepId) {
     return (tasks || []).map(function (task, index) {
+      var kind = task && task.kind === 'document_upload' ? 'document_upload' : 'standard';
       return {
         id: (task && task.id) || (stepId + '_task_' + (index + 1)),
         label: taskLabel(task),
-        required: typeof task === 'string' ? true : task.required !== false
+        kind: kind,
+        required: typeof task === 'string' ? true : task.required !== false,
+        documentTypeId: kind === 'document_upload' ? (task.documentTypeId || '') : '',
+        allowMultiple: kind === 'document_upload' ? task.allowMultiple !== false : false,
+        minimumFiles: kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1
       };
     });
   }
@@ -176,7 +221,7 @@
     });
     copy.steps = (copy.steps || []).map(function (step, index) {
       var stepId = step.id || (copy.id + '_step_' + (index + 1));
-      var sourceTasks = (step.tasks && step.tasks.length) ? step.tasks : defaultTasks(step.name, index);
+      var sourceTasks = Array.isArray(step.tasks) ? step.tasks : defaultTasks(step.name, index);
       return {
         id: stepId,
         name: step.name || ('Pasul ' + (index + 1)),
@@ -317,6 +362,23 @@
         var canonicalTemplates = clone((SA() && SA().flowTemplates) || []);
         var draftTemplateIds = Array.isArray(stored.draftTemplateIds) ? stored.draftTemplateIds.slice() : [];
         var draftVerticalIds = Array.isArray(stored.draftVerticalIds) ? stored.draftVerticalIds.slice() : [];
+
+        /* V7 — versiunile anterioare completau automat un task în pașii
+           definiți explicit cu `tasks: []`. Eliminăm numai valoarea generată
+           identic, fără să atingem task-uri adăugate sau rescrise de utilizator. */
+        if (stored.version !== MODEL_VERSION) {
+          stored.templates.forEach(function (storedTemplate) {
+            var canonicalTemplate = canonicalTemplates.find(function (item) { return item.id === storedTemplate.id; });
+            if (!canonicalTemplate) return;
+            (canonicalTemplate.steps || []).forEach(function (canonicalStep, stepIndex) {
+              if (!Array.isArray(canonicalStep.tasks) || canonicalStep.tasks.length) return;
+              var storedStep = (storedTemplate.steps || []).find(function (step) { return step.id === canonicalStep.id; }) || (storedTemplate.steps || [])[stepIndex];
+              if (!storedStep) return;
+              var generated = normalizeTasks(defaultTasks(canonicalStep.name, stepIndex), canonicalStep.id || storedStep.id);
+              if (sameRecord(storedStep.tasks || [], generated)) storedStep.tasks = [];
+            });
+          });
+        }
 
         /* Migrare din explorarea V2: orice record care nu a ajuns în registrul
            central rămâne ciornă, nu este pierdut și nu suprascrie în tăcere
@@ -460,7 +522,7 @@
       name: 'Pas nou',
       description: '',
       offsetDays: offsetDays || Math.max(1, number * 10),
-      tasks: [{ id: stepId + '_task_1', label: 'Descrie activitatea obligatorie', required: true }],
+      tasks: [{ id: stepId + '_task_1', label: 'Descrie activitatea obligatorie', kind: 'standard', required: true, documentTypeId: '', allowMultiple: false, minimumFiles: 1 }],
       anexeIds: [],
       requireApproval: false
     };
@@ -494,6 +556,9 @@
       if (!String(step.name || '').trim()) errors.push('Pasul ' + (index + 1) + ' trebuie să aibă o denumire.');
       (step.tasks || []).forEach(function (task, taskIndex) {
         if (!String(taskLabel(task)).trim()) errors.push('Task-ul ' + (taskIndex + 1) + ' din pasul ' + (index + 1) + ' trebuie descris.');
+        if (task.kind === 'document_upload' && !documentTypesForVertical(vertical).some(function (type) { return type.id === task.documentTypeId; })) {
+          errors.push('Task-ul de încărcare ' + (taskIndex + 1) + ' din pasul ' + (index + 1) + ' trebuie să aibă un tip de document.');
+        }
       });
       var error = deadlineError(template, index);
       if (error) errors.push('Pasul ' + (index + 1) + ': ' + error);
@@ -506,25 +571,14 @@
       '<b>' + number + '</b><span>' + esc(label) + '</span></div>';
   }
 
-  function setupPathHtml(ct, template) {
-    var flowActive = !!template;
-    return '<nav class="sa-setup" aria-label="Registrul global de fluxuri">' +
-      '<a class="sa-setup__step' + (flowActive ? '' : ' is-active') + '" href="#fxv2-root"' + (flowActive ? '' : ' aria-current="step"') + '><span>1</span><div><small>Grupează serviciile</small><b>Verticale</b></div></a>' +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step' + (flowActive ? ' is-active' : '') + '" href="#fxv2-root"' + (flowActive ? ' aria-current="step"' : '') + '><span>2</span><div><small>Definește execuția</small><b>Fluxuri</b></div></a>' +
-      '<span class="material-symbols-outlined sa-setup__arrow" aria-hidden="true">arrow_forward</span>' +
-      '<a class="sa-setup__step" href="super-admin-clienti.html?view=superadmin"><span>3</span><div><small>Activează pe cont</small><b>Module client</b></div></a>' +
-    '</nav>';
-  }
-
   function renderPage() {
+    /* Registrul este un workspace, nu un wizard: fără traseu decorativ de pași. */
     var previousLibrary = root.querySelector('.fxv2-library__scroll');
     var previousEditor = root.querySelector('.fxv2-editor');
     var previousSequence = root.querySelector('.fxv2-sequence-scroll');
     if (previousLibrary) state.libraryScroll = previousLibrary.scrollTop;
     if (previousEditor) state.editorScroll = previousEditor.scrollTop;
     if (previousSequence) state.sequenceScroll = previousSequence.scrollLeft;
-    var ct = contextType();
     var vertical = selectedVertical();
     var template = selectedTemplate();
     var visibleTemplates = libraryTemplates();
@@ -533,20 +587,19 @@
       '<header class="page-header fxv2-page-header">' +
         '<div class="fxv2-heading"><div class="fxv2-heading__line">' +
           '<h1 class="page-header__title">Verticale și fluxuri</h1><span class="pill pill--neutral">Registru global</span></div>' +
-          '<p class="fxv2-intro">Definește o singură dată verticalele și fluxurile platformei. Ele devin module disponibile, activate ulterior pe fiecare client.</p>' +
+          '<p class="fxv2-intro">Definește o singură dată verticalele și fluxurile platformei. Verticalele devin disponibile pentru activare pe fiecare client.</p>' +
         '</div>' +
         '<div class="fxv2-page-actions">' +
           '<button class="btn btn--secondary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' +
           (vertical ? '<button class="btn btn--primary" type="button" data-new-template>Flux nou<span class="material-symbols-outlined" aria-hidden="true">add</span></button>' : '') +
         '</div>' +
       '</header>' +
-      setupPathHtml(ct, template) +
       '<div class="fxv2-summary" aria-label="Rezumat registru de fluxuri">' +
         summaryMetric('account_tree', libraryVerticals().length, 'verticale globale') +
         summaryMetric('schema', visibleTemplates.length, 'fluxuri definite') +
         summaryMetric('conversion_path', totalSteps, 'pași configurabili') +
         '<span class="fxv2-summary__explain"><span class="material-symbols-outlined" aria-hidden="true">info</span>' +
-          'Verticala devine modul comercial; fiecare flux din ea definește pașii de lucru disponibili clientului.</span>' +
+          'Verticala este unitatea activată pe client; fiecare flux din ea definește pașii de lucru disponibili.</span>' +
       '</div>' +
       '<div class="fxv2-workspace">' + libraryHtml(vertical, template) + editorHtml(vertical, template) + '</div>';
     rememberSelection();
@@ -643,14 +696,14 @@
       copy = affectedClients.length + ' ' + plural(affectedClients.length, 'client folosește', 'clienți folosesc') +
         ' deja acest flux. Ciorna este păstrată, dar publicarea rămâne în așteptare până se decide cum sunt tratate configurațiile existente.';
     } else {
-      copy = 'După publicare, fluxul rămâne în registrul global și va fi inclus în noile activări ale modulului acestei verticale.';
+      copy = 'După publicare, fluxul rămâne în registrul global și va fi inclus în noile activări ale acestei verticale.';
     }
     return { usedBy: [], affectedClients: affectedClients, dirty: dirty, pending: pending, copy: copy };
   }
 
   function editorHtml(vertical, template) {
     if (!vertical) {
-      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează prima verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu și va deveni un modul disponibil clienților.</p>' +
+      return '<section class="fxv2-editor fxv2-editor--empty"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><h2>Creează prima verticală</h2><p>Verticala va grupa fluxurile aceluiași domeniu și va deveni disponibilă clienților.</p>' +
         '<button class="btn btn--primary" type="button" data-new-vertical>Verticală nouă<span class="material-symbols-outlined" aria-hidden="true">add</span></button></section>';
     }
     if (!template) {
@@ -725,16 +778,29 @@
   function stepInspectorHtml(template, step, index) {
     if (!step) return '';
     var vertical = verticalById(template.verticalId);
-    var available = anexeForVertical(vertical).filter(function (anexa) { return (step.anexeIds || []).indexOf(anexa.id) === -1; });
+    var available = anexeTypes().filter(function (anexa) {
+      return (anexa.status || 'activ') === 'activ' && (step.anexeIds || []).indexOf(anexa.id) === -1;
+    });
+    var currentAnexe = available.filter(function (anexa) { return anexaBelongsToVertical(anexa, vertical); });
+    var otherAnexe = available.filter(function (anexa) { return !anexaBelongsToVertical(anexa, vertical); });
     var dayError = deadlineError(template, index);
-    var requiredTasks = (step.tasks || []).filter(function (task) { return task.required !== false; }).length;
+    var standardTasks = (step.tasks || []).filter(function (task) { return task.kind !== 'document_upload'; });
+    var requiredTasks = standardTasks.filter(function (task) { return task.required !== false; }).length;
+    var requiredUploads = (step.tasks || []).filter(function (task) { return task.kind === 'document_upload' && task.required !== false; }).length;
     var blockingAnexe = 0;
     var requiredFields = 0;
     var tasks = (step.tasks || []).map(function (task, taskIndex) {
-      return '<div class="fxv2-task"><span class="material-symbols-outlined" aria-hidden="true">check_box_outline_blank</span>' +
+      var isUpload = task.kind === 'document_upload';
+      var uploadConfig = isUpload
+        ? '<div class="fxv2-task__upload-config"><label><span>Tip document</span><select class="select" data-task-document-type="' + taskIndex + '">' + documentTypeOptionsHtml(vertical, task.documentTypeId) + '</select></label>' +
+            '<label class="fxv2-task__multiple"><input type="checkbox" data-task-multiple="' + taskIndex + '"' + (task.allowMultiple !== false ? ' checked' : '') + '><span>Permite mai multe fișiere</span></label>' +
+            '<label class="fxv2-task__minimum"><span>Minimum</span><input class="input" type="number" min="1" value="' + esc(task.minimumFiles || 1) + '" data-task-minimum-files="' + taskIndex + '"' + (task.allowMultiple === false ? ' disabled' : '') + '><span>fișiere</span></label></div>'
+        : '';
+      return '<div class="fxv2-task' + (isUpload ? ' is-upload' : '') + '"><span class="material-symbols-outlined" aria-hidden="true">' + (isUpload ? 'upload_file' : 'check_box_outline_blank') + '</span>' +
         '<input class="input" type="text" value="' + esc(taskLabel(task)) + '" data-task-input="' + taskIndex + '" aria-label="Task ' + (taskIndex + 1) + '">' +
+        '<select class="select fxv2-task__kind" data-task-kind="' + taskIndex + '" aria-label="Tip task"><option value="standard"' + (!isUpload ? ' selected' : '') + '>Task normal</option><option value="document_upload"' + (isUpload ? ' selected' : '') + '>Încărcare document</option></select>' +
         '<label class="fxv2-task__required"><input type="checkbox" data-task-required="' + taskIndex + '"' + (task.required !== false ? ' checked' : '') + '><span>Obligatoriu</span></label>' +
-        '<button type="button" data-remove-task="' + taskIndex + '" aria-label="Șterge task-ul" title="Șterge task-ul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button></div>';
+        '<button type="button" data-remove-task="' + taskIndex + '" aria-label="Șterge task-ul" title="Șterge task-ul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>' + uploadConfig + '</div>';
     }).join('');
     var anexe = (step.anexeIds || []).map(function (id) {
       var anexa = anexaById(id);
@@ -744,7 +810,17 @@
         (count ? '<small class="is-required"><span class="material-symbols-outlined" aria-hidden="true">lock</span>' + count + ' ' + plural(count, 'câmp obligatoriu', 'câmpuri obligatorii') + '</small>' : '<small>Fără câmpuri obligatorii</small>') + '</div>' +
         '<button type="button" data-remove-anexa="' + esc(id) + '" aria-label="Elimină anexa"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>';
     }).join('');
-    var options = available.map(function (anexa) { return '<option value="' + esc(anexa.id) + '">' + esc(anexa.name) + '</option>'; }).join('');
+    var options = '';
+    if (currentAnexe.length) {
+      options += '<optgroup label="Disponibile în ' + esc(vertical.name) + '">' + currentAnexe.map(function (anexa) {
+        return '<option value="' + esc(anexa.id) + '">' + esc(anexa.name) + '</option>';
+      }).join('') + '</optgroup>';
+    }
+    if (otherAnexe.length) {
+      options += '<optgroup label="Alte verticale — reutilizare">' + otherAnexe.map(function (anexa) {
+        return '<option value="' + esc(anexa.id) + '">' + esc(anexa.name) + '</option>';
+      }).join('') + '</optgroup>';
+    }
     return '<div class="fxv2-inspector">' +
       '<header class="fxv2-inspector__head"><div><span class="fxv2-eyebrow">Configurare pas</span><h3>Pasul ' + (index + 1) + ' din ' + template.steps.length + '</h3></div>' +
         '<div class="fxv2-step-actions">' +
@@ -763,14 +839,15 @@
         '</section>' +
         '<section class="fxv2-config-card"><div class="fxv2-config-card__title"><span class="material-symbols-outlined" aria-hidden="true">task_alt</span><div><h4>Cerințe pentru avansare</h4><p>Ce blochează butonul „Finalizează pasul”.</p></div></div>' +
           '<div class="fxv2-rules">' +
-            automaticRuleHtml('checklist', 'Task-uri obligatorii', 'Se configurează individual în lista de task-uri.', requiredTasks + ' din ' + (step.tasks || []).length) +
+            automaticRuleHtml('checklist', 'Task-uri obligatorii', 'Se configurează individual în lista de task-uri.', requiredTasks + ' din ' + standardTasks.length) +
+            automaticRuleHtml('upload_file', 'Încărcări obligatorii', requiredUploads ? 'Pasul rămâne blocat până la încărcarea documentelor.' : 'Nicio încărcare nu blochează acum pasul.', requiredUploads ? requiredUploads + ' ' + plural(requiredUploads, 'task', 'task-uri') : 'Niciuna') +
             automaticRuleHtml('description', 'Câmpuri obligatorii din anexe', blockingAnexe ? 'Pasul este blocat până la completarea lor.' : 'Nicio anexă nu blochează acum pasul.', requiredFields ? requiredFields + ' câmpuri' : 'Niciunul') +
             toggleHtml('Aprobare internă', 'Pasul se închide numai după validarea unui responsabil.', 'requireApproval', step.requireApproval) +
           '</div>' +
         '</section>' +
       '</div>' +
       '<div class="fxv2-inspector__grid fxv2-inspector__grid--content">' +
-        '<section class="fxv2-config-card"><div class="fxv2-config-card__title"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><div><h4>Task-uri implicite</h4><p>Obligativitatea se decide pentru fiecare task, nu pentru tot pasul.</p></div><span class="fxv2-count">' + (step.tasks || []).length + '</span></div>' +
+        '<section class="fxv2-config-card"><div class="fxv2-config-card__title"><span class="material-symbols-outlined" aria-hidden="true">checklist</span><div><h4>Task-uri implicite</h4><p>Un task poate fi o confirmare normală sau o încărcare obligatorie de documente.</p></div><span class="fxv2-count">' + (step.tasks || []).length + '</span></div>' +
           '<div class="fxv2-task-list">' + (tasks || '<div class="fxv2-mini-empty">Niciun task definit.</div>') + '</div>' +
           '<button class="btn btn--ghost" type="button" data-add-task><span class="material-symbols-outlined" aria-hidden="true">add</span>Adaugă task</button>' +
         '</section>' +
@@ -778,6 +855,7 @@
           '<div class="fxv2-anexe">' + (anexe || '<div class="fxv2-mini-empty">Nicio anexă atașată.</div>') + '</div>' +
           '<div class="fxv2-anexa-picker"><select class="select" data-anexa-picker' + (available.length ? '' : ' disabled') + '><option value="">' + (available.length ? 'Selectează o anexă...' : 'Nicio anexă disponibilă') + '</option>' + options + '</select>' +
             '<button class="btn btn--secondary" type="button" data-add-anexa' + (available.length ? '' : ' disabled') + '>Atașează</button></div>' +
+          (otherAnexe.length ? '<span class="form-helper">Poți reutiliza aceeași anexă din altă verticală; nu se creează o copie.</span>' : '') +
         '</section>' +
       '</div>' +
     '</div>';
@@ -825,6 +903,8 @@
       removeTask(parseInt(el.getAttribute('data-remove-task'), 10));
     } else if ((el = event.target.closest('[data-task-required]'))) {
       setTaskRequired(parseInt(el.getAttribute('data-task-required'), 10), el.checked);
+    } else if ((el = event.target.closest('[data-task-multiple]'))) {
+      setTaskMultiple(parseInt(el.getAttribute('data-task-multiple'), 10), el.checked);
     } else if ((el = event.target.closest('[data-toggle-rule]'))) {
       toggleRule(el.getAttribute('data-toggle-rule'));
     } else if (event.target.closest('[data-add-anexa]')) {
@@ -875,6 +955,16 @@
       refreshEditingSignals(template);
     } else if (event.target.hasAttribute('data-task-input')) {
       step.tasks[parseInt(event.target.getAttribute('data-task-input'), 10)].label = event.target.value;
+      markDirty(template);
+      refreshEditingSignals(template);
+    } else if (event.target.hasAttribute('data-task-kind')) {
+      setTaskKind(parseInt(event.target.getAttribute('data-task-kind'), 10), event.target.value);
+    } else if (event.target.hasAttribute('data-task-document-type')) {
+      step.tasks[parseInt(event.target.getAttribute('data-task-document-type'), 10)].documentTypeId = event.target.value;
+      markDirty(template);
+      refreshEditingSignals(template);
+    } else if (event.target.hasAttribute('data-task-minimum-files')) {
+      step.tasks[parseInt(event.target.getAttribute('data-task-minimum-files'), 10)].minimumFiles = Math.max(1, parseInt(event.target.value, 10) || 1);
       markDirty(template);
       refreshEditingSignals(template);
     }
@@ -1012,7 +1102,7 @@
     var template = selectedTemplate();
     var step = selectedStep(template);
     if (!step) return;
-    step.tasks.push({ id: step.id + '_task_' + (step.tasks.length + 1) + '_' + Date.now().toString(36), label: 'Task nou', required: true });
+    step.tasks.push({ id: step.id + '_task_' + (step.tasks.length + 1) + '_' + Date.now().toString(36), label: 'Task nou', kind: 'standard', required: true, documentTypeId: '', allowMultiple: false, minimumFiles: 1 });
     markDirty(template);
     renderPage();
   }
@@ -1035,6 +1125,37 @@
     renderPage();
   }
 
+  function setTaskKind(index, kind) {
+    var template = selectedTemplate();
+    var step = selectedStep(template);
+    var task = step && step.tasks[index];
+    if (!task) return;
+    task.kind = kind === 'document_upload' ? 'document_upload' : 'standard';
+    if (task.kind === 'document_upload') {
+      var availableTypes = documentTypesForVertical(selectedVertical());
+      if (!task.documentTypeId && availableTypes[0]) task.documentTypeId = availableTypes[0].id;
+      task.allowMultiple = task.allowMultiple !== false;
+      task.minimumFiles = Math.max(1, parseInt(task.minimumFiles, 10) || 1);
+    } else {
+      task.documentTypeId = '';
+      task.allowMultiple = false;
+      task.minimumFiles = 1;
+    }
+    markDirty(template);
+    renderPage();
+  }
+
+  function setTaskMultiple(index, allowMultiple) {
+    var template = selectedTemplate();
+    var step = selectedStep(template);
+    var task = step && step.tasks[index];
+    if (!task) return;
+    task.allowMultiple = !!allowMultiple;
+    if (!task.allowMultiple) task.minimumFiles = 1;
+    markDirty(template);
+    renderPage();
+  }
+
   function toggleRule(key) {
     var template = selectedTemplate();
     var step = selectedStep(template);
@@ -1050,6 +1171,15 @@
     var picker = root.querySelector('[data-anexa-picker]');
     if (!step || !picker || !picker.value) return;
     if (step.anexeIds.indexOf(picker.value) === -1) step.anexeIds.push(picker.value);
+    var anexa = anexaById(picker.value);
+    var vertical = selectedVertical();
+    if (anexa && vertical && Array.isArray(anexa.verticalIds) && anexa.verticalIds.length && anexa.verticalIds.indexOf(vertical.id) === -1) {
+      anexa.verticalIds.push(vertical.id);
+      anexa.categories = Array.isArray(anexa.categories) ? anexa.categories : [];
+      if (anexa.categories.indexOf(vertical.domain) === -1) anexa.categories.push(vertical.domain);
+      persistAnexaRecord(anexa);
+      toast('info', 'Anexa a devenit disponibilă și în verticala „' + vertical.name + '”.');
+    }
     markDirty(template);
     renderPage();
   }
@@ -1077,7 +1207,7 @@
         title: 'Publicarea este în așteptare',
         subtitle: template.name,
       bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + affectedClients.length + '</b><span>' + plural(affectedClients.length, 'client existent', 'clienți existenți') + '</span></div>' +
-          '<div><b>Modul activ</b><span>pe clienți</span></div><div><b>Ciornă</b><span>salvată local</span></div></div>' +
+          '<div><b>Verticală activă</b><span>pe clienți</span></div><div><b>Ciornă</b><span>salvată local</span></div></div>' +
           '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">pending_actions</span><span><b>Structura nu a fost trimisă în registrul central.</b> Ciorna rămâne disponibilă pentru editare și previzualizare până se decide dacă o versiune publicată actualizează sau nu clienții existenți.</span></div>',
         footerHtml: '<span class="modal__footer-helper">Nicio configurație de client nu a fost modificată.</span><button class="btn btn--primary" type="button" data-dialog-close>Am înțeles</button>'
       });
@@ -1090,7 +1220,7 @@
       bodyHtml: '<div class="fxv2-publish-summary"><div><b>' + template.steps.length + '</b><span>' + plural(template.steps.length, 'pas', 'pași') + '</span></div>' +
         '<div><b>Ziua ' + template.steps[template.steps.length - 1].offsetDays + '</b><span>termen final</span></div><div><b>Global</b><span>registru platformă</span></div></div>' +
         '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">verified</span><span>' +
-          'Fluxul va fi salvat în registrul central. Niciun client nu primește automat modulul.</span></div>',
+          'Fluxul va fi salvat în registrul central. Niciun client nu primește automat verticala.</span></div>',
       onSubmit: function (dialog, close) {
         if (typeof window.scripticaFlowSave !== 'function') {
           toast('error', 'Registrul central nu este disponibil. Reîncarcă pagina și încearcă din nou.');
@@ -1118,10 +1248,11 @@
     var step = template.steps[current];
     var previewTasks = (step.tasks || []).map(function (task, index) {
       var required = task.required !== false;
+      var isUpload = task.kind === 'document_upload';
       return '<div class="fxv2-preview-requirement" data-preview-task="' + index + '" data-blocking="' + (required ? 'true' : 'false') + '">' +
-        '<label><input type="checkbox"><span class="material-symbols-outlined" aria-hidden="true">check_box_outline_blank</span><b>' + esc(taskLabel(task)) + '</b></label>' +
-        '<span class="pill ' + (required ? 'pill--critical' : 'pill--neutral') + '">' + (required ? 'Obligatoriu' : 'Opțional') + '</span>' +
-        (required ? '<span class="fxv2-block-tooltip" role="tooltip"><span class="material-symbols-outlined" aria-hidden="true">priority_high</span>Bifează task-ul obligatoriu înainte de a continua.</span>' : '') +
+        '<label><input type="checkbox"><span class="material-symbols-outlined" aria-hidden="true">' + (isUpload ? 'upload_file' : 'check_box_outline_blank') + '</span><b>' + esc(taskLabel(task)) + '</b></label>' +
+        '<span class="pill ' + (required ? 'pill--critical' : 'pill--neutral') + '">' + (isUpload ? 'Încărcare document · ' : '') + (required ? 'Obligatoriu' : 'Opțional') + '</span>' +
+        (required ? '<span class="fxv2-block-tooltip" role="tooltip"><span class="material-symbols-outlined" aria-hidden="true">priority_high</span>' + (isUpload ? 'Simulează încărcarea documentului înainte de a continua.' : 'Bifează task-ul obligatoriu înainte de a continua.') + '</span>' : '') +
       '</div>';
     }).join('');
     var previewAnexe = (step.anexeIds || []).map(function (id) {
@@ -1465,7 +1596,7 @@
     var dialog = openDialog({
       title: isNew ? 'Verticală nouă' : (vertical.builtin ? 'Categorii de documente — ' + vertical.name : 'Configurează verticala'),
       subtitle: isNew
-        ? 'Definește un domeniu de lucru care poate fi activat ca modul pe orice client.'
+        ? 'Definește un domeniu de lucru care poate fi activat ca verticală pe orice client.'
         : 'Verticala grupează fluxuri și definește vocabularul folosit de clasificarea A.I. Pașii aparțin exclusiv fluxurilor.',
       wide: true,
       bodyHtml: '<div class="fxv2-dialog-note"><span class="material-symbols-outlined" aria-hidden="true">layers</span><span>Fiecare tip de document are o singură categorie implicită. Fluxurile moștenesc acest vocabular și pot doar să ascundă ce nu folosesc.</span></div>' +

@@ -88,8 +88,9 @@
     var flowId = params.get('flowId');
     if (flowId) {
       var item = (MOCK.flowItems || []).find(function (flowItem) { return flowItem.id === flowId; });
-      var vertical = item && typeof window.scripticaVerticalById === 'function'
-        ? window.scripticaVerticalById(item.verticalId) : null;
+      var vertical = item && typeof window.scripticaEffectiveVertical === 'function'
+        ? window.scripticaEffectiveVertical(item.verticalId)
+        : (item && typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(item.verticalId) : null);
       if (!item || !vertical || (typeof window.viewInScope === 'function' && !window.viewInScope(vertical.domain))) {
         window.location.replace('acasa.html?view=' + encodeURIComponent(typeof window.getCurrentView === 'function' ? window.getCurrentView() : 'complet'));
         return;
@@ -167,10 +168,15 @@
       return Object.assign({}, step, {
         id: stepId,
         tasks: taskSource.map(function (task, taskIndex) {
+          var kind = task && task.kind === 'document_upload' ? 'document_upload' : 'standard';
           return {
             id: (task && task.id) || (stepId + '_task_' + (taskIndex + 1)),
             label: typeof task === 'string' ? task : (task.label || task.name || ''),
-            required: typeof task === 'string' ? true : task.required !== false
+            kind: kind,
+            required: typeof task === 'string' ? true : task.required !== false,
+            documentTypeId: kind === 'document_upload' ? (task.documentTypeId || '') : '',
+            allowMultiple: kind === 'document_upload' ? task.allowMultiple !== false : false,
+            minimumFiles: kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1
           };
         }),
         anexeIds: Array.isArray(step.anexeIds) ? step.anexeIds.slice() : legacyFlowAnexe(source.id, index)
@@ -183,7 +189,7 @@
         name: 'Lucru',
         offsetDays: 10,
         tasks: defaultFlowTasks('Lucru', 0).map(function (label, taskIndex) {
-          return { id: fallbackStepId + '_task_' + (taskIndex + 1), label: label, required: true };
+          return { id: fallbackStepId + '_task_' + (taskIndex + 1), label: label, kind: 'standard', required: true, documentTypeId: '', allowMultiple: false, minimumFiles: 1 };
         }),
         anexeIds: legacyFlowAnexe(source.id, 0)
       }];
@@ -245,14 +251,25 @@
         return Object.assign({
           id: task.id,
           label: task.label,
+          kind: task.kind || 'standard',
           required: task.required !== false,
+          documentTypeId: task.documentTypeId || '',
+          allowMultiple: task.kind === 'document_upload' ? task.allowMultiple !== false : false,
+          minimumFiles: task.kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1,
           completed: allDone,
           assigneeId: allDone ? item.titularId : null,
           completedAt: allDone ? '2026-04-15T10:00:00' : null,
           observation: '',
           needsSeniorAttention: false,
           attachments: []
-        }, old || {}, { label: task.label, required: task.required !== false });
+        }, old || {}, {
+          label: task.label,
+          kind: task.kind || 'standard',
+          required: task.required !== false,
+          documentTypeId: task.documentTypeId || '',
+          allowMultiple: task.kind === 'document_upload' ? task.allowMultiple !== false : false,
+          minimumFiles: task.kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1
+        });
       });
     });
     item.tasks = tasks;
@@ -322,7 +339,9 @@
   function workspaceNoun(s) {
     return currentWorkspaceKind === 'flux'
       ? String((s && s.flowItemLabel) || 'flux').toLowerCase()
-      : 'situație';
+      : String((typeof window.scripticaEffectiveVertical === 'function'
+        ? (window.scripticaEffectiveVertical('vert_contabil') || {}).itemLabel
+        : 'Situație') || 'Situație').toLowerCase();
   }
 
   function workspaceDefiniteNoun(s) {
@@ -623,7 +642,7 @@
 
     var canAct = (role === 'responsible') && !readonly;
 
-    var allDone = tasks.filter(function (t) { return t.required !== false; }).every(function (t) { return t.completed; });
+    var allDone = tasks.filter(function (t) { return t.required !== false; }).every(taskRequirementComplete);
 
     var stepAnexe = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.getStepAnexe(s) : [];
     var anexeOk = window.SCRIPTICA_ANEXE ? window.SCRIPTICA_ANEXE.allComplete(s) : true;
@@ -668,6 +687,9 @@
       cb.addEventListener('change', function (e) {
         onTaskToggle(e, cb);
       });
+    });
+    el.querySelectorAll('[data-task-upload]').forEach(function (button) {
+      button.addEventListener('click', function () { onUploadTask(button); });
     });
 
     // Bind step actions
@@ -728,6 +750,21 @@
       }
     }
 
+    if (isUploadTask(t)) {
+      var uploadCount = (t.attachments || []).length;
+      var uploadLabel = t.completed ? 'Document încărcat' : (t.allowMultiple === false ? 'Încarcă documentul' : 'Încarcă documentele');
+      return '<div class="task-detail-row task-detail-row--upload' + (t.completed ? ' is-complete' : '') + '" data-task-id="' + esc(t.id) + '">' +
+        '<button type="button" class="task-detail-row__upload-action" data-task-upload aria-label="' + esc(uploadLabel + ' pentru ' + t.label) + '">' +
+          '<span class="material-symbols-outlined" aria-hidden="true">' + (t.completed ? 'check_circle' : 'upload_file') + '</span>' +
+        '</button>' +
+        '<span class="task-detail-row__label' + (t.completed ? ' is-done' : '') + '">' + esc(t.label) +
+          ' <span class="pill pill--neutral">Încărcare document</span>' +
+          (t.required === false ? ' <span class="pill pill--neutral">Opțional</span>' : '') +
+          '<small class="task-detail-row__upload-copy">' + esc(t.completed ? uploadCount + (uploadCount === 1 ? ' fișier încărcat' : ' fișiere încărcate') + ' · poți actualiza documentele' : uploadLabel) + '</small></span>' +
+        timeBlock + indicators + assigneeBlock +
+      '</div>';
+    }
+
     return '<label class="task-detail-row" data-task-id="' + esc(t.id) + '">' +
       '<input type="checkbox" data-task-toggle ' + (t.completed ? 'checked' : '') + '>' +
       '<span class="task-detail-row__label' + (t.completed ? ' is-done' : '') + '">' + esc(t.label) +
@@ -736,6 +773,16 @@
       indicators +
       assigneeBlock +
     '</label>';
+  }
+
+  function isUploadTask(task) {
+    return !!task && task.kind === 'document_upload';
+  }
+
+  function taskRequirementComplete(task) {
+    if (!task || !task.completed) return false;
+    if (!isUploadTask(task)) return true;
+    return (task.attachments || []).length >= Math.max(1, parseInt(task.minimumFiles, 10) || 1);
   }
 
   function formatHoursMinutes(seconds) {
@@ -832,7 +879,7 @@
       if (!filtered.length) {
         listEl.innerHTML = '<div class="chat-attach-popover__empty">' +
           (searchInput.value.trim() ? 'Niciun document găsit pentru „' + esc(searchInput.value.trim()) + '".' :
-            'Nu există documente pentru această situație.') +
+            'Nu există documente pentru acest element de lucru.') +
         '</div>';
         return;
       }
@@ -1166,6 +1213,109 @@
 
   /* ---------- Task toggling ---------- */
 
+  function workspaceVertical() {
+    if (currentVertical) return currentVertical;
+    if (typeof window.scripticaEffectiveVertical === 'function') {
+      return window.scripticaEffectiveVertical(currentSituation.verticalId || 'vert_contabil');
+    }
+    return ((((MOCK || {}).superAdmin || {}).flowVerticals) || []).find(function (vertical) {
+      return vertical.id === (currentSituation.verticalId || 'vert_contabil');
+    }) || null;
+  }
+
+  function taskDocumentMeta(task) {
+    var vertical = workspaceVertical();
+    var fallback = null;
+    var match = null;
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system) return;
+      (category.documentTypes || []).forEach(function (type) {
+        if (!fallback) fallback = { categoryId: category.id, categoryName: category.name, typeId: type.id, typeName: type.name };
+        if (task.documentTypeId === type.id) match = { categoryId: category.id, categoryName: category.name, typeId: type.id, typeName: type.name };
+      });
+    });
+    return match || fallback || { categoryId: 'necategorisit', categoryName: 'Necategorisit', typeId: '', typeName: 'Document suport' };
+  }
+
+  function registerTaskDocuments(task, attachments) {
+    if (!isUploadTask(task)) return;
+    var meta = taskDocumentMeta(task);
+    var now = new Date().toISOString();
+    (attachments || []).forEach(function (attachment, index) {
+      if (!attachment.id) attachment.id = 'att_' + Date.now().toString(36) + '_' + index;
+      var exists = (MOCK.documents || []).some(function (doc) {
+        return doc.sourceTaskId === task.id && doc.attachmentId === attachment.id;
+      });
+      if (exists) return;
+      var record = {
+        id: 'doc_task_' + Date.now().toString(36) + '_' + index,
+        situationId: currentSituation.id,
+        domain: currentSituation.domain || (workspaceVertical() && workspaceVertical().domain) || 'contabil',
+        filename: attachment.name,
+        uploadedAt: now,
+        source: 'upload',
+        sourceTaskId: task.id,
+        sourceStep: currentSituation.currentStep,
+        attachmentId: attachment.id,
+        pagesCount: 1,
+        multiDoc: false,
+        multiDocConfidence: null,
+        tipDocument: meta.typeName,
+        documentTypeId: meta.typeId,
+        emitent: 'Încărcat de utilizator',
+        numarDocument: null,
+        dataEmiterii: null,
+        perioadaFiscala: null,
+        valoareFaraTVA: null,
+        tvaProcent: null,
+        tvaValoare: null,
+        valoareTotala: null,
+        moneda: 'RON',
+        categoriePropusa: meta.typeName,
+        broadCategory: meta.categoryId,
+        subFilter: null,
+        confidenceExtraction: 100,
+        confidenceCategorization: 100,
+        observatieAI: 'Document solicitat explicit de task-ul „' + task.label + '”.',
+        verificat: true,
+        verificatManual: true,
+        pageThumbnails: []
+      };
+      MOCK.documents.unshift(record);
+      if (currentWorkspaceKind === 'flux') {
+        currentSituation.documents = currentSituation.documents || [];
+        currentSituation.documents.unshift(record);
+      }
+    });
+  }
+
+  function completeTask(task, result) {
+    task.completed = true;
+    task.assigneeId = currentUserId;
+    task.completedAt = new Date().toISOString();
+    task.observation = result.observation;
+    task.needsSeniorAttention = result.needsSeniorAttention;
+    task.attachments = result.attachments;
+    registerTaskDocuments(task, task.attachments);
+    persistFlowWorkspace();
+    if (typeof window.SCRIPTICA_DOCS_REFRESH === 'function') window.SCRIPTICA_DOCS_REFRESH();
+  }
+
+  function onUploadTask(button) {
+    var row = button.closest('[data-task-id]');
+    var stepKey = 'step' + currentSituation.currentStep;
+    var taskId = row && row.getAttribute('data-task-id');
+    var task = ((currentSituation.tasks || {})[stepKey] || []).find(function (item) { return String(item.id) === String(taskId); });
+    if (!task || isClosedStatus(currentSituation)) return;
+    openTaskCompletionModal(task, function (result) {
+      if (result) {
+        completeTask(task, result);
+        showToast('success', (result.attachments.length === 1 ? 'Documentul a fost încărcat' : 'Documentele au fost încărcate') + ' și task-ul a fost finalizat.');
+      }
+      renderTaskPanel();
+    });
+  }
+
   function onTaskToggle(e, cb) {
     var s = currentSituation;
     if (isClosedStatus(s)) { cb.checked = !cb.checked; return; }
@@ -1180,13 +1330,7 @@
       // Open task completion modal; revert if cancelled
       openTaskCompletionModal(task, function (result) {
         if (result) {
-          task.completed = true;
-          task.assigneeId = currentUserId;
-          task.completedAt = new Date().toISOString();
-          task.observation = result.observation;
-          task.needsSeniorAttention = result.needsSeniorAttention;
-          task.attachments = result.attachments;
-          persistFlowWorkspace();
+          completeTask(task, result);
           showToast('success', 'Task finalizat.');
         } else {
           cb.checked = false;
@@ -1209,8 +1353,12 @@
   function openTaskCompletionModal(task, onDone) {
     var modal = document.getElementById('modal-task-complete');
     if (!modal) return;
+    var uploadTask = isUploadTask(task);
+    var minimumFiles = uploadTask ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 0;
+    var modalTitle = modal.querySelector('#modal-task-title');
     var titleEl = modal.querySelector('[data-task-title]');
-    if (titleEl) titleEl.textContent = '„' + task.label + '"';
+    if (modalTitle) modalTitle.textContent = uploadTask ? 'Încărcare document' : 'Finalizare task';
+    if (titleEl) titleEl.textContent = '„' + task.label + '”';
 
     var obsEl = modal.querySelector('[name="observation"]');
     var seniorEl = modal.querySelector('[name="senior"]');
@@ -1218,11 +1366,32 @@
     var fileList = modal.querySelector('[data-file-list]');
     var dropzone = modal.querySelector('[data-dropzone]');
     var pickBtn = modal.querySelector('[data-pick-files]');
+    var attachmentField = modal.querySelector('[data-attachment-field]');
+    var attachmentHelper = modal.querySelector('[data-attachment-helper]');
+    var attachmentError = modal.querySelector('[data-attachment-error]');
+    var submitBtn = modal.querySelector('[data-modal-submit]');
+    var meta = taskDocumentMeta(task);
+
+    if (fileInput) fileInput.multiple = uploadTask ? task.allowMultiple !== false : true;
+    if (attachmentHelper) {
+      attachmentHelper.textContent = uploadTask
+        ? 'Obligatoriu: ' + minimumFiles + (minimumFiles === 1 ? ' fișier' : ' fișiere') + ' · Tip document: ' + meta.typeName + '.'
+        : 'Atașează fișiere care susțin finalizarea task-ului.';
+    }
+    if (submitBtn) submitBtn.textContent = uploadTask ? 'Încarcă și finalizează' : 'Confirmă finalizarea';
 
     obsEl.value = task.observation || '';
     seniorEl.checked = !!task.needsSeniorAttention;
     var files = (task.attachments || []).slice();
     renderFiles();
+
+    function syncUploadValidation(showError) {
+      var missing = uploadTask && files.length < minimumFiles;
+      if (submitBtn) submitBtn.disabled = missing;
+      if (attachmentField) attachmentField.classList.toggle('has-error', !!(missing && showError));
+      if (attachmentError) attachmentError.textContent = missing && showError
+        ? 'Încarcă minimum ' + minimumFiles + (minimumFiles === 1 ? ' document.' : ' documente.') : '';
+    }
 
     function renderFiles() {
       fileList.innerHTML = files.map(function (f, i) {
@@ -1238,11 +1407,14 @@
           renderFiles();
         });
       });
+      syncUploadValidation(false);
     }
 
     function onFiles(list) {
+      if (uploadTask && task.allowMultiple === false) files = [];
       Array.prototype.forEach.call(list, function (f) {
-        files.push({ name: f.name, size: f.size, type: f.type });
+        if (uploadTask && task.allowMultiple === false && files.length) return;
+        files.push({ id: 'att_' + Date.now().toString(36) + '_' + files.length, name: f.name, size: f.size, type: f.type, uploadedAt: new Date().toISOString() });
       });
       renderFiles();
       fileInput.value = '';
@@ -1260,10 +1432,9 @@
 
     var closeBtn = modal.querySelector('[data-modal-close]');
     var cancelBtn = modal.querySelector('[data-modal-cancel]');
-    var submitBtn = modal.querySelector('[data-modal-submit]');
-
     function cleanup() {
       modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
       document.removeEventListener('keydown', onKey);
       modal.removeEventListener('click', onBackdrop);
@@ -1279,6 +1450,10 @@
     closeBtn.onclick = function () { cleanup(); onDone(null); };
     cancelBtn.onclick = function () { cleanup(); onDone(null); };
     submitBtn.onclick = function () {
+      if (uploadTask && files.length < minimumFiles) {
+        syncUploadValidation(true);
+        return;
+      }
       var result = {
         observation: obsEl.value.trim(),
         needsSeniorAttention: seniorEl.checked,
@@ -1291,8 +1466,9 @@
     document.addEventListener('keydown', onKey);
 
     modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    setTimeout(function () { obsEl.focus(); }, 0);
+    setTimeout(function () { (uploadTask ? pickBtn : obsEl).focus(); }, 0);
   }
 
   /* ---------- Cere Asistență Modal ---------- */
@@ -1507,7 +1683,7 @@
   function onFinalizeStep() {
     var s = currentSituation;
     var stepKey = 'step' + s.currentStep;
-    var allDone = s.tasks[stepKey].filter(function (t) { return t.required !== false; }).every(function (t) { return t.completed; });
+    var allDone = s.tasks[stepKey].filter(function (t) { return t.required !== false; }).every(taskRequirementComplete);
     if (!allDone) return;
     if (window.SCRIPTICA_ANEXE && !window.SCRIPTICA_ANEXE.allComplete(s)) return;
 

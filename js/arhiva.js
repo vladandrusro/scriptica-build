@@ -26,6 +26,7 @@
   }
 
   function buildArchiveFolders() {
+    var tenantAccount = typeof window.scripticaTenantAccount === 'function' ? window.scripticaTenantAccount() : null;
     var clientType = typeof window.scripticaClientTypeById === 'function'
       ? window.scripticaClientTypeById(tenantClientTypeId()) : null;
     var tree = (typeof window.scripticaArchiveTreeFor === 'function')
@@ -39,7 +40,9 @@
         });
         (n.children || []).forEach(walk);
       })(f);
-      return { key: f.id, label: f.name, system: !!f.system, typeNames: names };
+      var label = typeof window.scripticaEffectiveArchiveFolderName === 'function'
+        ? window.scripticaEffectiveArchiveFolderName(f.id, f.name, tenantAccount) : f.name;
+      return { key: f.id, label: label, system: !!f.system, typeNames: names };
     });
     var assignments = typeof window.scripticaTenantModuleAssignments === 'function'
       ? window.scripticaTenantModuleAssignments(true) : [];
@@ -62,12 +65,15 @@
       var assignment = assignments.find(function (item) { return item.verticalId === template.verticalId; });
       folders.push({
         key: 'af_flow_' + template.id,
-        label: template.name + (assignment && assignment.status !== 'activ' ? ' · modul inactiv' : ''),
+        label: (typeof window.scripticaEffectiveArchiveFolderName === 'function'
+          ? window.scripticaEffectiveArchiveFolderName('af_flow_' + template.id, template.name, tenantAccount)
+          : template.name) + (assignment && assignment.status !== 'activ' ? ' · verticală inactivă' : ''),
         system: false, flowTemplateId: template.id, typeNames: []
       });
     });
     if (!folders.some(function (f) { return f.system; })) {
-      folders.push({ key: 'af_fallback', label: 'Necategorisit', system: true, typeNames: [] });
+      folders.push({ key: 'af_fallback', label: typeof window.scripticaEffectiveArchiveFolderName === 'function'
+        ? window.scripticaEffectiveArchiveFolderName('af_fallback', 'Necategorisit', tenantAccount) : 'Necategorisit', system: true, typeNames: [] });
     }
     return folders;
   }
@@ -112,6 +118,12 @@
     return typeof getCurrentView === 'function' && getCurrentView() === 'client';
   }
 
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty()
+      : { singular: 'Client', plural: 'Clienți' };
+  }
+
   function getArchiveDocs() {
     if (typeof window.getVisibleDocuments === 'function') return window.getVisibleDocuments();
     return MOCK.documents || [];
@@ -137,7 +149,7 @@
     }
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
-      return { id: 'flow_' + String(flowItem.clientName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: flowItem.clientName || 'Client flux', _flow: true };
+      return { id: 'flow_' + String(flowItem.clientName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: flowItem.clientName || externalParty().singular + ' flux', _flow: true };
     }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
     if (!sit) return null;
@@ -311,7 +323,7 @@
     var html =
       '<div class="arhiva-tree__search">' +
         '<span class="material-symbols-outlined" aria-hidden="true">search</span>' +
-        '<input id="arhiva-tree-search" type="search" class="arhiva-tree__search-input" placeholder="Caută client..." value="' + esc(state.clientSearch) + '">' +
+        '<input id="arhiva-tree-search" type="search" class="arhiva-tree__search-input" placeholder="Caută ' + esc(externalParty().singular.toLowerCase()) + '..." value="' + esc(state.clientSearch) + '">' +
       '</div>';
 
     var q = state.clientSearch.toLowerCase().trim();
@@ -326,7 +338,7 @@
       });
 
     if (!clientIds.length) {
-      html += '<div class="arhiva-tree__empty">Niciun client găsit.</div>';
+      html += '<div class="arhiva-tree__empty">Niciun ' + esc(externalParty().singular.toLowerCase()) + ' găsit.</div>';
       return html;
     }
 
@@ -498,7 +510,7 @@
     return '<div class="arhiva-empty">' +
       '<span class="material-symbols-outlined" aria-hidden="true" style="font-size:64px;">folder_open</span>' +
       '<h2>Selectează un folder pentru a vedea documentele</h2>' +
-      '<p>Navighează în structura din stânga: Client → An → Lună → Categorie</p>' +
+      '<p>Navighează în structura din stânga: ' + esc(externalParty().singular) + ' → An → Lună → Categorie</p>' +
     '</div>';
   }
 

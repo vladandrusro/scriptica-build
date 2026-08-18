@@ -17,6 +17,20 @@
     anulata:              'Anulată',
     intarziere:           'În Întârziere'
   };
+  function accountingTerminology() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_contabil') : null;
+    return vertical || { name: 'Situații Contabile', itemLabel: 'Situație', itemLabelPlural: 'Situații' };
+  }
+  function auditTerminology() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_audit') : null;
+    return vertical || { name: 'Misiuni Audit', itemLabel: 'Misiune', itemLabelPlural: 'Misiuni' };
+  }
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty() : { singular: 'Client', plural: 'Clienți' };
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK) {
@@ -52,7 +66,7 @@
         '<h1 class="scope-block__title">Acasă · Audit</h1>' +
         '<p class="scope-block__text">Ai acces la aria de audit. Continuă către misiunile de audit sau arhiva ta.</p>' +
         '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;justify-content:center;">' +
-          '<a class="btn btn--primary" href="misiuni-audit.html">Misiuni Audit</a>' +
+          '<a class="btn btn--primary" href="misiuni-audit.html">' + esc(auditTerminology().name) + '</a>' +
           '<a class="btn btn--ghost" href="arhiva.html">Arhivă</a>' +
         '</div>' +
       '</div>';
@@ -420,6 +434,8 @@
     var deadlinesList = modal.querySelector('[data-deadlines-list]');
 
     var lastTrigger = null;
+    var workTerms = accountingTerminology();
+    var partyTerms = externalParty();
 
     /* Populate selects */
     typeSelect.innerHTML =
@@ -485,7 +501,7 @@
 
     function renderComboList(items) {
       if (!items.length) {
-        comboList.innerHTML = '<div class="combo__empty">Niciun client găsit.</div>';
+        comboList.innerHTML = '<div class="combo__empty">Niciun rezultat pentru ' + esc(partyTerms.singular.toLowerCase()) + '.</div>';
         return;
       }
       comboList.innerHTML = items.map(function (c, i) {
@@ -599,20 +615,20 @@
       e.preventDefault();
       if (!validate()) return;
       closeModal();
-      showToast('success', 'Situația contabilă a fost creată cu succes.');
+      showToast('success', workTerms.itemLabel + ' a fost creată cu succes.');
     });
 
     function validate() {
       var ok = true;
       // Type
-      setError('tip', !typeSelect.value, 'Selectează șablonul situației.');
+      setError('tip', !typeSelect.value, 'Selectează șablonul pentru ' + workTerms.itemLabel.toLowerCase() + '.');
       if (!typeSelect.value) ok = false;
 
       // Client
       var validClient = comboHidden.value && MOCK.clients.some(function (c) {
         return c.id === parseInt(comboHidden.value, 10) && c.companyName === comboInput.value;
       });
-      setError('client', !validClient, 'Selectează un client din listă.');
+      setError('client', !validClient, 'Selectează ' + partyTerms.singular.toLowerCase() + ' din listă.');
       if (!validClient) ok = false;
 
       // Responsible

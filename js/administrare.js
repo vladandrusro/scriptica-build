@@ -116,12 +116,12 @@ if (_isSuperAdminAnexe) {
     clientSearch: '',
     typeSearch: '', typeStatus: '', typeFreq: '',
     auditSearch: '', auditStatus: '', auditFreq: '',
-    anexaSearch: '', anexaStatus: '',
+    anexaSearch: '', anexaStatus: '', anexaVertical: '', anexaActivity: '',
     tagSearch: ''
   };
 
   /* Controllere de modal (create în init) */
-  var userModal, typeModal, anexaModal, tagModal, confirmModal;
+  var userModal, typeModal, anexaModal, anexaImpactModal, tagModal, confirmModal;
   var editingUserId = null;
   var editingTypeId = null;
   var editingTypeDomain = 'contabil';
@@ -148,6 +148,7 @@ if (_isSuperAdminAnexe) {
     initUserModal();
     initTypeModal();
     initAnexaModal();
+    initAnexaLibrary();
     initTagModal();
     initConfirmModal();
     bindGlobalModalKeys();
@@ -318,6 +319,13 @@ if (_isSuperAdminAnexe) {
     bindInput('tma-freq',   'change', function (v) { filters.auditFreq = v; renderTypes('audit'); });
     bindInput('ta-search', 'input',  function (v) { filters.anexaSearch = v; renderAnexe(); });
     bindInput('ta-status', 'change', function (v) { filters.anexaStatus = v; renderAnexe(); });
+    bindInput('ta-vertical', 'change', function (v) {
+      filters.anexaVertical = v;
+      filters.anexaActivity = '';
+      populateAnexaActivityOptions();
+      renderAnexe();
+    });
+    bindInput('ta-activity', 'change', function (v) { filters.anexaActivity = v; renderAnexe(); });
     bindInput('tg-search', 'input',  function (v) { filters.tagSearch = v; renderTags(); });
   }
 
@@ -358,7 +366,8 @@ if (_isSuperAdminAnexe) {
       }
       var anexa = (MOCK.anexeTypes || []).find(function (a) { return a.id === id; });
       if (!anexa) return;
-      if (action === 'duplicate') duplicateAnexa(anexa);
+      if (action === 'impact') openAnexaImpact(anexa);
+      else if (action === 'duplicate') duplicateAnexa(anexa);
       else if (action === 'delete') confirmDeleteAnexa(anexa);
     });
 
@@ -616,6 +625,50 @@ if (_isSuperAdminAnexe) {
     return { name: '', offsetDays: '', tasks: [], anexeIds: [] };
   }
 
+  function normalizeDraftTask(task, index) {
+    var objectTask = task && typeof task === 'object';
+    var kind = objectTask && task.kind === 'document_upload' ? 'document_upload' : 'standard';
+    return {
+      id: objectTask && task.id ? task.id : ('task_draft_' + index + '_' + Date.now().toString(36)),
+      label: objectTask ? (task.label || task.name || '') : String(task || ''),
+      kind: kind,
+      required: objectTask ? task.required !== false : true,
+      documentTypeId: kind === 'document_upload' ? (task.documentTypeId || '') : '',
+      allowMultiple: kind === 'document_upload' ? task.allowMultiple !== false : false,
+      minimumFiles: kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1
+    };
+  }
+
+  function verticalForDomain(domain) {
+    return ((((MOCK || {}).superAdmin || {}).flowVerticals) || []).find(function (vertical) {
+      return vertical.domain === domain;
+    }) || null;
+  }
+
+  function documentTypesForDomain(domain) {
+    var out = [];
+    var vertical = verticalForDomain(domain);
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system) return;
+      (category.documentTypes || []).forEach(function (type) {
+        out.push({ id: type.id, name: type.name, categoryName: category.name });
+      });
+    });
+    return out;
+  }
+
+  function documentTypeOptionsForDomain(domain, selectedId) {
+    var vertical = verticalForDomain(domain);
+    var html = '<option value="">Selectează tipul de document...</option>';
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system || !(category.documentTypes || []).length) return;
+      html += '<optgroup label="' + esc(category.name) + '">' + category.documentTypes.map(function (type) {
+        return '<option value="' + esc(type.id) + '"' + (type.id === selectedId ? ' selected' : '') + '>' + esc(type.name) + '</option>';
+      }).join('') + '</optgroup>';
+    });
+    return html;
+  }
+
   function initTypeModal() {
     typeModal = createModal('modal-type');
     var addBtn = $('ts-add');
@@ -673,12 +726,35 @@ if (_isSuperAdminAnexe) {
         draftSteps[i].offsetDays = el.value;
       } else if (el.hasAttribute('data-task-input')) {
         var j = parseInt(el.getAttribute('data-task'), 10);
-        if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) draftSteps[i].tasks[j] = el.value;
+        if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) draftSteps[i].tasks[j].label = el.value;
+      } else if (el.hasAttribute('data-task-kind')) {
+        var kindIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(kindIdx) && draftSteps[i].tasks[kindIdx]) {
+          var changedTask = draftSteps[i].tasks[kindIdx];
+          changedTask.kind = el.value === 'document_upload' ? 'document_upload' : 'standard';
+          if (changedTask.kind === 'document_upload') {
+            var availableTypes = documentTypesForDomain(editingTypeDomain);
+            if (!changedTask.documentTypeId && availableTypes[0]) changedTask.documentTypeId = availableTypes[0].id;
+            changedTask.allowMultiple = changedTask.allowMultiple !== false;
+            changedTask.minimumFiles = Math.max(1, parseInt(changedTask.minimumFiles, 10) || 1);
+          } else {
+            changedTask.documentTypeId = '';
+            changedTask.allowMultiple = false;
+            changedTask.minimumFiles = 1;
+          }
+          renderSteps();
+        }
+      } else if (el.hasAttribute('data-task-document-type')) {
+        var docIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(docIdx) && draftSteps[i].tasks[docIdx]) draftSteps[i].tasks[docIdx].documentTypeId = el.value;
+      } else if (el.hasAttribute('data-task-minimum-files')) {
+        var minIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(minIdx) && draftSteps[i].tasks[minIdx]) draftSteps[i].tasks[minIdx].minimumFiles = Math.max(1, parseInt(el.value, 10) || 1);
       }
     });
 
     stepsWrap.addEventListener('click', function (e) {
-      var btn = e.target.closest('button');
+      var btn = e.target.closest('button, input[type="checkbox"]');
       if (!btn) return;
       var i = parseInt(btn.getAttribute('data-idx'), 10);
       if (isNaN(i) || !draftSteps[i]) return;
@@ -688,7 +764,7 @@ if (_isSuperAdminAnexe) {
         draftSteps.splice(i, 1);
         renderSteps();
       } else if (btn.hasAttribute('data-add-task')) {
-        draftSteps[i].tasks.push('');
+        draftSteps[i].tasks.push(normalizeDraftTask('', draftSteps[i].tasks.length));
         renderSteps();
         var inputs = stepsWrap.querySelectorAll('[data-task-input][data-idx="' + i + '"]');
         if (inputs.length) inputs[inputs.length - 1].focus();
@@ -696,6 +772,19 @@ if (_isSuperAdminAnexe) {
         var j = parseInt(btn.getAttribute('data-task'), 10);
         if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) {
           draftSteps[i].tasks.splice(j, 1);
+          renderSteps();
+        }
+      } else if (btn.hasAttribute('data-task-required')) {
+        var reqIdx = parseInt(btn.getAttribute('data-task'), 10);
+        if (!isNaN(reqIdx) && draftSteps[i].tasks[reqIdx]) {
+          draftSteps[i].tasks[reqIdx].required = btn.checked;
+          renderSteps();
+        }
+      } else if (btn.hasAttribute('data-task-multiple')) {
+        var multiIdx = parseInt(btn.getAttribute('data-task'), 10);
+        if (!isNaN(multiIdx) && draftSteps[i].tasks[multiIdx]) {
+          draftSteps[i].tasks[multiIdx].allowMultiple = btn.checked;
+          if (!btn.checked) draftSteps[i].tasks[multiIdx].minimumFiles = 1;
           renderSteps();
         }
       } else if (btn.hasAttribute('data-attach-anexa')) {
@@ -734,6 +823,10 @@ if (_isSuperAdminAnexe) {
 
   /* Anexa e potrivită domeniului curent? Fără categorii = disponibilă peste tot. */
   function anexaInDomain(anexa, domain) {
+    var vertical = verticalForDomain(domain);
+    if (Array.isArray(anexa.verticalIds)) {
+      return !anexa.verticalIds.length || !!(vertical && anexa.verticalIds.indexOf(vertical.id) !== -1);
+    }
     var cats = anexa.categories;
     if (!cats || !cats.length) return true;
     if (domain === 'audit') return cats.indexOf('audit') !== -1;
@@ -912,13 +1005,22 @@ if (_isSuperAdminAnexe) {
     var canRemove = draftSteps.length > 1;
 
     var tasksHtml = st.tasks.map(function (t, j) {
-      return '<div class="admin-task-row">' +
-        '<input type="text" class="input" value="' + esc(t) + '" placeholder="Descrie task-ul..."' +
+      var isUpload = t.kind === 'document_upload';
+      var uploadConfig = isUpload
+        ? '<div class="admin-task-row__upload"><div class="form-field" data-field="task-document-type-' + i + '-' + j + '"><label><span>Tip document</span><select class="select" data-task-document-type data-idx="' + i + '" data-task="' + j + '">' + documentTypeOptionsForDomain(editingTypeDomain, t.documentTypeId) + '</select></label><span class="form-error" role="alert"></span></div>' +
+            '<label class="admin-task-row__check"><input type="checkbox" data-task-multiple data-idx="' + i + '" data-task="' + j + '"' + (t.allowMultiple !== false ? ' checked' : '') + '> Permite mai multe fișiere</label>' +
+            '<label class="admin-task-row__minimum"><span>Minimum</span><input type="number" class="input" min="1" value="' + esc(t.minimumFiles || 1) + '" data-task-minimum-files data-idx="' + i + '" data-task="' + j + '"' + (t.allowMultiple === false ? ' disabled' : '') + '><span>fișiere</span></label></div>'
+        : '';
+      return '<div class="admin-task-row' + (isUpload ? ' is-upload' : '') + '">' +
+        '<span class="material-symbols-outlined admin-task-row__icon" aria-hidden="true">' + (isUpload ? 'upload_file' : 'check_box_outline_blank') + '</span>' +
+        '<input type="text" class="input" value="' + esc(t.label) + '" placeholder="Descrie task-ul..."' +
           ' data-task-input data-idx="' + i + '" data-task="' + j + '" aria-label="Task ' + (j + 1) + '" autocomplete="off">' +
+        '<select class="select admin-task-row__kind" data-task-kind data-idx="' + i + '" data-task="' + j + '" aria-label="Tip task"><option value="standard"' + (!isUpload ? ' selected' : '') + '>Task normal</option><option value="document_upload"' + (isUpload ? ' selected' : '') + '>Încărcare document</option></select>' +
+        '<label class="admin-task-row__check"><input type="checkbox" data-task-required data-idx="' + i + '" data-task="' + j + '"' + (t.required !== false ? ' checked' : '') + '> Obligatoriu</label>' +
         '<button type="button" class="admin-action-btn admin-action-btn--delete" data-remove-task data-idx="' + i + '" data-task="' + j + '"' +
           ' aria-label="Șterge task-ul" title="Șterge task-ul">' +
           '<span class="material-symbols-outlined" aria-hidden="true">delete</span>' +
-        '</button>' +
+        '</button>' + uploadConfig +
       '</div>';
     }).join('');
 
@@ -1025,7 +1127,7 @@ if (_isSuperAdminAnexe) {
         return {
           name: st.name || '',
           offsetDays: (st.offsetDays === undefined || st.offsetDays === null) ? '' : st.offsetDays,
-          tasks: (st.tasks || []).slice(),
+          tasks: (st.tasks || []).map(function (task, taskIndex) { return normalizeDraftTask(task, taskIndex); }),
           /* Anexele șterse între timp nu se mai afișează și nu se re-salvează. */
           anexeIds: (st.anexeIds || []).filter(function (id) {
             if (anexaById(id)) return true;
@@ -1084,6 +1186,12 @@ if (_isSuperAdminAnexe) {
       setErr(modal, 'step-days-' + i, !!daysErr, daysErr);
       if (daysErr) ok = false;
       if (Number.isInteger(days) && days > 0) prevDays = days;
+
+      (st.tasks || []).forEach(function (task, taskIndex) {
+        var missingDocumentType = task.kind === 'document_upload' && !documentTypesForDomain(editingTypeDomain).some(function (type) { return type.id === task.documentTypeId; });
+        setErr(modal, 'task-document-type-' + i + '-' + taskIndex, missingDocumentType, 'Selectează tipul documentului solicitat.');
+        if (missingDocumentType) ok = false;
+      });
     });
 
     if (!ok) {
@@ -1103,7 +1211,11 @@ if (_isSuperAdminAnexe) {
         return {
           name: String(st.name).trim(),
           offsetDays: parseInt(st.offsetDays, 10),
-          tasks: st.tasks.map(function (t) { return String(t).trim(); }).filter(function (t) { return !!t; }),
+          tasks: st.tasks.map(function (task, taskIndex) {
+            var normalized = normalizeDraftTask(task, taskIndex);
+            normalized.label = String(normalized.label || '').trim();
+            return normalized;
+          }).filter(function (task) { return !!task.label; }),
           anexeIds: st.anexeIds.slice()
         };
       })
@@ -1162,16 +1274,152 @@ if (_isSuperAdminAnexe) {
      în harta localStorage 'scriptica.anexe', citite din MOCK)
      ============================================================= */
 
-  /* Numele tipurilor de situații care au anexa atașată pe vreun pas. */
-  function anexaUsedBy(anexaId) {
-    var names = [];
-    (MOCK.situationTypes || []).forEach(function (t) {
-      var used = (t.steps || []).some(function (st) {
-        return (st.anexeIds || []).indexOf(anexaId) !== -1;
-      });
-      if (used) names.push(t.name);
+  function flowVerticals() {
+    return ((((MOCK || {}).superAdmin || {}).flowVerticals) || []);
+  }
+
+  function flowTemplates() {
+    return ((((MOCK || {}).superAdmin || {}).flowTemplates) || []);
+  }
+
+  function verticalById(id) {
+    return flowVerticals().find(function (vertical) { return vertical.id === id; }) || null;
+  }
+
+  function verticalIdForType(type) {
+    if (type && type.verticalId) return type.verticalId;
+    var domain = (type && type.domain) || 'contabil';
+    var vertical = flowVerticals().find(function (item) { return item.domain === domain; });
+    return vertical ? vertical.id : '';
+  }
+
+  function annexVerticalIds(anexa) {
+    return Array.isArray(anexa && anexa.verticalIds) ? anexa.verticalIds.slice() : [];
+  }
+
+  function activityCatalog() {
+    var out = [];
+    flowTemplates().forEach(function (template) {
+      out.push({ key: 'hq:' + template.id, id: template.id, name: template.name, verticalId: template.verticalId, source: 'Registru HQ' });
     });
-    return names;
+    (MOCK.situationTypes || []).forEach(function (type) {
+      out.push({ key: 'client:' + type.id, id: type.id, name: type.name, verticalId: verticalIdForType(type), source: 'Configurare client' });
+    });
+    return out.sort(function (a, b) { return a.name.localeCompare(b.name, 'ro'); });
+  }
+
+  function anexaUsage(anexaId) {
+    var usage = [];
+    flowTemplates().forEach(function (template) {
+      var vertical = verticalById(template.verticalId);
+      (template.steps || []).forEach(function (step, index) {
+        if ((step.anexeIds || []).indexOf(anexaId) === -1) return;
+        usage.push({
+          activityKey: 'hq:' + template.id,
+          activityId: template.id,
+          activityName: template.name,
+          verticalId: template.verticalId,
+          verticalName: vertical ? vertical.name : 'Verticală necunoscută',
+          stepName: step.name || ('Pasul ' + (index + 1)),
+          source: 'Registru HQ'
+        });
+      });
+    });
+    (MOCK.situationTypes || []).forEach(function (type) {
+      var verticalId = verticalIdForType(type);
+      var vertical = verticalById(verticalId);
+      (type.steps || []).forEach(function (step, index) {
+        if ((step.anexeIds || []).indexOf(anexaId) === -1) return;
+        usage.push({
+          activityKey: 'client:' + type.id,
+          activityId: type.id,
+          activityName: type.name,
+          verticalId: verticalId,
+          verticalName: vertical ? vertical.name : 'Configurare locală',
+          stepName: step.name || ('Pasul ' + (index + 1)),
+          source: 'Configurare client'
+        });
+      });
+    });
+    return usage;
+  }
+
+  function uniqueUsageActivities(usage) {
+    var seen = {};
+    return (usage || []).filter(function (item) {
+      if (seen[item.activityKey]) return false;
+      seen[item.activityKey] = true;
+      return true;
+    });
+  }
+
+  function containsAnnexId(value, annexId) {
+    var escaped = String(annexId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(^|[^a-zA-Z0-9_])' + escaped + '(?=\\.|[^a-zA-Z0-9_]|$)').test(JSON.stringify(value || ''));
+  }
+
+  function anexaRelations(anexaId) {
+    var related = {};
+    var ids = (MOCK.anexeTypes || []).map(function (anexa) { return anexa.id; });
+    function connect(value) {
+      if (!containsAnnexId(value, anexaId)) return;
+      ids.forEach(function (id) {
+        if (id !== anexaId && containsAnnexId(value, id)) related[id] = true;
+      });
+    }
+    (MOCK.situationTypes || []).forEach(function (type) { (type.formulas || []).forEach(connect); });
+    flowTemplates().forEach(function (template) { (template.formulas || []).forEach(connect); });
+    /* Două anexe folosite în același pas formează o relație operațională,
+       chiar dacă nu există încă o formulă care le leagă explicit. */
+    flowTemplates().concat(MOCK.situationTypes || []).forEach(function (activity) {
+      (activity.steps || []).forEach(function (step) {
+        var stepIds = step.anexeIds || [];
+        if (stepIds.indexOf(anexaId) === -1) return;
+        stepIds.forEach(function (id) { if (id !== anexaId) related[id] = true; });
+      });
+    });
+    (MOCK.anexeTypes || []).forEach(function (anexa) {
+      var schema = (anexa && anexa.schema) || {};
+      if (anexa.id === anexaId) {
+        ids.forEach(function (id) { if (id !== anexaId && containsAnnexId(schema, id)) related[id] = true; });
+      } else if (containsAnnexId(schema, anexaId)) {
+        related[anexa.id] = true;
+      }
+    });
+    return Object.keys(related).map(function (id) {
+      return (MOCK.anexeTypes || []).find(function (anexa) { return anexa.id === id; });
+    }).filter(Boolean).sort(function (a, b) { return a.name.localeCompare(b.name, 'ro'); });
+  }
+
+  function initAnexaLibrary() {
+    anexaImpactModal = createModal('modal-anexa-impact');
+    var verticalSelect = $('ta-vertical');
+    if (verticalSelect) {
+      verticalSelect.innerHTML = '<option value="">Toate verticalele</option><option value="__shared__">Partajate între verticale</option>' +
+        flowVerticals().map(function (vertical) { return '<option value="' + esc(vertical.id) + '">' + esc(vertical.name) + '</option>'; }).join('');
+    }
+    populateAnexaActivityOptions();
+  }
+
+  function populateAnexaActivityOptions() {
+    var select = $('ta-activity');
+    if (!select) return;
+    var items = activityCatalog().filter(function (activity) {
+      return !filters.anexaVertical || filters.anexaVertical === '__shared__' || activity.verticalId === filters.anexaVertical;
+    });
+    select.innerHTML = '<option value="">Toate tipurile de activitate</option>' + items.map(function (activity) {
+      return '<option value="' + esc(activity.key) + '">' + esc(activity.name) + ' · ' + esc(activity.source) + '</option>';
+    }).join('');
+    select.value = filters.anexaActivity;
+  }
+
+  function verticalChipsHtml(anexa) {
+    var ids = annexVerticalIds(anexa);
+    if (!ids.length) return '<span class="pill pill--neutral admin-anexa-vertical">Partajată</span>';
+    return ids.map(function (id) {
+      var vertical = verticalById(id);
+      return '<span class="pill pill--neutral admin-anexa-vertical">' + esc(vertical ? vertical.name : id) + '</span>';
+    }).join('');
   }
 
   function renderAnexe() {
@@ -1180,8 +1428,13 @@ if (_isSuperAdminAnexe) {
     var all = MOCK.anexeTypes || [];
     var q = normalize(filters.anexaSearch);
     var list = all.filter(function (a) {
+      var usage = anexaUsage(a.id);
+      var verticalIds = annexVerticalIds(a);
       if (q && normalize(a.name).indexOf(q) === -1) return false;
       if (filters.anexaStatus && (a.status || 'activ') !== filters.anexaStatus) return false;
+      if (filters.anexaVertical === '__shared__' && verticalIds.length) return false;
+      if (filters.anexaVertical && filters.anexaVertical !== '__shared__' && verticalIds.indexOf(filters.anexaVertical) === -1) return false;
+      if (filters.anexaActivity && !usage.some(function (item) { return item.activityKey === filters.anexaActivity; })) return false;
       return true;
     });
 
@@ -1195,20 +1448,55 @@ if (_isSuperAdminAnexe) {
     toggleEmpty('ta', list.length);
     tbody.innerHTML = list.map(function (a) {
       var fieldsCount = (a.schema && a.schema.fields) ? a.schema.fields.length : 0;
-      var usedIn = anexaUsedBy(a.id);
+      var usage = anexaUsage(a.id);
+      var activities = uniqueUsageActivities(usage);
+      var relations = anexaRelations(a.id);
+      var usedLabel = activities.slice(0, 2).map(function (item) { return item.activityName; }).join(', ');
+      if (activities.length > 2) usedLabel += ' +' + (activities.length - 2);
       return '<tr>' +
-        '<td class="admin-table__name">' + esc(a.name) + '</td>' +
+        '<td class="admin-table__name">' + esc(a.name) + '<small class="admin-anexa-updated">Modificată ' + esc(formatDateFull(a.updatedAt)) + '</small></td>' +
+        '<td><div class="admin-anexa-verticals">' + verticalChipsHtml(a) + '</div></td>' +
+        '<td>' + (activities.length ? '<span title="' + esc(activities.map(function (item) { return item.activityName; }).join(', ')) + '">' + esc(usedLabel) + '</span><small class="admin-anexa-usage">' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + '</small>' : '<span class="admin-table__muted">Neutilizată</span>') + '</td>' +
+        '<td>' + (relations.length ? '<button type="button" class="admin-anexa-relation" data-action="impact" data-id="' + esc(a.id) + '"><span class="material-symbols-outlined" aria-hidden="true">hub</span>' + relations.length + '</button>' : '<span class="admin-table__muted">—</span>') + '</td>' +
         '<td class="admin-table__muted">' + fieldsCount + '</td>' +
-        '<td>' + (usedIn.length ? esc(usedIn.join(', ')) : '<span class="admin-table__muted">—</span>') + '</td>' +
-        '<td>' + formatDateFull(a.updatedAt) + '</td>' +
         '<td>' + statusPillHtml(a.status) + '</td>' +
         '<td><div class="admin-actions">' +
+          actionBtnHtml('impact', a.id, 'account_tree', 'Vezi utilizările și relațiile', false) +
           actionBtnHtml('edit', a.id, 'edit', 'Editează în constructor', false) +
           actionBtnHtml('duplicate', a.id, 'content_copy', 'Duplică anexa', false) +
-          actionBtnHtml('delete', a.id, 'delete', 'Șterge anexa', true) +
+          actionBtnHtml('delete', a.id, 'delete', 'Retrage sau șterge anexa', true) +
         '</div></td>' +
       '</tr>';
     }).join('');
+  }
+
+  function openAnexaImpact(anexa, warning) {
+    if (!anexaImpactModal || !anexa) return;
+    var usage = anexaUsage(anexa.id);
+    var activities = uniqueUsageActivities(usage);
+    var relations = anexaRelations(anexa.id);
+    var title = $('mai-title');
+    var subtitle = $('mai-subtitle');
+    var body = $('mai-body');
+    if (title) title.textContent = 'Impact — ' + anexa.name;
+    if (subtitle) subtitle.textContent = activities.length + (activities.length === 1 ? ' tip de activitate' : ' tipuri de activitate') + ' · ' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + ' · ' + relations.length + (relations.length === 1 ? ' anexă conectată' : ' anexe conectate');
+    if (body) {
+      body.innerHTML =
+        (warning ? '<div class="admin-anexa-impact__warning"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>' + esc(warning) + '</span></div>' : '') +
+        '<div class="admin-anexa-impact__summary"><div><b>' + activities.length + '</b><span>Tipuri de activitate</span></div><div><b>' + usage.length + '</b><span>Pași conectați</span></div><div><b>' + relations.length + '</b><span>Anexe conectate</span></div></div>' +
+        '<section class="admin-anexa-impact__section"><h3>Disponibilă în verticale</h3><div class="admin-anexa-verticals">' + verticalChipsHtml(anexa) + '</div><p>O anexă poate fi disponibilă în mai multe verticale fără să fie duplicată.</p></section>' +
+        '<section class="admin-anexa-impact__section"><h3>Utilizări în fluxuri și pași</h3>' +
+          (usage.length ? '<div class="admin-anexa-impact__list">' + usage.map(function (item) {
+            return '<div><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><span><b>' + esc(item.activityName) + '</b><small>' + esc(item.verticalName + ' · ' + item.stepName + ' · ' + item.source) + '</small></span></div>';
+          }).join('') + '</div>' : '<div class="admin-anexa-impact__empty">Anexa nu este încă atașată niciunui flux.</div>') +
+        '</section>' +
+        '<section class="admin-anexa-impact__section"><h3>Conexiuni cu alte anexe</h3>' +
+          (relations.length ? '<div class="admin-anexa-impact__list">' + relations.map(function (related) {
+            return '<div><span class="material-symbols-outlined" aria-hidden="true">hub</span><span><b>' + esc(related.name) + '</b><small>Relație detectată prin folosire în același pas, formulă sau referință stabilă.</small></span></div>';
+          }).join('') + '</div>' : '<div class="admin-anexa-impact__empty">Nu există conexiuni detectate cu alte anexe.</div>') +
+        '</section>';
+    }
+    anexaImpactModal.open();
   }
 
   function duplicateAnexa(anexa) {
@@ -1227,14 +1515,31 @@ if (_isSuperAdminAnexe) {
   }
 
   function confirmDeleteAnexa(anexa) {
-    if (anexaUsedBy(anexa.id).length) {
-      toast('error', 'Anexa este folosită de tipuri de situații și nu poate fi ștearsă.');
+    var usage = anexaUsage(anexa.id);
+    var relations = anexaRelations(anexa.id);
+    if (usage.length || relations.length) {
+      if ((anexa.status || 'activ') === 'inactiv') {
+        openAnexaImpact(anexa, 'Anexa este deja retrasă și nu poate fi ștearsă definitiv deoarece păstrează utilizări sau conexiuni istorice.');
+        return;
+      }
+      openConfirm({
+        title: 'Retragere anexă utilizată',
+        body: '„' + anexa.name + '” este folosită în ' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + ' și are ' + relations.length + (relations.length === 1 ? ' conexiune' : ' conexiuni') + '. Va fi retrasă din configurările noi, dar definiția, formulele și istoricul rămân intacte.',
+        confirmLabel: 'Retrage anexa',
+        onConfirm: function () {
+          anexa.status = 'inactiv';
+          anexa.updatedAt = TODAY_ISO;
+          writeMapEntry(ANEXE_KEY, anexa.id, anexa);
+          renderAnexe();
+          toast('success', 'Anexa a fost retrasă. Istoricul și conexiunile au rămas intacte.');
+        }
+      });
       return;
     }
     openConfirm({
-      title: 'Ștergere anexă',
+      title: 'Ștergere definitivă anexă',
       body: '„' + anexa.name + '” nu va mai putea fi atașată pașilor tipurilor de situații. Anexele deja completate rămân în arhivă.',
-      confirmLabel: 'Șterge',
+      confirmLabel: 'Șterge definitiv',
       onConfirm: function () {
         var idx = MOCK.anexeTypes.indexOf(anexa);
         if (idx !== -1) MOCK.anexeTypes.splice(idx, 1);

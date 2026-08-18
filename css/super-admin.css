@@ -37,31 +37,6 @@ body[data-page^="super-admin"] .sidebar__nav > a[href^="administrare.html"] { or
 body[data-page^="super-admin"] .sidebar__nav > a[href^="super-admin-client"] { order: 6; }
 body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 
-/* Parcursul HQ: categorie → client → module. */
-.sa-setup {
-  display: flex; align-items: stretch; gap: var(--space-2); min-width: 0;
-  padding: var(--space-2); margin-bottom: var(--space-4); overflow-x: auto;
-  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
-  background: var(--color-surface-white);
-}
-.sa-setup__step {
-  display: flex; align-items: center; gap: var(--space-2); flex: 1 0 180px;
-  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
-  color: var(--color-text-secondary); text-decoration: none;
-}
-.sa-setup__step:hover { background: var(--color-surface-1); }
-.sa-setup__step.is-active { background: var(--color-surface-2); color: var(--color-text-primary); }
-.sa-setup__step > span:first-child {
-  width: 28px; height: 28px; flex: none; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-pill); background: var(--color-surface-2);
-  color: var(--color-text-secondary); font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
-}
-.sa-setup__step.is-active > span:first-child { background: var(--color-important); color: var(--color-text-primary); }
-.sa-setup__step div { min-width: 0; display: flex; flex-direction: column; }
-.sa-setup__step small { color: var(--color-text-muted); font-size: var(--font-size-tiny); }
-.sa-setup__step b { font-size: var(--font-size-body); }
-.sa-setup__arrow { align-self: center; flex: none; color: var(--color-text-muted); font-size: 18px; }
-
 /* ---- page header (reuse .page-header + subtitle) ---- */
 .sa-subtitle {
   font-size: var(--font-size-small);
@@ -499,12 +474,16 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 .sa-ct-preview:empty { display: none; }
 .sa-ct-preview .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
 
+/* Traseele decorative de tip wizard nu aparțin paginilor Super Admin.
+   Progresul real rămâne izolat în modalurile de înrolare/configurare. */
+.sa-setup { display: none !important; }
+
 /* ============================================================
-   Înrolare cont business — doi pași, cu constructor de profil client.
+   Înrolare cont business — cinci pași, cu constructor de profil client.
    Reia limbajul Constructorului de Anexe: paletă / canvas / proprietăți.
    ============================================================ */
 .sa-client-onboarding-shell {
-  width: min(640px, 94vw);
+  width: min(860px, 94vw);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -514,6 +493,15 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 }
 .sa-client-onboarding-shell.is-builder-step {
   width: min(1120px, 96vw);
+}
+.sa-client-onboarding-shell.is-verticals-step {
+  width: min(860px, 96vw);
+}
+.sa-client-onboarding-shell.is-dashboard-step {
+  width: min(1120px, 96vw);
+}
+.sa-client-onboarding-shell.is-terminology-step {
+  width: min(1040px, 96vw);
 }
 .sa-client-onboarding-modal {
   width: 100%;
@@ -536,7 +524,7 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 }
 .sa-onboarding-progress {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
@@ -816,9 +804,140 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 }
 .sa-cpf-error { display: none; }
 
+/* Editorul de profil este un spațiu de lucru cu trei coloane, nu un formular
+   obișnuit. Folosește aproape tot ecranul, păstrând headerul și footerul fixe. */
+.modal__dialog--wide.sa-cpf-modal {
+  width: min(1600px, calc(100vw - (var(--space-6) * 2)));
+  height: calc(100vh - var(--space-6));
+  max-height: calc(100vh - var(--space-6));
+}
+.sa-cpf-modal .modal__body {
+  min-height: 0;
+  overflow: hidden;
+}
+.sa-cpf-modal .sa-cpf-builder {
+  height: auto;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 240px minmax(520px, 1fr) 320px;
+}
+
+/* Terminologia per cont: editor de denumiri, fără controale structurale. */
+.sa-term-editor {
+  display: grid;
+  gap: var(--space-4);
+}
+.sa-term-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-white);
+}
+.sa-term-section > header,
+.sa-term-card__head,
+.sa-term-folder__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sa-term-section > header > .material-symbols-outlined {
+  color: var(--color-default-highlight);
+}
+.sa-term-section > header div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.sa-term-section > header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.sa-term-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.sa-term-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sa-term-card,
+.sa-term-folder {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+}
+.sa-term-card.is-inactive,
+.sa-term-folder.is-inactive { opacity: .72; }
+.sa-term-card__head { margin-bottom: var(--space-3); }
+.sa-term-card__head .pill,
+.sa-term-folder__meta .pill { margin-left: auto; }
+.sa-term-field { margin: 0; }
+.sa-term-field__control {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.sa-term-field__control .input { min-width: 0; width: 100%; }
+.sa-term-reset {
+  align-self: flex-start;
+  min-height: auto;
+  padding: 0;
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+.sa-term-folders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.sa-term-folder__meta {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+.sa-term-folder__meta > .material-symbols-outlined {
+  color: var(--color-important);
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1;
+}
+.sa-term-folder--d1 { margin-left: var(--space-5); }
+.sa-term-folder--d2 { margin-left: calc(var(--space-5) * 2); }
+.sa-term-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
 @media (max-width: 1100px) {
+  .sa-onboarding-progress { gap: var(--space-2); }
+  .sa-onboarding-progress__step small { display: none; }
+  .sa-onboarding-progress__step { gap: var(--space-1); }
+  .sa-onboarding-progress__step b { font-size: var(--font-size-small); }
+  .sa-term-grid--three { grid-template-columns: 1fr; }
   .sa-cpf-builder {
     height: auto;
+    grid-template-columns: 190px minmax(0, 1fr);
+    grid-template-rows: 440px auto;
+  }
+  .modal__dialog--wide.sa-cpf-modal {
+    width: calc(100vw - (var(--space-4) * 2));
+    height: calc(100vh - (var(--space-4) * 2));
+    max-height: calc(100vh - (var(--space-4) * 2));
+  }
+  .sa-cpf-modal .modal__body { overflow-y: auto; }
+  .sa-cpf-modal .sa-cpf-builder {
+    height: auto;
+    min-height: 0;
+    flex: none;
     grid-template-columns: 190px minmax(0, 1fr);
     grid-template-rows: 440px auto;
   }
@@ -838,9 +957,11 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
   .sa-onboarding-progress > .material-symbols-outlined { display: none; }
   .sa-client-onboarding-modal { max-height: calc(90vh - var(--space-8) - var(--space-8)); }
   .sa-cpf-builder { height: auto; grid-template-columns: 1fr; grid-template-rows: auto; }
+  .sa-cpf-modal .sa-cpf-builder { grid-template-columns: 1fr; grid-template-rows: auto; }
   .sa-cpf-toolbox { border-right: 0; border-bottom: 1px solid var(--color-border); }
   .sa-cpf-properties { grid-column: auto; }
   .sa-cpf-head__actions { align-items: flex-start; flex-direction: column; }
+  .sa-term-grid { grid-template-columns: 1fr; }
 }
 
 /* secțiunea „Fluxuri provisionate" din detaliul de client */
@@ -900,7 +1021,7 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 @media (max-width: 960px) { .sa-module-options { grid-template-columns: 1fr; } }
 
 /* ============================================================
-   Configurările tipului (Structură arhivă · Ecranul Acasă) —
+   Configurarea tipului (Structură arhivă) —
    rânduri structurate: etichetă + meta la stânga, buton la dreapta.
    Blocul e ancorat jos (margin-top:auto) ca să se alinieze pe rând
    între carduri, indiferent de lungimea listei de șabloane.
@@ -1026,6 +1147,40 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
   background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
   padding: var(--space-4); min-height: 400px;
 }
+.sa-dwb--onboarding { grid-template-columns: 280px minmax(0, 1fr); }
+.sa-dwb--onboarding .sa-dwb-palette {
+  position: static;
+  max-height: min(520px, 52vh);
+}
+.sa-dwb--onboarding .sa-dwb-preview {
+  min-height: 360px;
+  max-height: min(520px, 52vh);
+  overflow: auto;
+}
+.sa-onboarding-dashboard-empty {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+  color: var(--color-text-secondary);
+}
+.sa-onboarding-dashboard-empty > .material-symbols-outlined {
+  color: var(--color-default-highlight);
+  font-size: 40px;
+}
+.sa-onboarding-dashboard-empty b { color: var(--color-text-primary); }
+.sa-onboarding-dashboard-empty p { margin: var(--space-1) 0 0; }
+@media (max-width: 1100px) {
+  .sa-dwb.sa-dwb--onboarding { grid-template-columns: 240px minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .sa-dwb.sa-dwb--onboarding { grid-template-columns: 1fr; }
+}
 .sa-dwb-item { position: relative; min-width: 0; }
 .sa-dwb-item__bar {
   display: flex; align-items: center; gap: var(--space-2);
@@ -1146,3 +1301,74 @@ body[data-page^="super-admin"] .sidebar__nav > .nav-item--stub { order: 7; }
 .sa-th-btn:hover:not(:disabled) { border-color: var(--color-border-strong); color: var(--color-text-primary); }
 .sa-th-btn--danger:hover:not(:disabled) { border-color: var(--color-critical); color: var(--color-critical); }
 .sa-th-btn:disabled { opacity: .35; cursor: default; }
+
+/* Feedback #2 — surse configurabile și profil beneficiar */
+.sa-tbl-context {
+  margin-bottom: var(--space-1); color: var(--color-text-muted);
+  font-size: var(--font-size-small); font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+.sa-tbl-source-group + .sa-tbl-source-group { margin-top: var(--space-4); }
+.sa-tbl-source-group h3 {
+  margin: 0 0 var(--space-2); color: var(--color-text-muted);
+  font-size: var(--font-size-small); text-transform: uppercase;
+}
+.sa-dwb-pal__main em {
+  display: block; margin-top: var(--space-1); color: var(--color-text-muted);
+  font-size: var(--font-size-small); font-style: normal; font-weight: var(--font-weight-bold);
+}
+.sa-dwb-pal.is-unsupported { opacity: .64; }
+.sa-tbl-properties {
+  margin: var(--space-3); padding: var(--space-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.sa-tbl-properties.is-empty {
+  display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-muted);
+}
+.sa-tbl-properties__head {
+  display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3);
+}
+.sa-tbl-properties__grid {
+  display: grid; grid-template-columns: minmax(220px, .8fr) minmax(150px, .5fr) minmax(260px, 1.5fr);
+  gap: var(--space-3); align-items: end;
+}
+.sa-tbl-readonly {
+  min-height: 68px; padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface-white);
+}
+.sa-tbl-readonly span, .sa-tbl-readonly b { display: block; }
+.sa-tbl-readonly span { color: var(--color-text-muted); font-size: var(--font-size-small); }
+.sa-tbl-readonly b { margin-top: var(--space-1); font-size: var(--font-size-body); }
+.sa-tbl-readonly--source b { font-weight: var(--font-weight-regular); }
+.sa-th__label {
+  padding: 0; border: 0; background: transparent; color: inherit;
+  font: inherit; font-weight: var(--font-weight-bold); text-align: left; cursor: pointer;
+}
+.sa-tbl-sim__tablewrap th.is-selected { background: var(--color-important-highlight); }
+.sa-prov-vert__table { margin-left: auto; }
+.sa-profile-summary { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.sa-profile-summary span {
+  padding: var(--space-1) var(--space-2); border-radius: var(--radius-pill);
+  background: var(--color-surface-2); color: var(--color-text-muted); font-size: var(--font-size-small);
+}
+.sa-profile-summary b { color: var(--color-text-primary); }
+.sa-sec__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.sa-cpf-visibility {
+  display: grid; gap: var(--space-2); margin-top: var(--space-3);
+  padding-top: var(--space-3); border-top: 1px solid var(--color-border);
+}
+.sa-cpf-sensitive-warning {
+  display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  background: var(--color-pending-surface); color: var(--color-text-primary); font-size: var(--font-size-small);
+}
+.sa-cpf-sensitive-warning .material-symbols-outlined { color: var(--color-pending); }
+.sa-external-preview { max-width: 860px; margin: 0 auto; }
+
+@media (max-width: 1100px) {
+  .sa-tbl-properties__grid { grid-template-columns: 1fr 1fr; }
+  .sa-tbl-readonly--source { grid-column: 1 / -1; }
+  .sa-prov-vert__table { width: 100%; margin: var(--space-2) 0 0; }
+}

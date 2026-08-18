@@ -46,10 +46,11 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || !document.getElementById('sit-table')) return;
+    applyTerminology();
     /* Gating pe arie de acces: pagina e contabilă; ascunsă pentru personas
        fără „contabil" în scope (ex. audit-stat). */
     if (typeof window.viewInScope === 'function' && !window.viewInScope('contabil')) {
-      renderOutOfScope('Situații Contabile', 'aria de contabilitate');
+      renderOutOfScope(accountingVertical().name, 'aria de contabilitate');
       return;
     }
     populateFilterOptions();
@@ -84,6 +85,49 @@
 
   function normalize(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function accountingVertical() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_contabil')
+      : (typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById('vert_contabil') : null);
+    return vertical || { name: 'Situații Contabile', itemLabel: 'Situație', itemLabelPlural: 'Situații' };
+  }
+
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty()
+      : { singular: 'Client', plural: 'Clienți' };
+  }
+
+  function applyTerminology() {
+    var vertical = accountingVertical();
+    var party = externalParty();
+    document.title = vertical.name + ' — Scriptica';
+    var title = document.querySelector('.page-header__title');
+    if (title) title.textContent = vertical.name;
+    var add = document.getElementById('open-new-situation');
+    if (add) add.innerHTML = 'Adaugă ' + esc(vertical.itemLabel.toLowerCase()) + '<span class="material-symbols-outlined" aria-hidden="true">add</span>';
+    var search = document.getElementById('f-search');
+    if (search) search.placeholder = 'Caută ' + party.singular.toLowerCase() + '...';
+    var searchLabel = document.querySelector('label[for="f-search"]');
+    if (searchLabel) searchLabel.textContent = 'Nume ' + party.singular.toLowerCase();
+    var modal = document.getElementById('modal-new-situation');
+    if (!modal) return;
+    var modalTitle = modal.querySelector('.modal__title');
+    var modalSubtitle = modal.querySelector('.modal__subtitle');
+    var typeLabel = modal.querySelector('label[for="f-tip-modal"]');
+    var partyLabel = modal.querySelector('label[for="f-client-modal"]');
+    var partyInput = modal.querySelector('#f-client-modal');
+    var submit = modal.querySelector('[data-modal-submit]');
+    var notificationHelp = modal.querySelector('[data-field="notif"] .form-helper');
+    if (modalTitle) modalTitle.textContent = vertical.itemLabel + ' nouă';
+    if (modalSubtitle) modalSubtitle.textContent = 'Completează detaliile pentru a începe un element nou în „' + vertical.name + '”.';
+    if (typeLabel) typeLabel.textContent = 'Șablon de ' + vertical.itemLabel.toLowerCase();
+    if (partyLabel) partyLabel.textContent = party.singular;
+    if (partyInput) partyInput.placeholder = 'Caută ' + party.singular.toLowerCase() + '...';
+    if (submit) submit.textContent = 'Creează ' + vertical.itemLabel.toLowerCase();
+    if (notificationHelp) notificationHelp.textContent = 'Selectează momentele în care notificările automate vor fi trimise ' + party.singular.toLowerCase() + ' și echipei.';
   }
 
   function formatDate(iso) {
@@ -226,7 +270,7 @@
         : '<tr>' +
           '<th style="width:44px;"></th>' +
           '<th style="width:140px;">Cod</th>' +
-          '<th>Client</th>' +
+          '<th>' + esc(externalParty().singular) + '</th>' +
           '<th style="width:160px;">Titular</th>' +
           '<th style="width:120px;">Dată Start</th>' +
           '<th style="width:110px;">Termen</th>' +
@@ -242,8 +286,7 @@
      tabel" (listView) configurate în Super Admin → Fluxuri. Portalul de
      client (isClient) NU trece pe aici — își păstrează vederea proprie. */
   function listEngine() {
-    var v = (typeof window.scripticaVerticalById === 'function')
-      ? window.scripticaVerticalById('vert_contabil') : null;
+    var v = accountingVertical();
     return (v && window.SCRIPTICA_LISTVIEW) ? { LV: window.SCRIPTICA_LISTVIEW, v: v } : null;
   }
 
@@ -261,10 +304,10 @@
       var emptyMsg = empty.querySelector('p');
       var emptyLink = empty.querySelector('a');
       if (isClient() && allVisible.length === 0) {
-        if (emptyMsg) emptyMsg.textContent = 'Nu aveți situații contabile active.';
+        if (emptyMsg) emptyMsg.textContent = 'Nu aveți ' + accountingVertical().itemLabelPlural.toLowerCase() + ' active.';
         if (emptyLink) emptyLink.style.display = 'none';
       } else {
-        if (emptyMsg) emptyMsg.textContent = 'Nicio situație nu corespunde filtrelor selectate.';
+        if (emptyMsg) emptyMsg.textContent = 'Nu există ' + accountingVertical().itemLabelPlural.toLowerCase() + ' care să corespundă filtrelor selectate.';
         if (emptyLink) emptyLink.style.display = '';
       }
       return;
@@ -378,7 +421,7 @@
         '</div>' +
         '<div class="task-list" data-tasks-for="' + esc(s.id) + '">' + tasksHtml + '</div>' +
         '<div class="exp-footer">' +
-          '<a class="exp-open-link" href="situatie-detaliu.html?id=' + esc(s.id) + '">Deschide situația →</a>' +
+          '<a class="exp-open-link" href="situatie-detaliu.html?id=' + esc(s.id) + '">Deschide ' + esc(accountingVertical().itemLabel.toLowerCase()) + ' →</a>' +
         '</div>' +
       '</div>' +
     '</td></tr>';

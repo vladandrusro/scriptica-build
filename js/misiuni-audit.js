@@ -38,6 +38,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || document.body.getAttribute('data-page') !== 'misiuni-audit') return;
+    applyTerminology();
     /* Gating pe arie de acces: pagina e de audit; ascunsă pentru personas
        fără „audit" în scope (ex. contabilitate). */
     if (typeof window.viewInScope === 'function' && !window.viewInScope('audit')) {
@@ -45,7 +46,7 @@
       if (main) main.innerHTML =
         '<div class="scope-block">' +
           '<span class="material-symbols-outlined" aria-hidden="true">lock</span>' +
-          '<h1 class="scope-block__title">Misiuni Audit</h1>' +
+          '<h1 class="scope-block__title">' + esc(auditVertical().name) + '</h1>' +
           '<p class="scope-block__text">Această secțiune este disponibilă doar personelor cu acces la aria de audit.</p>' +
           '<a class="btn btn--primary" href="acasa.html">Înapoi la Acasă</a>' +
         '</div>';
@@ -134,6 +135,40 @@
 
   function normalize(s) {
     return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty()
+      : { singular: 'Entitate', plural: 'Entități' };
+  }
+
+  function applyTerminology() {
+    var vertical = auditVertical();
+    var party = externalParty();
+    document.title = vertical.name + ' — Scriptica';
+    var title = document.querySelector('.page-header__title');
+    if (title) title.textContent = vertical.name;
+    var add = document.getElementById('open-new-mission');
+    if (add) add.innerHTML = 'Adaugă ' + esc(vertical.itemLabel.toLowerCase()) + '<span class="material-symbols-outlined" aria-hidden="true">add</span>';
+    var search = document.getElementById('f-search');
+    if (search) search.placeholder = 'Caută ' + vertical.itemLabel.toLowerCase() + ' sau ' + party.singular.toLowerCase() + '...';
+    var modal = document.getElementById('modal-new-mission');
+    if (!modal) return;
+    var modalTitle = modal.querySelector('.modal__title');
+    var modalSubtitle = modal.querySelector('.modal__subtitle');
+    var typeLabel = modal.querySelector('label[for="mm-tip"]');
+    var partyLabel = modal.querySelector('label[for="mm-entity"]');
+    var partyInput = modal.querySelector('#mm-entity');
+    var submit = modal.querySelector('[data-modal-submit]');
+    var notificationHelp = modal.querySelector('[data-field="notif"] .form-helper');
+    if (modalTitle) modalTitle.textContent = vertical.itemLabel + ' nouă';
+    if (modalSubtitle) modalSubtitle.textContent = 'Completează detaliile pentru a începe un element nou în „' + vertical.name + '”.';
+    if (typeLabel) typeLabel.textContent = 'Șablon de ' + vertical.itemLabel.toLowerCase();
+    if (partyLabel) partyLabel.textContent = party.singular;
+    if (partyInput) partyInput.placeholder = 'Caută ' + party.singular.toLowerCase() + '...';
+    if (submit) submit.textContent = 'Creează ' + vertical.itemLabel.toLowerCase();
+    if (notificationHelp) notificationHelp.textContent = 'Selectează momentele în care notificările automate vor fi trimise echipei și părții externe („' + party.singular + '”).';
   }
 
   function formatDate(iso) {
@@ -267,8 +302,10 @@
   /* Verticala de audit din registrul de fluxuri — sursa „expresiei în
      tabel" (listView) configurate în Super Admin → Fluxuri. */
   function auditVertical() {
-    return (typeof window.scripticaVerticalById === 'function')
-      ? window.scripticaVerticalById('vert_audit') : null;
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_audit')
+      : (typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById('vert_audit') : null);
+    return vertical || { name: 'Misiuni Audit', itemLabel: 'Misiune', itemLabelPlural: 'Misiuni' };
   }
   function listEngine() {
     var v = auditVertical();
@@ -283,7 +320,7 @@
       ? eng.LV.headerHtml(eng.v, { chevron: true })
       : '<tr>' +
         '<th style="width:44px;"></th>' +
-        '<th>Misiune</th>' +
+        '<th>' + esc(auditVertical().itemLabel) + '</th>' +
         '<th style="width:240px;">Șablon</th>' +
         '<th style="width:110px;">Termen</th>' +
         '<th style="width:160px;">Responsabili</th>' +
@@ -301,6 +338,8 @@
       tbody.innerHTML = '';
       empty.style.display = 'flex';
       wrap.style.display = 'none';
+      var message = empty.querySelector('p');
+      if (message) message.textContent = 'Nu există ' + auditVertical().itemLabelPlural.toLowerCase() + ' care să corespundă filtrelor selectate.';
       return;
     }
     empty.style.display = 'none';
@@ -390,7 +429,7 @@
       '<div class="exp-panel">' +
         '<div class="am-steps" role="list" aria-label="Etapele misiunii">' + stepsHtml + '</div>' +
         '<div class="exp-footer">' +
-          '<a class="exp-open-link" href="misiune-audit-workspace.html?id=' + esc(m.id) + '">Deschide misiunea →</a>' +
+          '<a class="exp-open-link" href="misiune-audit-workspace.html?id=' + esc(m.id) + '">Deschide ' + esc(auditVertical().itemLabel.toLowerCase()) + ' →</a>' +
         '</div>' +
       '</div>' +
     '</td></tr>';
@@ -591,7 +630,7 @@
     var filtered = entities.slice();
 
     function renderComboList(items) {
-      if (!items.length) { comboList.innerHTML = '<div class="combo__empty">Nicio entitate găsită.</div>'; return; }
+      if (!items.length) { comboList.innerHTML = '<div class="combo__empty">Niciun rezultat pentru ' + esc(externalParty().singular.toLowerCase()) + '.</div>'; return; }
       comboList.innerHTML = items.map(function (c, i) {
         return '<div class="combo__option' + (i === activeIdx ? ' is-active' : '') + '" data-id="' + c.id + '" role="option">' +
           '<div class="combo__option-title">' + esc(c.name) + '</div>' +
@@ -660,7 +699,7 @@
       e.preventDefault();
       if (!validate()) return;
       closeModal();
-      toast('success', 'Misiunea de audit a fost creată cu succes.');
+      toast('success', auditVertical().itemLabel + ' a fost creată cu succes.');
     });
 
     function validate() {
@@ -671,7 +710,7 @@
       var validEntity = comboHidden.value && entities.some(function (c) {
         return c.id === parseInt(comboHidden.value, 10) && c.name === comboInput.value;
       });
-      setError('entity', !validEntity, 'Selectează o entitate din listă.');
+      setError('entity', !validEntity, 'Selectează ' + externalParty().singular.toLowerCase() + ' din listă.');
       if (!validEntity) ok = false;
 
       setError('responsabili', selectedResp.length === 0, 'Adaugă cel puțin un responsabil.');

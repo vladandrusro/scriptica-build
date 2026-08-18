@@ -24,6 +24,15 @@
     page: 1,
     editingId: null
   };
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty() : { singular: 'Client', plural: 'Clienți' };
+  }
+  function workTerms() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_contabil') : null;
+    return vertical || { itemLabel: 'Situație', itemLabelPlural: 'Situații' };
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     populateStaticFilterOptions();
@@ -72,7 +81,7 @@
       sessions.reduce(function (arr, s) { return arr.concat(s.taskLabels || []); }, [])
     );
 
-    fillSelect('#tt-f-client',    [{ v: '', t: 'Toți clienții' }].concat(clients.map(function (c) { return { v: c, t: c }; })));
+    fillSelect('#tt-f-client',    [{ v: '', t: 'Toate: ' + externalParty().plural }].concat(clients.map(function (c) { return { v: c, t: c }; })));
     fillSelect('#tt-f-situation', [{ v: '', t: 'Toate situațiile' }].concat(situations.map(function (s) { return { v: s, t: s }; })));
     fillSelect('#tt-f-task',      [{ v: '', t: 'Toate task-urile' }].concat(tasks.map(function (t) { return { v: t, t: t }; })));
   }
@@ -310,8 +319,8 @@
       '<div class="sessions-table-wrap">' +
         '<table class="sessions-table"><thead><tr>' +
           '<th style="width:160px;">Data</th>' +
-          '<th>Client</th>' +
-          '<th>Situație</th>' +
+          '<th>' + esc(externalParty().singular) + '</th>' +
+          '<th>' + esc(workTerms().itemLabel) + '</th>' +
           '<th>Acțiuni</th>' +
           '<th style="width:100px;">Durată</th>' +
           '<th>Observație</th>' +

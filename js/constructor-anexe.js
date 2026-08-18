@@ -90,15 +90,10 @@ if (_isSuperAdminAnexeBuilder) {
      (un singur nivel — fără bloc-în-bloc). */
   var BLOCK_FORBIDDEN_TYPES = { repeater_block: true };
 
-  /* Categorii de anexe (Part D) — multi-categorie. Absența oricărei categorii
-     = anexa e disponibilă în orice tip de flux. Folosite ca filtru în
-     picker-ul de anexe din builder-ul de tip de misiune. */
-  var ANEXA_CATEGORIES = (window.SCRIPTICA_MOCK && window.SCRIPTICA_MOCK.anexaCategories) || [
-    { id: 'contabilitate', label: 'Contabilitate' },
-    { id: 'audit', label: 'Audit' },
-    { id: 'salarizare', label: 'Salarizare' },
-    { id: 'fiscal', label: 'Fiscal' }
-  ];
+  /* Clasificarea anexei folosește registrul real de verticale. O anexă poate
+     fi disponibilă în mai multe verticale; activitățile în care este folosită
+     sunt derivate separat din atașările la pași. */
+  var FLOW_VERTICALS = ((((window.SCRIPTICA_MOCK || {}).superAdmin || {}).flowVerticals) || []);
 
   /* ============================================================
      STATE
@@ -115,6 +110,7 @@ if (_isSuperAdminAnexeBuilder) {
   var anexaName = 'Anexă nouă';
   var anexaStatus = 'activ';
   var anexaCategories = [];
+  var anexaVerticalIds = [];
   var notFound = false;
 
   /* Ultima versiune salvată (pentru Resetează) */
@@ -242,6 +238,7 @@ if (_isSuperAdminAnexeBuilder) {
       anexaName = found.name || 'Anexă nouă';
       anexaStatus = found.status || 'activ';
       anexaCategories = Array.isArray(found.categories) ? found.categories.slice() : [];
+      anexaVerticalIds = Array.isArray(found.verticalIds) ? found.verticalIds.slice() : [];
       originalFields = deepCopy((found.schema && found.schema.fields) || []);
       originalName = anexaName;
       fields = withUids(deepCopy(originalFields));
@@ -253,6 +250,7 @@ if (_isSuperAdminAnexeBuilder) {
     anexaName = name || 'Anexă nouă';
     anexaStatus = 'activ';
     anexaCategories = [];
+    anexaVerticalIds = [];
     anexaId = null;
     originalFields = [];
     originalName = anexaName;
@@ -760,27 +758,27 @@ if (_isSuperAdminAnexeBuilder) {
      RENDER — settings panel
      ============================================================ */
   function renderAnexaSettings() {
-    var checks = ANEXA_CATEGORIES.map(function (c) {
-      var on = anexaCategories.indexOf(c.id) !== -1;
+    var checks = FLOW_VERTICALS.map(function (vertical) {
+      var on = anexaVerticalIds.indexOf(vertical.id) !== -1;
       return '<div class="builder__srow builder__srow--inline"><label>' +
-        '<input type="checkbox" data-anexa-cat="' + esc(c.id) + '"' + (on ? ' checked' : '') + '> ' +
-        esc(c.label) + '</label></div>';
+        '<input type="checkbox" data-anexa-vertical="' + esc(vertical.id) + '"' + (on ? ' checked' : '') + '> ' +
+        esc(vertical.name) + '</label></div>';
     }).join('');
     return '<div class="builder__settings-header">' +
         '<div class="builder__settings-type">Proprietăți anexă</div>' +
-        '<h3 class="builder__settings-title">Categorii</h3>' +
+        '<h3 class="builder__settings-title">Verticale disponibile</h3>' +
       '</div>' +
-      group('Categorii / Tipuri de flux', checks) +
-      '<div class="builder__settings-note">Filtrează unde apare anexa în builder-ul de tip de misiune. Fără nicio categorie bifată = disponibilă peste tot. Selectează un câmp din canvas pentru a-i edita proprietățile.</div>';
+      group('Verticale', checks || '<div class="builder__settings-note">Nu există verticale configurate în registru.</div>') +
+      '<div class="builder__settings-note">Poți selecta mai multe verticale fără să duplici anexa. Fără nicio verticală bifată = anexă partajată, disponibilă peste tot. Tipurile de activitate și conexiunile sunt calculate automat din utilizările reale.</div>';
   }
 
   function attachAnexaSettingsHandlers() {
-    settingsContentEl.querySelectorAll('[data-anexa-cat]').forEach(function (cb) {
+    settingsContentEl.querySelectorAll('[data-anexa-vertical]').forEach(function (cb) {
       cb.addEventListener('change', function () {
-        var id = cb.getAttribute('data-anexa-cat');
-        var i = anexaCategories.indexOf(id);
-        if (cb.checked && i === -1) anexaCategories.push(id);
-        else if (!cb.checked && i !== -1) anexaCategories.splice(i, 1);
+        var id = cb.getAttribute('data-anexa-vertical');
+        var i = anexaVerticalIds.indexOf(id);
+        if (cb.checked && i === -1) anexaVerticalIds.push(id);
+        else if (!cb.checked && i !== -1) anexaVerticalIds.splice(i, 1);
       });
     });
   }
@@ -1420,7 +1418,12 @@ if (_isSuperAdminAnexeBuilder) {
       id: anexaId,
       name: name,
       status: anexaStatus || 'activ',
-      categories: anexaCategories.slice(),
+      categories: anexaVerticalIds.map(function (verticalId) {
+        var vertical = FLOW_VERTICALS.find(function (item) { return item.id === verticalId; });
+        return vertical ? vertical.domain : null;
+      }).filter(Boolean),
+      verticalIds: anexaVerticalIds.slice(),
+      verticalIdsVersion: 2,
       updatedAt: TODAY_ISO,
       schema: { fields: stripUids(fields) }
     };

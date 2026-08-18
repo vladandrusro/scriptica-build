@@ -51,22 +51,23 @@ flowchart TD
 | Module | Owns | Exposes (window.*) |
 |---|---|---|
 | `js/shell.js` | persona/view model, body classes, nav injection (audit, planificare, custom verticals, admin) + domain gating, sidebar/messaging chrome, avatar dropdown | `getCurrentView`, `setCurrentView`, `getViewScope`, `viewInScope`, `scripticaCurrentUser`, `renderAvatar`, `scripticaInitials`, `scripticaAvatarColor` |
-| `js/mock-data.js` | ALL data (seed + merge + derivation), flow-registry persistence API, vertical-owned document vocabulary, visibility/scoping helpers | `SCRIPTICA_MOCK`, `scripticaFlowSave/Delete`, `scripticaFlowVerticals/CustomVerticals/VerticalById/TemplatesForVertical/ClientTypes/ClientTypeById/FlowItemsForVertical`, `scripticaDocumentCategoriesForVertical/DocumentTypesForVertical/DocumentCategoryForType/SystemDocumentCategory`, `scripticaDocumentTypes/DocTypeById/ArchiveTreeFor/DefaultArchiveTree/TenantClientTypeId`, `getVisibleSituations/Clients/Documents/Messages/Anexe`, `scripticaVerticalAccentClass`, `scripticaIsClientView`, `SCRIPTICA_CANVAS_CLIENT_ID`, label helpers |
+| `js/mock-data.js` | ALL data (seed + merge + derivation), flow-registry persistence API, vertical-owned document vocabulary, per-account terminology resolvers, visibility/scoping helpers | `SCRIPTICA_MOCK`, `scripticaFlowSave/Delete`, `scripticaFlowVerticals/CustomVerticals/VerticalById/TemplatesForVertical/ClientTypes/ClientTypeById/FlowItemsForVertical`, `scripticaEffectiveExternalParty/EffectiveVertical/EffectiveVerticalTerminology/EffectiveArchiveFolderName/ArchiveFolderDefinitionsForClient`, `scripticaDocumentCategoriesForVertical/DocumentTypesForVertical/DocumentCategoryForType/SystemDocumentCategory`, `scripticaDocumentTypes/DocTypeById/ArchiveTreeFor/DefaultArchiveTree/TenantClientTypeId`, `getVisibleSituations/Clients/Documents/Messages/Anexe`, `scripticaVerticalAccentClass`, `scripticaIsClientView`, `SCRIPTICA_CANVAS_CLIENT_ID`, label helpers |
 | `js/timer.js` | cross-page active timer (only persisted timer state) | `ScripticaTimer`; events `scriptica:timer-started/-stopped` |
 | `js/dashboard.js` | static home regions, client/audit home routing, Situație Nouă modal, toasts | `SCRIPTICA_TOAST` |
-| `js/dashboard-widgets.js` | 10-widget library; swaps `#main` on acasa.html with the client type's configured layout | `SCRIPTICA_WIDGETS {render, cardHtml, paletteFor}` |
-| `js/situatii.js` / `js/situatie-detaliu.js` / `js/documents.js` | contabil list, workspace (tasks/chat/anexe gating), AI-document modals & upload simulation | `SCRIPTICA_SITUATII_RESET`, `SCRIPTICA_OPEN_DOC_AI_MODAL`, `SCRIPTICA_DOC_TIP_PREFIX`, `SCRIPTICA_DOCS_REFRESH` |
+| `js/dashboard-widgets.js` | 10-widget library; builds the final onboarding step and swaps `#main` on acasa.html with the selected client's configured layout | `SCRIPTICA_WIDGETS {render, cardHtml, paletteFor}` |
+| `js/situatii.js` / `js/situatie-detaliu.js` / `js/documents.js` | contabil/custom-flow workspace (tasks/chat/anexe gating), required document-upload tasks, AI-document modals & upload simulation | `SCRIPTICA_SITUATII_RESET`, `SCRIPTICA_OPEN_DOC_AI_MODAL`, `SCRIPTICA_DOC_TIP_PREFIX`, `SCRIPTICA_DOCS_REFRESH` |
 | `js/arhiva.js` | archive tree (Container→An→Lună→Folder); legacy folders come from HQ archiveTree, custom-flow folders follow the included templates and are independent from classification categories | — |
 | `js/time-tracking.js` | month view, bar chart, session table/edit | — |
 | `js/misiuni-audit.js` / `js/misiune-audit-workspace.js` / `js/planificare-audit.js` / `js/rapoarte-audit.js` | audit list+tabs+creation, workspace (objectives, Dosar Permanent, Etapa IV, decision bar), plans, reports table+modals | `SCRIPTICA_MISIUNI_RESET`, `SCRIPTICA_RAPOARTE.render` |
-| `js/administrare.js` | hash-routed admin tabs; situation/mission type builder (steps, anexe attach, cross-anexă formulas with DFS cycle validation) | — |
-| `js/constructor-anexe.js` | drag-and-drop form builder, 22 field types (FIELD_TYPES), `ref` codes on numeric fields, anexă categories | — |
+| `js/administrare.js` | hash-routed admin tabs; situation/mission type builder (normal/upload tasks, anexe attach, cross-anexă formulas with DFS cycle validation); multi-vertical annex library with usage/relationship impact and safe retirement | — |
+| `js/constructor-anexe.js` | drag-and-drop form builder, 22 field types (FIELD_TYPES), `ref` codes on numeric fields, multi-vertical annex availability | — |
+| `js/beneficiary-profile.js` | shared beneficiary-profile schema renderer for HQ/internal editing and external-form preview; validation, address/file/repeater controls and table formatting | `SCRIPTICA_BENEFICIARY_PROFILE` |
 | `js/anexa-fill.js` | fill modal for all field types, completion %, safe formula evaluator (`evalExpr`, recursive descent, **no eval**), computed-field states (auto/override/manual/pending), derivation modal | `SCRIPTICA_ANEXE {renderCards, allComplete, getStepAnexe}`; event `scriptica:anexa-saved` |
 | `js/list-columns.js` | per-vertical table-column engine ("expresia în tabel") | `SCRIPTICA_LISTVIEW {availableFor, defaultsFor, effectiveFor, colById, headerHtml, cellsHtml, colCount, normalizeSituation/Mission/FlowItem, sampleItems}` |
 | `js/flux.js` | generic list+detail for custom verticals; builtin verticals redirect to dedicated pages | — |
 | `js/super-admin.js` | HQ ops dashboard, clients, client detail, legacy client types, dashboard builder and table builder | — |
 | `js/super-admin-fluxuri-v2.js` | canonical HQ flow constructor: per-template steps/tasks/anexe, local drafts, validation/preview, guarded publish into the shared registry | — |
-| `js/super-admin-tipuri-clienti-v2.js` | client-type package editor: verticals/templates, archive routing and links into the Acasă builder | — |
+| `js/super-admin-tipuri-clienti-v2.js` | client-category editor and its base archive routing; Acasă is deliberately absent because its owner is the individual client | — |
 | `js/prezentare.js` | slide deck (exposes nothing) | — |
 
 ## Component boundaries and data flow
@@ -101,13 +102,13 @@ flowchart LR
     MOCK --> NAV & SIT & AUD & FLX & ACA & ARH
 ```
 
-The one-way cycle to understand: **HQ writes configuration → localStorage → every page-load merge → tenant pages read the merged MOCK**. Tenant runtime actions (task ticks, chat, uploads, step advances) mutate MOCK **in memory only** and vanish on reload — the demo depends on this being understood. The exceptions that persist are listed below.
+The one-way cycle to understand: **HQ writes configuration → localStorage → every page-load merge → tenant pages read the merged MOCK**. Legacy situation runtime actions still mostly mutate MOCK **in memory only** and vanish on reload. Generic custom-flow workspaces are the exception: task completion, required uploads, embedded documents and step progress are saved back into `scriptica.flowItems`.
 
 ## State ownership and persistence
 
 Three layers, lowest priority first:
 
-1. **Seed** — hard-coded in `mock-data.js` ("today" pinned to 2026-04-20; verified counts: 10 tenant clients, 6 employees, 28 situations (13 of them generated archival), 7 audit missions + entities/plans/reports, 119 documents, 27 anexe, 6 HQ clients, 4 flow verticals, 5 client types, 9 flow items — incl. the seeded Consultanță + Construcții showcases).
+1. **Seed** — hard-coded in `mock-data.js` ("today" pinned to 2026-04-20; verified counts: 10 tenant clients, 6 employees, 28 situations (13 of them generated archival), 7 audit missions + entities/plans/reports, 119 documents, 31 anexe, 6 HQ clients, 4 flow verticals, 5 client types, 10 flow items — incl. the seeded Consultanță + Construcții showcases).
 2. **localStorage overrides** — `scriptica.*` keys, each a JSON map `id → full record`, `{deleted:true}` = tombstone. Merge REPLACES whole records (no field-level merge) — stale persisted records normally shadow new seed fields until cleared. The vertical document-vocabulary migration is an explicit exception: missing `documentCategories`, filters and template category selections are backfilled from the canonical seed.
 3. **In-memory mutations** — everything else; lost on reload.
 
@@ -116,7 +117,7 @@ Full localStorage inventory (all owned keys):
 | Key | Contents | Written by |
 |---|---|---|
 | `scriptica.view` | persona id | shell.js (also force-set to `admin` by administrare.js/constructor-anexe.js, sparing `complet` on administrare only) |
-| `scriptica.tenantAccountId` | HQ client selected for tenant preview; its active module assignments scope tenant navigation and work surfaces | super-admin.js via `scripticaSetTenantAccountId()` |
+| `scriptica.tenantAccountId` | HQ client selected for tenant preview; its active vertical assignments scope tenant navigation and work surfaces | super-admin.js via `scripticaSetTenantAccountId()` |
 | `scriptica.anexe` | anexă templates | constructor-anexe.js, administrare.js |
 | `scriptica.situationTypes` | situation/mission types (steps, formulas) | administrare.js |
 | `scriptica.flowVerticals` / `.flowTemplates` / `.clientTypes` / `.saClients` / `.flowItems` | HQ flow registry + instances | super-admin.js, flux.js — always via `scripticaFlowSave` |
@@ -127,19 +128,27 @@ Full localStorage inventory (all owned keys):
 | `scriptica.activeTimer` | the running timer only | timer.js |
 | `scriptica.sidebarExpanded` / `.messagingPanelCollapsed` | chrome state | shell.js |
 
-Flow configuration has two distinct owners: a `flowVertical` groups templates and owns `documentCategories[]` (each with its nested, uniquely assigned `documentTypes[]`), while a `flowTemplate` owns `steps[]` and `documentCategoryIds[]`. The permanent system category `Necategorisit` is always added to the template selection. `clientTypes[].archiveTree` is deliberately independent from that taxonomy; custom-flow archive folders are derived from the flow templates included in the client type.
+Flow configuration has two distinct owners: a `flowVertical` groups templates and owns `documentCategories[]` (each with its nested, uniquely assigned `documentTypes[]`), while a `flowTemplate` owns `steps[]` and `documentCategoryIds[]`. A step task may be `standard` or `document_upload`; upload tasks also store a document-type id, single/multiple-file behavior and a minimum file count. The permanent system category `Necategorisit` is always added to the template selection. `clientTypes[].archiveTree` is deliberately independent from that taxonomy; custom-flow archive folders are derived from the flow templates included in the client type.
 
-## Client categories and flow modules
+Annex templates remain independent records. `verticalIds[]` controls where one annex is available without duplicating it; an empty array means deliberately shared. The library derives each annex's workflow/step usages and its relationships from same-step reuse, formulas and stable references. Used or related annexes are retired, never hard-deleted; historical responses keep the same annex id and field indexes.
 
-### Per-client modules (implemented in the prototype)
+## Client categories and vertical assignments
 
-`clientTypes[]` now acts as the stable business category. A client can be created in `superAdmin.clients[]` with that category and zero modules; category changes and module changes are separate operations. Each HQ client stores `moduleAssignments[]`, with stable vertical/template ids, status and activation/deactivation timestamps. Older `scriptica.saClients` records are migrated in memory from the former category package (`verticalIds[]` / `defaultTemplateIds[]`) so stale localStorage continues to render.
+### Per-client verticals (implemented in the prototype)
 
-The Fluxuri V2 surface is a global catalog: publishing a vertical or template makes it available for later activation, but does not attach it to a category or existing client. The HQ client detail has a module manager and a tenant preview. `scriptica.tenantAccountId` selects that preview account; `shell.js`, `dashboard-widgets.js`, `flux.js` and `arhiva.js` then resolve visibility from its assignments. Without a selected preview account, the seeded persona/category behavior remains as a compatibility fallback for the established demos.
+`clientTypes[]` acts as the stable business category. Client onboarding has five steps: business identity/category, the client's enrollment form, an optional selection of contracted verticals, per-account terminology/archive labels, and the client's individual Acasă layout. Acasă is always the final step. A client can therefore be created in `superAdmin.clients[]` with that category and zero verticals; in that case its final step clearly records an empty dashboard. Category changes and vertical changes are separate operations. Each HQ client stores its vertical assignments in `moduleAssignments[]`, with stable vertical/template ids, status and activation/deactivation timestamps, plus its own `dashboardLayout[]` and `dashboardLayoutVersion`. The `moduleAssignments` property keeps its legacy name to remain compatible with existing localStorage and seeded data; it must not be presented as “modules” in the UI. Older `scriptica.saClients` records are migrated in memory from the former category package (`verticalIds[]` / `defaultTemplateIds[]`) and the former client-type dashboard defaults so stale localStorage continues to render.
 
-Module removal is non-destructive. An assignment must move from active to inactive/retired rather than be deleted. Operational records, documents, conversations, anexă responses and archive entries created while the module was active remain stored; ordinary work surfaces may be hidden while inactive, but the archive and historical integrity remain intact. Reactivating the same module must restore access to the same history.
+Per-account naming is additive and optional. `terminologyOverrides` stores only values that differ from the client-type/vertical/archive defaults (`externalParty`, `verticals[verticalId]`, `archiveFolders[stableFolderKey]`), and `terminologyVersion` is currently `1`. The effective display order is account override → shared definition → safe Romanian fallback. Renaming is presentation-only: vertical ids, template ids, archive folder ids, folder hierarchy, the `system` flag and document routing remain unchanged. Existing client records without these fields retain their former labels.
 
-Archive folders are resolved from active **and inactive** assignments, while normal navigation, creation actions and dashboard module cards use active assignments only. Used verticals/templates are archived (`status: inactiv`) instead of tombstoned. One prototype limitation remains: most pre-seeded operational records are shared demo data rather than fully owned by an HQ client; newly created generic flow records receive `tenantAccountId`, but a production data model would enforce tenant ownership on every operational record.
+Beneficiary-profile configuration follows the same inheritance model. `clientTypes[].clientProfileSchema` is the category default, `clients[].clientProfileSchema` is an optional account override, and operational beneficiary records keep values in `profileValues` keyed by stable field id. The shared `SCRIPTICA_BENEFICIARY_PROFILE` renderer is used for internal forms and the external preview. Table columns may point to supported profile fields or annex fields through stable `sourceKey` values; `clients[].verticalTableOverrides[verticalId]` overrides the vertical's `listViewConfig` without mutating the global definition.
+
+The Fluxuri V2 surface is a global catalog: publishing a vertical or template makes it available for later activation, but does not attach it to a category or existing client. The HQ client detail has a vertical manager and a tenant preview. `scriptica.tenantAccountId` selects that preview account; `shell.js`, `dashboard-widgets.js`, `flux.js` and `arhiva.js` then resolve visibility from its assignments. Without a selected preview account, the seeded persona/category behavior remains as a compatibility fallback for the established demos.
+
+Vertical removal is non-destructive. An assignment must move from active to inactive/retired rather than be deleted. Operational records, documents, conversations, anexă responses, archive entries and the client's saved Acasă layout created while the vertical was active remain stored; ordinary work surfaces and the vertical's widgets may be hidden while inactive, but the archive and historical integrity remain intact. Reactivating the same vertical must restore access to the same history and saved layout.
+
+Archive folders are resolved from active **and inactive** assignments, while normal navigation, creation actions and dashboard vertical cards use active assignments only. Used verticals/templates are archived (`status: inactiv`) instead of tombstoned. One prototype limitation remains: most pre-seeded operational records are shared demo data rather than fully owned by an HQ client; newly created generic flow records receive `tenantAccountId`, but a production data model would enforce tenant ownership on every operational record.
+
+Vertical deactivation is non-destructive. It hides the vertical, its dashboard widgets and current working surfaces for that account, but never deletes its flow records, documents, archive contents or terminology overrides. Inactive assignments stay in `moduleAssignments[]`, remain editable in the account terminology editor and become visible again when reactivated.
 
 ## Authentication and permissions
 
@@ -172,4 +181,4 @@ Load order per page: Google Fonts → `tokens.css` (single source of truth: surf
 7. **Task-id determinism**: `augmentTasks` assigns task ids sequentially; seeded time sessions depend on those ids — editing a type's steps mis-attributes time data.
 8. **Two clocks**: pinned 2026-04-20 for rendering vs real `new Date()` in some modal validations (dashboard.js) — date-validation UX can look inconsistent relative to demo data.
 9. Prototype-only security posture: all "permissions" are cosmetic client-side gating. Nothing here should ever hold real data.
-10. **Operational ownership is only partially modeled** — per-client module entitlement is implemented, but most seeded flow instances still have no HQ-account owner. The selected-tenant preview therefore validates module visibility, not hard multi-tenant data isolation.
+10. **Operational ownership is only partially modeled** — per-client vertical assignment is implemented, but most seeded flow instances still have no HQ-account owner. The selected-tenant preview therefore validates vertical visibility, not hard multi-tenant data isolation.

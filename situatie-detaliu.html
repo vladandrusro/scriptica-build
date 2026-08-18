@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=17">
-  <link rel="stylesheet" href="css/anexe.css?v=15">
+  <link rel="stylesheet" href="css/anexe.css?v=16">
 </head>
 <body>
   <div class="shell">
@@ -141,9 +141,9 @@
           <textarea id="tc-observation" name="observation" class="textarea" rows="4" placeholder="Ex: Verificat cu atenție, totul este în regulă."></textarea>
         </div>
 
-        <div class="form-field">
+        <div class="form-field" data-attachment-field>
           <span class="form-label">Atașează documente</span>
-          <span class="form-helper">Atașează fișiere care susțin finalizarea task-ului.</span>
+          <span class="form-helper" data-attachment-helper>Atașează fișiere care susțin finalizarea task-ului.</span>
           <div class="dropzone" data-dropzone>
             <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
             <span>Trage fișierele aici sau</span>
@@ -151,6 +151,7 @@
             <input type="file" name="attachments" hidden multiple>
           </div>
           <div class="file-list" data-file-list></div>
+          <span class="form-error" role="alert" data-attachment-error></span>
         </div>
 
         <div class="form-field">
@@ -424,12 +425,12 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=30"></script>
-  <script src="js/mock-data.js?v=37"></script>
+  <script src="js/shell.js?v=32"></script>
+  <script src="js/mock-data.js?v=46"></script>
   <script src="js/timer.js?v=30"></script>
-  <script src="js/dashboard.js?v=31"></script>
+  <script src="js/dashboard.js?v=32"></script>
   <script src="js/anexa-fill.js?v=29"></script>
-  <script src="js/situatie-detaliu.js?v=32"></script>
+  <script src="js/situatie-detaliu.js?v=36"></script>
   <script src="js/documents.js?v=30"></script>
 </body>
 </html>

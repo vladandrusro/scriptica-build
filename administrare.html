@@ -13,9 +13,9 @@
   <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=17">
-  <link rel="stylesheet" href="css/administrare.css?v=16">
-  <link rel="stylesheet" href="css/client-onboarding.css?v=1">
-  <link rel="stylesheet" href="css/super-admin.css?v=16">
+  <link rel="stylesheet" href="css/administrare.css?v=20">
+  <link rel="stylesheet" href="css/client-onboarding.css?v=2">
+  <link rel="stylesheet" href="css/super-admin.css?v=24">
 </head>
 <body>
   <div class="shell shell--messaging-closed">
@@ -160,7 +160,7 @@
         <p class="admin-helper">Configurează identitatea clientului, persoanele de contact, accesul în Scriptica și toate sursele autorizate pentru documente.</p>
         <div class="table-wrap" id="ue-table-wrap">
           <table class="admin-table">
-            <thead>
+            <thead id="ue-thead">
               <tr>
                 <th style="min-width:220px;">Client</th>
                 <th style="width:180px;">Contact principal</th>
@@ -288,9 +288,17 @@
             <label for="ta-search" class="sr-only">Caută anexă</label>
             <input id="ta-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
           </div>
+          <label for="ta-vertical" class="sr-only">Verticală</label>
+          <select id="ta-vertical" class="select admin-anexa-filter">
+            <option value="">Toate verticalele</option>
+          </select>
+          <label for="ta-activity" class="sr-only">Tip de activitate</label>
+          <select id="ta-activity" class="select admin-anexa-filter">
+            <option value="">Toate tipurile de activitate</option>
+          </select>
           <label for="ta-status" class="sr-only">Status</label>
-          <select id="ta-status" class="select" style="width:140px;">
-            <option value="">Toate</option>
+          <select id="ta-status" class="select" style="width:calc(var(--space-8) * 2.5);">
+            <option value="">Active și inactive</option>
             <option value="activ">Activ</option>
             <option value="inactiv">Inactiv</option>
           </select>
@@ -304,12 +312,13 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th style="min-width:240px;">Nume anexă</th>
-                <th style="width:90px;">Câmpuri</th>
+                <th style="min-width:220px;">Nume anexă</th>
+                <th style="min-width:170px;">Verticale</th>
                 <th style="min-width:220px;">Folosită în</th>
-                <th style="width:150px;">Ultima modificare</th>
+                <th style="width:120px;">Relații</th>
+                <th style="width:80px;">Câmpuri</th>
                 <th style="width:110px;">Status</th>
-                <th style="width:130px;">Acțiuni</th>
+                <th style="width:170px;">Acțiuni</th>
               </tr>
             </thead>
             <tbody id="ta-tbody"></tbody>
@@ -586,6 +595,24 @@
     </div>
   </div>
 
+  <!-- Modal: impact și relații anexă -->
+  <div class="modal" id="modal-anexa-impact" role="dialog" aria-modal="true" aria-labelledby="mai-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="mai-title">Unde este folosită anexa</h2>
+        <p class="modal__subtitle" id="mai-subtitle"></p>
+      </header>
+      <div class="modal__body" id="mai-body"></div>
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">Relațiile sunt calculate automat din fluxuri și formule.</span>
+        <button type="button" class="btn btn--primary" data-modal-close>Închide</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Modal: Tag (adăugare/editare) -->
   <div class="modal" id="modal-tag" role="dialog" aria-modal="true" aria-labelledby="mtag-title" aria-hidden="true">
     <div class="modal__dialog modal__dialog--narrow" role="document">
@@ -686,6 +713,13 @@
               <label class="form-label" for="co-address">Sediu / adresă</label>
               <input id="co-address" type="text" class="input" autocomplete="street-address" placeholder="Adresă completă">
             </div>
+          </div>
+          <div class="co-profile-schema" id="co-profile-schema">
+            <div class="co-profile-schema__head">
+              <span class="material-symbols-outlined" aria-hidden="true">dynamic_form</span>
+              <div><h4>Date configurate pentru profil</h4><p>Câmpurile sunt stabilite la nivelul contului de business.</p></div>
+            </div>
+            <div id="co-profile-fields"></div>
           </div>
         </section>
 
@@ -836,11 +870,12 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=30"></script>
-  <script src="js/mock-data.js?v=37"></script>
+  <script src="js/shell.js?v=32"></script>
+  <script src="js/mock-data.js?v=46"></script>
+  <script src="js/beneficiary-profile.js?v=2"></script>
   <script src="js/timer.js?v=30"></script>
-  <script src="js/dashboard.js?v=31"></script>
-  <script src="js/administrare.js?v=31"></script>
-  <script src="js/client-onboarding.js?v=1"></script>
+  <script src="js/dashboard.js?v=32"></script>
+  <script src="js/administrare.js?v=36"></script>
+  <script src="js/client-onboarding.js?v=3"></script>
 </body>
 </html>
