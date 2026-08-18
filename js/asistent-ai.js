@@ -183,9 +183,53 @@
     for (var i = 0; i < DOC_NOUNS.length; i++) if (DOC_NOUNS[i].re.test(n)) return DOC_NOUNS[i];
     return null;
   }
+  /* Analize predefinite, relevante pentru o primărie — cu date agregate de
+     demonstrație (evidențele seed sunt prea mici pentru statistici reale) și,
+     unde se poate, cu date calculate din dosarele accesibile. */
+  var CHART_PRESETS = [
+    { id: 'petitii_subiecte', re: /(petiti|sesizar).*(subiect|categori|tem)|(subiect|categori|tem).*(petiti|sesizar)|petitii pe subiecte/,
+      title: 'Petiții pe subiecte — trimestrul I 2026', type: 'bars',
+      labels: ['Salubrizare și spații verzi', 'Infrastructură rutieră', 'Urbanism și disciplină în construcții', 'Transport public', 'Asistență socială', 'Altele'],
+      values: [184, 152, 97, 76, 41, 63], unit: 'petiții',
+      tiles: [{ label: 'Petiții înregistrate', value: 613 }, { label: 'Timp mediu de soluționare', value: 18, suffix: ' zile' }, { label: 'Soluționate în termenul legal', value: 92, suffix: '%' }, { label: 'Redirecționate altor instituții', value: 47 }],
+      insight: 'Salubrizarea și infrastructura rutieră concentrează 55% din petiții. Timpul mediu de soluționare (18 zile) se încadrează în termenul legal de 30 de zile; 8% dintre petiții au depășit termenul, majoritatea la Urbanism.',
+      chips: ['Evoluția lunară a solicitărilor externe', 'Termene depășite pe direcții', 'Întocmește raportul trimestrial al petițiilor'] },
+    { id: 'solicitari_lunar', re: /(evolut|lunar|pe luni|trend).*(solicit|petiti|cerer)|(solicit|petiti|cerer).*(lunar|pe luni|evolut|trend)/,
+      title: 'Evoluția lunară a solicitărilor externe — 2026', type: 'line',
+      labels: ['Ian', 'Feb', 'Mar', 'Apr*'],
+      series: [{ name: 'Petiții (OG 27/2002)', values: [148, 171, 163, 131] }, { name: 'Cereri Legea 544/2001', values: [22, 31, 27, 19] }, { name: 'Certificate de urbanism', values: [64, 58, 71, 44] }],
+      unit: 'solicitări', note: '* aprilie: date până la 20.04.2026',
+      tiles: [{ label: 'Total T1 2026', value: 755 }, { label: 'Vârf lunar', value: 260, suffix: ' (feb.)' }, { label: 'Răspunsuri în termen', value: 94, suffix: '%' }],
+      insight: 'Volumul crește în februarie–martie (dezbaterea bugetului local) și scade în aprilie. Cererile 544 rămân sub 5% din total; certificatele de urbanism sunt a doua categorie ca volum.',
+      chips: ['Petiții pe subiecte', 'Stadiul obiectivelor de investiții', 'Resetează contextul'] },
+    { id: 'investitii_stadiu', re: /(stadiu|fizic|valoric|progres).*(investit|obiectiv|lucrar)|(investit|obiectiv|lucrar).*(stadiu|fizic|valoric|progres)/,
+      title: 'Stadiul obiectivelor de investiții — fizic și valoric', type: 'hbars',
+      labels: ['Reabilitare Pasaj Unirii — lucrări structurale', 'Creșă și grădiniță — cartier Străulești', 'Consolidare Școala Gimnazială nr. 12', 'Servicii de proiectare — pasaj pietonal Piața Unirii'],
+      values: [38, 12, 8, 100], unit: '%',
+      tiles: [{ label: 'Obiective în derulare', value: 3 }, { label: 'Stadiu fizic mediu', value: 19, suffix: '%' }, { label: 'Valoare decontată cumulat', value: 21.4, suffix: ' mil. RON', decimals: 1 }, { label: 'Obiective cu întârziere', value: 1, critical: true }],
+      insight: 'Pasajul Unirii are stadiul fizic 38% și o întârziere de 10 zile la lucrările structurale (aviz Metrorex). Creșa Străulești așteaptă aprobarea indicatorilor în CGMB; Școala 12 este în faza DALI.',
+      chips: ['Ce termene se apropie la investiții?', 'Valoarea achizițiilor pe tipuri de procedură', 'Întocmește nota de informare privind stadiul investițiilor'] },
+    { id: 'termene_directii', re: /(termen|intarzi|restant).*(directi|structur|compartiment)|(directi|structur|compartiment).*(termen|intarzi|restant)|termene depasite pe directii/,
+      title: 'Termene depășite pe direcții — dosare active', type: 'bars', computed: 'lateByDirection', unit: 'dosare',
+      insight: 'Calculat din dosarele accesibile: pentru fiecare direcție, dosarele active al căror termen al pasului curent este depășit față de 20.04.2026.',
+      chips: ['Cine este responsabil?', 'Ce termene se apropie?', 'Întocmește situația dosarelor cu termen depășit'] },
+    { id: 'achizitii_valoare', re: /(valoar|suma|cat).*(achizit|contract|procedur)|(achizit|contract|procedur).*(valoar|suma|pe tipuri)/,
+      title: 'Valoarea achizițiilor publice pe tipuri de procedură — 2026', type: 'donut',
+      labels: ['Licitație deschisă', 'Procedură simplificată', 'Achiziție directă', 'Negociere fără publicare'],
+      values: [41.7, 12.4, 3.1, 1.8], unit: 'mil. RON', decimals: 1,
+      tiles: [{ label: 'Valoare totală estimată', value: 59, suffix: ' mil. RON' }, { label: 'Proceduri în derulare', value: 14 }, { label: 'Contracte semnate 2026', value: 9 }, { label: 'Economii față de estimare', value: 6.2, suffix: '%', decimals: 1 }],
+      insight: 'Licitațiile deschise reprezintă 71% din valoare, dar doar 3 proceduri; achizițiile directe sunt cele mai numeroase (26) și sub 6% din valoare.',
+      chips: ['Stadiul obiectivelor de investiții', 'Petiții pe subiecte', 'Întocmește situația centralizatoare a achizițiilor în derulare'] }
+  ];
+  function chartPresetOf(q) {
+    var n = norm(q);
+    for (var i = 0; i < CHART_PRESETS.length; i++) if (CHART_PRESETS[i].re.test(n)) return CHART_PRESETS[i];
+    return null;
+  }
   function intentOf(q) {
     var n = norm(q);
     if (/\b(reset|toate dosarele|contextul initial|sterge contextul|iesi din context)/.test(n)) return 'reset';
+    if (chartPresetOf(q) && !/\b(genereaz|intocm|redact|creeaz|elaboreaz|scrie|pregat)/.test(n)) return 'chart';
     if (/\b(genereaz|intocm|redact|creeaz|elaboreaz|scrie|pregat|emite|completeaz|fa-mi|fa o|fa un)/.test(n) && docNounOf(q)) return 'generate';
     if (/\b(statistic|analiz|distribu|evolut|procent|medie|total|valoare|suma|cat costa|grafic|pe verticale|pe directii|pe subiecte|pe luni)/.test(n)) return 'analysis';
     if (/\b(rezum|sumar|sintez|pe scurt)/.test(n)) return 'summary';
@@ -298,6 +342,18 @@
     var matchedDocs = toks.length ? scoreDocs(kb.docs.filter(function (d) { return usedContext ? pool.some(function (i) { return i.id === d.itemId; }) : true; }), toks).map(function (r) { return r.doc; }) : [];
     if (usedContext && !toks.length) matched = pool;
 
+    if (intent === 'chart') {
+      var preset = chartPresetOf(question);
+      var chart = buildChart(preset);
+      reasoning.push('Am recunoscut o analiză standard a instituției: „' + esc(preset.title) + '”.');
+      reasoning.push(preset.computed ? 'Am calculat valorile din dosarele accesibile rolului tău (' + plural(kb.items.length, 'dosar', 'dosare') + ').' : 'Am agregat evidențele din registre pe perioada analizată și am pregătit graficul.');
+      reasoning.push('Am extras concluziile principale și le-am însoțit de indicatorii-cheie.');
+      html = '<b>' + esc(preset.title) + '</b> — ' + esc(chart.insight) + ' Graficul și indicatorii sunt în zona de lucru din stânga.';
+      refs = (chart.refItems || []).map(itemRef);
+      chips = preset.chips || defaultChips();
+      return { reasoning: reasoning, answerHtml: html, references: refs, contextShift: null, chips: chips,
+        canvas: { kind: 'chart', title: preset.title, chart: chart } };
+    }
     if (intent === 'analysis' || intent === 'count') {
       var subject = matched.length ? matched : pool;
       if (wantsActive) subject = subject.filter(function (i) { return i.active; });
@@ -530,12 +586,142 @@
     return doc;
   }
 
+  function buildChart(preset) {
+    var chart = { type: preset.type, labels: (preset.labels || []).slice(), values: (preset.values || []).slice(), series: preset.series || null,
+      unit: preset.unit || '', decimals: preset.decimals || 0, note: preset.note || '', tiles: (preset.tiles || []).slice(), insight: preset.insight, refItems: [] };
+    if (preset.computed === 'lateByDirection') {
+      var by = {}, refItems = [];
+      state.kb.items.forEach(function (i) {
+        var dir = i.container || 'Fără structură';
+        if (!by[dir]) by[dir] = { late: 0, active: 0 };
+        if (i.active) by[dir].active++;
+        if (i.active && i.days != null && i.days < 0) { by[dir].late++; refItems.push(i); }
+      });
+      var dirs = Object.keys(by).sort(function (a, b) { return by[b].late - by[a].late || by[b].active - by[a].active; });
+      chart.labels = dirs.map(function (d) { return d.replace('Direcția Generală ', 'DG ').replace('Direcția ', 'D. '); });
+      chart.values = dirs.map(function (d) { return by[d].late; });
+      var totalLate = chart.values.reduce(function (a, b) { return a + b; }, 0);
+      chart.tiles = [{ label: 'Dosare active', value: state.kb.items.filter(function (i) { return i.active; }).length }, { label: 'Cu termen depășit', value: totalLate, critical: totalLate > 0 }, { label: 'Direcții afectate', value: chart.values.filter(function (v) { return v > 0; }).length }];
+      chart.refItems = refItems.slice(0, 6);
+      chart.insight = totalLate ? 'Cele mai multe termene depășite: ' + dirs[0] + ' (' + by[dirs[0]].late + '). ' + preset.insight : 'Nu există dosare active cu termen depășit. ' + preset.insight;
+    }
+    return chart;
+  }
+
+  var CHART_COLORS = ['var(--vertical-auriu)', 'var(--vertical-albastru)', 'var(--vertical-verde)', 'var(--vertical-mov)', 'var(--vertical-portocaliu)', 'var(--vertical-roz)'];
+  function fmtNum(v, decimals) {
+    var n = Number(v) || 0;
+    var s = decimals ? n.toFixed(decimals).replace('.', ',') : Math.round(n).toString();
+    return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function chartHtml(chart) {
+    if (chart.type === 'line') return lineChartSvg(chart);
+    if (chart.type === 'donut') return donutChartSvg(chart);
+    if (chart.type === 'hbars') return hbarsHtml(chart);
+    return barsChartSvg(chart);
+  }
+  function barsChartSvg(chart) {
+    var W = 720, H = 300, padL = 40, padB = 70, padT = 20;
+    var n = chart.values.length || 1;
+    var max = Math.max.apply(null, chart.values.concat([1]));
+    var slot = (W - padL) / n, bw = Math.min(64, slot * 0.6);
+    var bars = chart.values.map(function (v, i) {
+      var h = (H - padB - padT) * (v / max);
+      var x = padL + slot * i + (slot - bw) / 2, y = H - padB - h;
+      return '<g class="ai-chart__bar" style="animation-delay:' + (i * 90) + 'ms; transform-origin: ' + (x + bw / 2) + 'px ' + (H - padB) + 'px">' +
+        '<rect x="' + x + '" y="' + y + '" width="' + bw + '" height="' + h + '" rx="6" fill="' + CHART_COLORS[i % CHART_COLORS.length] + '"></rect></g>' +
+        '<text class="ai-chart__value ai-chart__fade" style="animation-delay:' + (500 + i * 90) + 'ms" x="' + (x + bw / 2) + '" y="' + (y - 8) + '" text-anchor="middle">' + fmtNum(v, chart.decimals) + '</text>' +
+        '<text class="ai-chart__label" x="' + (x + bw / 2) + '" y="' + (H - padB + 18) + '" text-anchor="middle">' + wrapLabel(chart.labels[i], x + bw / 2) + '</text>';
+    }).join('');
+    var grid = [0.25, 0.5, 0.75, 1].map(function (f) {
+      var y = H - padB - (H - padB - padT) * f;
+      return '<line x1="' + padL + '" x2="' + W + '" y1="' + y + '" y2="' + y + '" class="ai-chart__grid"></line><text class="ai-chart__tick" x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + fmtNum(max * f, chart.decimals) + '</text>';
+    }).join('');
+    return '<svg class="ai-chart ai-chart--bars" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(chart.labels.join(', ')) + '">' + grid + bars + '</svg>' + (chart.unit ? '<div class="ai-chart__unit">' + esc(chart.unit) + '</div>' : '');
+  }
+  function wrapLabel(text, x) {
+    var words = String(text || '').split(' ');
+    var lines = [], cur = '';
+    words.forEach(function (w) { if ((cur + ' ' + w).trim().length > 16 && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3).map(function (l, i) { return '<tspan x="' + x + '" dy="' + (i ? 13 : 0) + '">' + esc(l) + '</tspan>'; }).join('');
+  }
+  function lineChartSvg(chart) {
+    var W = 720, H = 300, padL = 44, padB = 40, padT = 20, padR = 20;
+    var series = chart.series || [{ name: '', values: chart.values }];
+    var all = []; series.forEach(function (sr) { all = all.concat(sr.values); });
+    var max = Math.max.apply(null, all.concat([1]));
+    var n = chart.labels.length || 1;
+    var stepX = (W - padL - padR) / Math.max(1, n - 1);
+    var grid = [0.25, 0.5, 0.75, 1].map(function (f) {
+      var y = H - padB - (H - padB - padT) * f;
+      return '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + y + '" y2="' + y + '" class="ai-chart__grid"></line><text class="ai-chart__tick" x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + fmtNum(max * f) + '</text>';
+    }).join('');
+    var xlabels = chart.labels.map(function (l, i) { return '<text class="ai-chart__label" x="' + (padL + stepX * i) + '" y="' + (H - padB + 20) + '" text-anchor="middle">' + esc(l) + '</text>'; }).join('');
+    var lines = series.map(function (sr, si) {
+      var pts = sr.values.map(function (v, i) { return [padL + stepX * i, H - padB - (H - padB - padT) * (v / max)]; });
+      var d = pts.map(function (pt, i) { return (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1); }).join(' ');
+      var color = CHART_COLORS[si % CHART_COLORS.length];
+      return '<path class="ai-chart__line" d="' + d + '" stroke="' + color + '" style="animation-delay:' + (si * 200) + 'ms"></path>' +
+        pts.map(function (pt, i) { return '<circle class="ai-chart__fade" cx="' + pt[0] + '" cy="' + pt[1] + '" r="4" fill="' + color + '" style="animation-delay:' + (700 + si * 200 + i * 120) + 'ms"></circle>' +
+          '<text class="ai-chart__value ai-chart__fade" x="' + pt[0] + '" y="' + (pt[1] - 10) + '" text-anchor="middle" style="animation-delay:' + (700 + si * 200 + i * 120) + 'ms">' + fmtNum(sr.values[i]) + '</text>'; }).join('');
+    }).join('');
+    var legend = series.length > 1 ? '<div class="ai-chart__legend">' + series.map(function (sr, si) { return '<span><i style="background:' + CHART_COLORS[si % CHART_COLORS.length] + '"></i>' + esc(sr.name) + '</span>'; }).join('') + '</div>' : '';
+    return legend + '<svg class="ai-chart ai-chart--line" viewBox="0 0 ' + W + ' ' + H + '" role="img">' + grid + xlabels + lines + '</svg>' + (chart.note ? '<div class="ai-chart__unit">' + esc(chart.note) + '</div>' : '');
+  }
+  function donutChartSvg(chart) {
+    var total = chart.values.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var R = 80, C = 2 * Math.PI * R, offset = 0;
+    var segs = chart.values.map(function (v, i) {
+      var len = C * (v / total);
+      var seg = '<circle class="ai-chart__seg" cx="110" cy="110" r="' + R + '" fill="none" stroke="' + CHART_COLORS[i % CHART_COLORS.length] + '" stroke-width="30" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '" style="animation-delay:' + (i * 220) + 'ms"></circle>';
+      offset += len; return seg;
+    }).join('');
+    var legend = '<ul class="ai-chart__donut-legend">' + chart.values.map(function (v, i) {
+      return '<li class="ai-chart__fade" style="animation-delay:' + (i * 220 + 300) + 'ms"><i style="background:' + CHART_COLORS[i % CHART_COLORS.length] + '"></i><span>' + esc(chart.labels[i]) + '</span><b>' + fmtNum(v, chart.decimals) + ' ' + esc(chart.unit) + '</b><em>' + Math.round(v / total * 100) + '%</em></li>';
+    }).join('') + '</ul>';
+    return '<div class="ai-chart__donut"><svg class="ai-chart ai-chart--donut" viewBox="0 0 220 220" role="img"><g transform="rotate(-90 110 110)">' + segs + '</g>' +
+      '<text class="ai-chart__center" x="110" y="104" text-anchor="middle">' + fmtNum(total, chart.decimals) + '</text><text class="ai-chart__center-sub" x="110" y="124" text-anchor="middle">' + esc(chart.unit) + '</text></svg>' + legend + '</div>';
+  }
+  function hbarsHtml(chart) {
+    return '<div class="ai-bars ai-bars--animated">' + chart.values.map(function (v, i) {
+      return '<div class="ai-bar ai-chart__fade" style="animation-delay:' + (i * 120) + 'ms"><span class="ai-bar__label">' + esc(chart.labels[i]) + '</span><span class="ai-bar__track"><span class="ai-bar__fill" style="width:' + Math.min(100, v) + '%; animation-delay:' + (i * 120) + 'ms; background:' + CHART_COLORS[i % CHART_COLORS.length] + '"></span></span><span class="ai-bar__value">' + fmtNum(v, chart.decimals) + esc(chart.unit === '%' ? '%' : ' ' + chart.unit) + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function chartCanvasHtml(cv) {
+    var chart = cv.chart;
+    var tiles = (chart.tiles || []).map(function (t) {
+      return '<div class="ai-tile' + (t.critical ? ' ai-tile--critical' : '') + '"><div class="ai-tile__value" data-count="' + t.value + '" data-decimals="' + (t.decimals || 0) + '" data-suffix="' + esc(t.suffix || '') + '">0' + esc(t.suffix || '') + '</div><div class="ai-tile__label">' + esc(t.label) + '</div></div>';
+    }).join('');
+    return '<div class="ai-tiles">' + tiles + '</div>' +
+      '<div class="ai-chart-card">' + chartHtml(chart) + '</div>' +
+      '<div class="ai-insight"><span class="material-symbols-outlined" aria-hidden="true">lightbulb</span><span>' + esc(chart.insight) + '</span></div>' +
+      '<div class="ai-canvas__actions"><button type="button" class="btn btn--primary" data-ai-generate-from="nota">Întocmește o notă din această analiză<span class="material-symbols-outlined" aria-hidden="true">description</span></button>' +
+      '<button type="button" class="btn btn--secondary" data-ai-stub="Exportul graficului va fi disponibil în versiunea finală."><span class="material-symbols-outlined" aria-hidden="true">download</span>Exportă graficul</button></div>';
+  }
+  /* numărătoare animată pe tile-uri (după randare) */
+  function animateCounters(root) {
+    var els = root.querySelectorAll('[data-count]');
+    if (!els.length) return;
+    var start = null, dur = 900;
+    function frame(ts) {
+      if (!start) start = ts;
+      var p = Math.min(1, (ts - start) / dur), e = 1 - Math.pow(1 - p, 3);
+      els.forEach(function (el) {
+        var target = parseFloat(el.getAttribute('data-count')) || 0, dec = parseInt(el.getAttribute('data-decimals'), 10) || 0;
+        el.textContent = fmtNum(target * e, dec) + (el.getAttribute('data-suffix') || '');
+      });
+      if (p < 1) window.requestAnimationFrame(frame);
+    }
+    window.requestAnimationFrame(frame);
+  }
+
   function defaultChips() {
     return ['Ce termene se apropie?', 'Câte dosare active am pe fiecare verticală?', 'Întocmește situația achizițiilor în derulare'];
   }
   var EXAMPLE_PROMPTS = [
     { icon: 'search', label: 'Caută', text: 'Ce documente avem la Pasajul Unirii?' },
-    { icon: 'monitoring', label: 'Analizează', text: 'Câte dosare active am pe fiecare verticală și câte au termenul depășit?' },
+    { icon: 'monitoring', label: 'Analizează', text: 'Petiții pe subiecte și timp mediu de soluționare' },
     { icon: 'description', label: 'Întocmește', text: 'Întocmește situația centralizatoare a achizițiilor în derulare' },
     { icon: 'mail', label: 'Redactează', text: 'Redactează răspunsul la petiția privind zgomotul de pe Str. Lipscani' }
   ];
@@ -768,7 +954,7 @@
       var back = e.target.closest('[data-ai-preview-close]');
       if (back) { state.canvas.preview = null; renderCanvas(); return; }
       var gen = e.target.closest('[data-ai-generate-from]');
-      if (gen) { ask('Întocmește o situație centralizatoare cu aceste date'); return; }
+      if (gen) { ask(gen.getAttribute('data-ai-generate-from') === 'nota' ? 'Întocmește o notă de informare cu concluziile acestei analize' : 'Întocmește o situație centralizatoare cu aceste date'); return; }
       var stub = e.target.closest('[data-ai-stub]');
       if (stub) { toast('info', stub.getAttribute('data-ai-stub')); return; }
     });
@@ -796,6 +982,7 @@
       html = msg && msg.canvas ? canvasResultHtml(msg) : canvasIdleHtml();
     } else html = canvasIdleHtml();
     el.innerHTML = html;
+    if (c.mode === 'result' && !c.preview) animateCounters(el);
   }
 
   function canvasIdleHtml() {
@@ -830,8 +1017,8 @@
   function canvasResultHtml(msg) {
     var cv = msg.canvas;
     var head = '<div class="ai-canvas__head">' +
-        '<span class="material-symbols-outlined ai-canvas__head-icon" aria-hidden="true">' + (cv.kind === 'document' ? 'description' : (cv.kind === 'analysis' ? 'monitoring' : 'search')) + '</span>' +
-        '<div><div class="ai-canvas__kicker">' + (cv.kind === 'document' ? 'Document generat' : (cv.kind === 'analysis' ? 'Analiză' : 'Rezultate')) + '</div><h2 class="ai-canvas__title">' + esc(cv.title || cv.doc && cv.doc.title || '') + '</h2></div>' +
+        '<span class="material-symbols-outlined ai-canvas__head-icon" aria-hidden="true">' + (cv.kind === 'document' ? 'description' : (cv.kind === 'analysis' || cv.kind === 'chart' ? 'monitoring' : 'search')) + '</span>' +
+        '<div><div class="ai-canvas__kicker">' + (cv.kind === 'document' ? 'Document generat' : (cv.kind === 'chart' ? 'Analiză grafică' : (cv.kind === 'analysis' ? 'Analiză' : 'Rezultate'))) + '</div><h2 class="ai-canvas__title">' + esc(cv.title || cv.doc && cv.doc.title || '') + '</h2></div>' +
       '</div>';
     var think = foldHtml('psychology', 'Cum am ajuns aici · ' + plural((msg.reasoning || []).length, 'pas', 'pași'),
       '<ol class="ai-think ai-think--compact">' + (msg.reasoning || []).map(function (r) { return '<li class="ai-think__step is-done"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span>' + r + '</span></li>'; }).join('') + '</ol>', false);
@@ -839,6 +1026,7 @@
     if (cv.kind === 'note') return head + '<p class="ai-canvas__note">' + esc(cv.text) + '</p>' + think;
     if (cv.kind === 'search') return head + think + searchResultsHtml(cv);
     if (cv.kind === 'analysis') return head + think + analysisHtml(cv);
+    if (cv.kind === 'chart') return head + think + chartCanvasHtml(cv);
     if (cv.kind === 'document') return head + think + documentHtml(cv.doc, true);
     return head;
   }

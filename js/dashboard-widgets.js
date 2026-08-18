@@ -135,6 +135,12 @@
     return names;
   }
 
+  /* acordul adjectivului „nou/nouă” cu eticheta elementului (Dosar nou, Procedură nouă, Cerere … nouă) */
+  function newAdjective(label) {
+    var first = String(label || '').trim().split(/\s+/)[0].toLowerCase();
+    return /(ă|e|ie|ură|are|ere|ire|ție)$/.test(first) ? 'nouă' : 'nou';
+  }
+
   function rowsHtml(rows) {
     return '<div class="dw-rows">' + rows.join('') + '</div>';
   }
@@ -202,18 +208,29 @@
             '<span class="dw-status">' + statusDot(m.status) + '</span>');
         });
       } else {
-        var items = window.scripticaFlowItemsForVertical(v.id).filter(function (i) { return i.status !== 'finalizat'; });
+        var items = window.scripticaFlowItemsForVertical(v.id).filter(function (i) { return i.status !== 'finalizat' && i.status !== 'inchisa' && i.status !== 'anulata'; });
         count = items.length;
         listHref = 'flux.html?vertical=' + encodeURIComponent(v.id);
+        var templates = (MOCK().superAdmin.flowTemplates || []);
         rows = items.slice(0, 5).map(function (i) {
+          var tpl = templates.find(function (t) { return t.id === i.templateId; });
+          var total = (tpl && tpl.steps && tpl.steps.length) || i.totalSteps || 1;
+          var done = Math.min(total, parseInt(i.stepsCompleted, 10) || 0);
           return rowHtml('situatie-detaliu.html?flowId=' + esc(i.id), esc(i.name), esc(i.clientName || ''),
-            '<span class="dw-status">' + statusDot(i.status) + '</span>');
+            '<span class="pill pill--progress ' + progressClass(done, total) + '">' + done + '/' + total + '</span>');
         });
       }
+      /* Aceeași expresie ca „Situații noi”: buton primar „<Element> nou/nouă” + „Toate …” */
+      var isBuiltin = v.domain === 'contabil' || v.domain === 'audit';
+      var newLabel = (v.itemLabel || 'Element') + ' ' + newAdjective(v.itemLabel || 'Element');
+      var newHref = isBuiltin ? listHref : listHref + '&nou=1';
+      var footer = '<a class="btn btn--primary" href="' + esc(newHref) + '">' + esc(newLabel) +
+          '<span class="material-symbols-outlined" aria-hidden="true">add</span></a>' +
+        '<a class="ghost-link" href="' + esc(listHref) + '">Toate ' + esc((v.itemLabelPlural || 'elementele').toLowerCase()) + '</a>';
       return {
         title: v.name, icon: v.icon || 'account_tree', count: count,
         bodyHtml: rows.length ? rowsHtml(rows) : emptyState('inbox', 'Niciun element activ în această verticală.'),
-        footerHtml: '<a class="ghost-link" href="' + esc(listHref) + '">Vezi toate</a>'
+        footerHtml: footer
       };
     },
 

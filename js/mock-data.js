@@ -2905,7 +2905,22 @@ window.SCRIPTICA_MOCK = {
       chips: ["Ce termene au?", "Cine face parte din comisii?", "Resetează contextul"] }
   ];
   aiReq2.aiContext = { label: "2 dosare · Resurse Umane", itemIds: ["fi_pmb_ru_01", "fi_pmb_ru_02"] };
-  M.flowItems.push(aiReq1, aiReq2);
+  /* Exemplu: utilizatorul cere o analiză, asistentul propune analizele standard
+     ale instituției ca opțiuni (click → grafic animat în zona de lucru). */
+  var aiReq3 = fi("fi_pmb_ai_03", "vert_pmb_asistent_ai", "pmb_asistent_ai", "ft_pmb_ai_cerere", "Cerere de lămuriri către Asistentul AI",
+    "Am nevoie de o analiză pentru raportarea către Primarul General", AI, "Ioana Petrescu", DGI, "2026-04-20", 1, 0, "in_verificare", [504]);
+  aiReq3.aiMessages = [
+    { id: "aim_7", role: "user", at: "2026-04-20T08:40:00", text: "Am nevoie de o analiză pentru raportarea către Primarul General. Ce îmi poți pregăti?" },
+    { id: "aim_8", role: "assistant", at: "2026-04-20T08:40:03",
+      reasoning: [
+        "Am identificat o cerere de analiză fără un subiect precizat.",
+        "Am verificat analizele standard disponibile pentru evidențele la care ai acces: solicitări externe, investiții, achiziții, termene pe direcții."
+      ],
+      answerHtml: "Îți pot pregăti imediat una dintre analizele standard ale instituției — alege de mai jos și îți afișez graficul, indicatorii-cheie și concluziile în zona de lucru. Poți formula și o analiză proprie (ex. „petițiile pe subiecte din T1”).",
+      references: [], contextShift: null,
+      chips: ["Petiții pe subiecte și timp mediu de soluționare", "Evoluția lunară a solicitărilor externe", "Stadiul obiectivelor de investiții", "Valoarea achizițiilor pe tipuri de procedură", "Termene depășite pe direcții"] }
+  ];
+  M.flowItems.push(aiReq1, aiReq2, aiReq3);
 })();
 
 /* ------------------------------------------------------------

@@ -246,6 +246,11 @@
 
     bindList(root, v);
     renderRows(root, v);
+    /* deep-link din widgetul de Acasă: „<Element> nou” deschide direct crearea */
+    if (qs('nou') === '1') {
+      if (history && history.replaceState) history.replaceState(null, '', 'flux.html?vertical=' + encodeURIComponent(v.id));
+      setTimeout(function () { openNewItemModal(root, v); }, 0);
+    }
   }
 
   function itemsFor(v) {
