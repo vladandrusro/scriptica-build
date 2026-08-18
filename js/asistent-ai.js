@@ -40,7 +40,11 @@
     var item = (MOCK.flowItems || []).find(function (f) { return f.id === flowId; });
     if (!item) return;
     var vertical = typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(item.verticalId) : null;
-    if (!vertical || !vertical.assistant) return;
+    if (!vertical || !vertical.assistant) {
+      /* dosar obișnuit: activăm comenzile „@ai” în chatul fluxului (dacă contul are asistentul) */
+      if (vertical && typeof window.scripticaAssistantVertical === 'function' && window.scripticaAssistantVertical()) mountMentionHint();
+      return;
+    }
     if (typeof window.viewInScope === 'function' && !window.viewInScope(vertical.domain)) return;
     state.item = item;
     state.vertical = typeof window.scripticaEffectiveVertical === 'function' ? window.scripticaEffectiveVertical(vertical) : vertical;
@@ -1181,4 +1185,136 @@
         refs +
       '</div></div>' + shift;
   }
+
+  /* ============================================================
+     „@ai” în chatul unui flux — comenzi rapide vizibile pentru toți
+     participanții: căutare de documente/dosare + „Adaugă la flux”.
+     ============================================================ */
+  function mountMentionHint() {
+    var composer = document.getElementById('composer');
+    if (!composer || document.querySelector('.ai-mention-hint')) return;
+    var hint = document.createElement('div');
+    hint.className = 'ai-mention-hint';
+    hint.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>' +
+      '<span>Scrie <b>@ai</b> urmat de o comandă — ex. <button type="button" class="ai-mention-hint__ex" data-ai-mention-example="@ai caută chitanța pentru achiziția de becuri Philips">@ai caută chitanța pentru achiziția de becuri Philips</button>. Răspunsul e vizibil tuturor participanților.</span>';
+    composer.parentNode.insertBefore(hint, composer);
+    hint.addEventListener('click', function (e) {
+      var ex = e.target.closest('[data-ai-mention-example]');
+      if (!ex) return;
+      var ta = document.getElementById('composer-text');
+      if (!ta) return;
+      ta.value = ex.getAttribute('data-ai-mention-example');
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      ta.focus();
+    });
+  }
+
+  function commandTokens(command) {
+    return tokens(command).filter(function (t) {
+      return !/^(caut|gases|gasit|vreau|trebui|arata|adu|posteaz|pune|urgent|rog|poti|putet|docum|fisier|scan|copie|baza|date|arhiv|dosar|pentru|achizit)/.test(t);
+    });
+  }
+
+  function attachDocToFlow(docId, item) {
+    var src = (MOCK.documents || []).find(function (d) { return d.id === docId; });
+    if (!src || !item) return null;
+    var already = (MOCK.documents || []).find(function (d) { return d.situationId === item.id && d.attachedFrom === docId; });
+    if (already) return already;
+    var owner = (MOCK.flowItems || []).find(function (f) { return f.id === src.situationId; });
+    var copy = Object.assign({}, src, {
+      id: 'doc_att_' + Date.now(), situationId: item.id, domain: item.domain || src.domain,
+      uploadedAt: nowIso(), source: 'generat', attachedFrom: docId,
+      observatieAI: 'Atașat de Asistentul AI din dosarul „' + (owner ? owner.name : src.situationId) + '”. ' + (src.observatieAI || ''),
+      verificat: false, verificatManual: false
+    });
+    MOCK.documents.push(copy);
+    item.documents = (item.documents || []).concat([copy]);
+    if (window.SCRIPTICA_WORKSPACE && typeof window.SCRIPTICA_WORKSPACE.persist === 'function') window.SCRIPTICA_WORKSPACE.persist();
+    if (typeof window.SCRIPTICA_DOCS_REFRESH === 'function') setTimeout(window.SCRIPTICA_DOCS_REFRESH, 0);
+    return copy;
+  }
+
+  window.SCRIPTICA_AI_CHAT = {
+    handle: function (command, item, done) {
+      var kb = buildKnowledgeBase();
+      var toks = commandTokens(command);
+      var docs = toks.length ? scoreDocs(kb.docs, toks).map(function (r) { return r.doc; }) : [];
+      var items = toks.length ? scoreItems(kb.items, toks).map(function (r) { return r.item; }) : [];
+      /* preferăm documentele care corespund tuturor termenilor „tari” (ex. brand) */
+      var strict = docs.filter(function (d) { return hits(d.filename.replace(/[_\-.]/g, ' ') + ' ' + d.tip + ' ' + d.emitent + ' ' + d.obs, toks) >= Math.min(toks.length, 2); });
+      if (strict.length) docs = strict;
+      var pending = {
+        id: 'aicmd_' + Date.now(), situationId: item.id, sender: 'ai', subtype: 'ai_command',
+        senderName: 'Asistentul AI Scriptica', date: '2026-04-20', read: true, typing: true,
+        command: command, docIds: [], itemIds: [], attached: {}
+      };
+      MOCK.messages.push(pending);
+      if (done) done();
+      setTimeout(function () {
+        pending.typing = false;
+        pending.docIds = docs.slice(0, 3).map(function (d) { return d.id; });
+        pending.itemIds = docs.length ? [] : items.slice(0, 3).map(function (i) { return i.id; });
+        pending.searched = { docs: kb.docs.length, items: kb.items.length, terms: toks.slice(0, 4) };
+        if (docs.length) {
+          pending.body = 'Am găsit ' + plural(docs.length, 'document', 'documente') + ' pentru „' + toks.join(' ') + '” în evidențele la care aveți acces' + (docs.length > 3 ? ' — afișez primele 3' : '') + '. Poți adăuga oricare dintre ele la fluxul curent.';
+        } else if (items.length) {
+          pending.body = 'Nu am găsit un document care să corespundă, dar am identificat ' + plural(items.length, 'dosar', 'dosare') + ' cu termenii căutați.';
+        } else {
+          pending.body = 'Nu am găsit documente sau dosare pentru „' + command + '”. Încearcă cu denumirea produsului, a emitentului sau tipul documentului (chitanță, factură, contract).';
+        }
+        if (done) done();
+      }, 1100);
+    },
+    cardHtml: function (m, item) {
+      var head = '<div class="message-card__header">' +
+          '<div class="message-card__sender ai-cmd__sender"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>Asistentul AI Scriptica</div>' +
+          '<div class="message-card__date">' + esc(fmtDate(m.date)) + '</div>' +
+        '</div>' +
+        '<div class="ai-cmd__meta">Răspuns la <b>@ai</b> · vizibil pentru toți participanții</div>';
+      if (m.typing) {
+        return '<article class="message-card message-card--ai-cmd">' + head + '<div class="ai-typing"><span></span><span></span><span></span></div></article>';
+      }
+      var docs = (m.docIds || []).map(function (id) { return (MOCK.documents || []).find(function (d) { return d.id === id; }); }).filter(Boolean);
+      var items = (m.itemIds || []).map(function (id) { return (MOCK.flowItems || []).find(function (f) { return f.id === id; }); }).filter(Boolean);
+      var docsHtml = docs.map(function (d) {
+        var owner = (MOCK.flowItems || []).find(function (f) { return f.id === d.situationId; });
+        var attached = !!(m.attached && m.attached[d.id]) || (MOCK.documents || []).some(function (x) { return x.situationId === item.id && x.attachedFrom === d.id; });
+        var isOwn = d.situationId === item.id;
+        return '<div class="ai-cmd__doc">' +
+          '<span class="material-symbols-outlined ai-cmd__doc-icon" aria-hidden="true">description</span>' +
+          '<div class="ai-cmd__doc-main">' +
+            '<button type="button" class="ai-cmd__doc-name" data-open-doc="' + esc(d.id) + '" title="Deschide detaliile documentului">' + esc(d.filename) + '</button>' +
+            '<div class="ai-cmd__doc-sub">' + esc(d.tipDocument || '') + (d.emitent ? ' · ' + esc(d.emitent) : '') + (d.dataEmiterii ? ' · ' + esc(fmtDate(d.dataEmiterii)) : '') + '</div>' +
+            '<div class="ai-cmd__doc-obs">' + esc(d.observatieAI || '') + '</div>' +
+            (owner ? '<a class="ai-cmd__doc-src" href="situatie-detaliu.html?flowId=' + esc(owner.id) + '">Din dosarul: ' + esc(owner.name) + '</a>' : '') +
+          '</div>' +
+          '<div class="ai-cmd__doc-actions">' +
+            (isOwn ? '<span class="ai-cmd__attached"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Deja în acest flux</span>'
+              : (attached ? '<span class="ai-cmd__attached"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Adăugat la flux</span>'
+                : '<button type="button" class="btn btn--primary btn--sm ai-cmd__attach" data-ai-attach="' + esc(d.id) + '" data-ai-msg-id="' + esc(m.id) + '">Adaugă la flux<span class="material-symbols-outlined" aria-hidden="true">add</span></button>')) +
+          '</div>' +
+        '</div>';
+      }).join('');
+      var itemsHtml = items.map(function (f) {
+        return '<a class="ai-cmd__doc ai-cmd__doc--item" href="situatie-detaliu.html?flowId=' + esc(f.id) + '"><span class="material-symbols-outlined ai-cmd__doc-icon" aria-hidden="true">folder_open</span><div class="ai-cmd__doc-main"><div class="ai-cmd__doc-name">' + esc(f.name) + '</div><div class="ai-cmd__doc-sub">' + esc(f.clientName || '') + '</div></div><span class="material-symbols-outlined" aria-hidden="true">open_in_new</span></a>';
+      }).join('');
+      var searched = m.searched ? '<div class="ai-cmd__searched">Am căutat în ' + plural(m.searched.docs, 'document', 'documente') + ' și ' + plural(m.searched.items, 'dosar', 'dosare') + (m.searched.terms.length ? ' după: ' + m.searched.terms.map(function (t) { return '<b>' + esc(t) + '</b>'; }).join(', ') : '') + '.</div>' : '';
+      return '<article class="message-card message-card--ai-cmd">' + head +
+        '<div class="message-card__body">' + esc(m.body || '') + '</div>' + docsHtml + itemsHtml + searched + '</article>';
+    }
+  };
+
+  /* click pe „Adaugă la flux” din cardul @ai */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-ai-attach]');
+    if (!btn) return;
+    var item = window.SCRIPTICA_WORKSPACE && typeof window.SCRIPTICA_WORKSPACE.current === 'function' ? window.SCRIPTICA_WORKSPACE.current() : null;
+    if (!item) return;
+    var docId = btn.getAttribute('data-ai-attach');
+    var msg = (MOCK.messages || []).find(function (x) { return x.id === btn.getAttribute('data-ai-msg-id'); });
+    var copy = attachDocToFlow(docId, item);
+    if (msg) { msg.attached = msg.attached || {}; msg.attached[docId] = true; }
+    if (copy) toast('success', 'Documentul „' + copy.filename + '” a fost adăugat la flux.');
+    if (window.SCRIPTICA_WORKSPACE && typeof window.SCRIPTICA_WORKSPACE.renderChat === 'function') window.SCRIPTICA_WORKSPACE.renderChat();
+  });
 })();

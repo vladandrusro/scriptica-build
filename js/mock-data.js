@@ -2193,7 +2193,8 @@ window.SCRIPTICA_MOCK = {
           { id: "dt_pmb_oferta", name: "Ofertă" }, { id: "dt_pmb_raport_procedura", name: "Raport al procedurii" }
         ] },
         { id: "contractare", name: "Contractare", documentTypes: [
-          { id: "dt_pmb_contract_ap", name: "Contract de achiziție publică" }, { id: "dt_pmb_act_aditional", name: "Act adițional" }
+          { id: "dt_pmb_contract_ap", name: "Contract de achiziție publică" }, { id: "dt_pmb_act_aditional", name: "Act adițional" },
+          { id: "dt_pmb_document_plata", name: "Document de plată (factură / chitanță)" }
         ] },
         { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
       ]
@@ -2733,7 +2734,7 @@ window.SCRIPTICA_MOCK = {
       { id: "af_pmb_ru_disciplina", group: "Resurse Umane", name: "X.a.2 — Comisia de disciplină", docTypeIds: ["dt_pmb_sesizare_disciplinara", "dt_pmb_raport_disciplina", "dt_pmb_act_sanctionare"], children: [] },
       { id: "af_pmb_ru_cariera", group: "Resurse Umane", name: "X.b.1 — Evoluție în carieră și evaluare", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg", "dt_pmb_fisa_post"], children: [] },
       { id: "af_pmb_ap_proceduri", group: "Achiziții Publice", name: "V.a.1 — Proceduri de achiziție publică", docTypeIds: ["dt_pmb_referat_necesitate", "dt_pmb_strategie_contractare", "dt_pmb_caiet_sarcini_ap", "dt_pmb_documentatie_atribuire", "dt_pmb_anunt_participare", "dt_pmb_oferta", "dt_pmb_raport_procedura"], children: [] },
-      { id: "af_pmb_ap_contracte", group: "Achiziții Publice", name: "V.a.2 — Contracte de achiziție publică", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional"], children: [] },
+      { id: "af_pmb_ap_contracte", group: "Achiziții Publice", name: "V.a.2 — Contracte de achiziție publică", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional", "dt_pmb_document_plata"], children: [] },
       { id: "af_pmb_inv_docte", group: "Investiții și Lucrări", name: "VII.a.1 — Documentații tehnico-economice", docTypeIds: ["dt_pmb_nota_conceptuala", "dt_pmb_tema_proiectare", "dt_pmb_sf", "dt_pmb_dali", "dt_pmb_hcgmb", "dt_pmb_aviz_cte", "dt_pmb_pt", "dt_pmb_ac"], children: [] },
       { id: "af_pmb_inv_executie", group: "Investiții și Lucrări", name: "VII.b.1 — Execuție lucrări și recepții", docTypeIds: ["dt_pmb_ordin_incepere", "dt_pmb_situatie_lucrari", "dt_pmb_pv_rtl", "dt_pmb_pv_rf"], children: [] },
       { id: "af_pmb_ext_petitii", group: "Solicitări Externe", name: "I.a.1 — Petiții și răspunsuri (OG 27/2002)", docTypeIds: ["dt_pmb_petitie", "dt_pmb_raspuns_petitie"], children: [] },
@@ -2827,6 +2828,8 @@ window.SCRIPTICA_MOCK = {
       "Act adițional nr. 2 — servicii de pază sedii PMB", "Guard One Security S.R.L.", "Andrei Constantin", DGAP, "2026-04-15", 1, 0, "spre_aprobare", [503, 506]),
     fi("fi_pmb_ap_04", "vert_pmb_achizitii", "pmb_achizitii", "ft_pmb_ap_simplificata", "Procedură simplificată",
       "Servicii de proiectare — pasaj pietonal Piața Unirii", "Search Corporation S.R.L.", "Andrei Constantin", DGAP, "2025-11-10", 5, 5, "finalizat", [503]),
+    fi("fi_pmb_ap_05", "vert_pmb_achizitii", "pmb_achizitii", "ft_pmb_ap_directa", "Achiziție directă",
+      "Becuri LED pentru sediul PMB — Bd. Regina Elisabeta", "Electric Plus Distribution S.R.L.", "Andrei Constantin", DGAP, "2026-02-09", 3, 3, "finalizat", [503]),
 
     fi("fi_pmb_inv_01", "vert_pmb_investitii", "pmb_investitii", "ft_pmb_inv_obiectiv_nou", "Obiectiv de investiții nou",
       "Creșă și grădiniță — cartier Străulești", "Proiectant: Urban Design Studio S.R.L.", "Ioana Petrescu", DGI, "2026-01-19", 3, 2, "spre_aprobare", [504]),
@@ -4670,6 +4673,9 @@ window.SCRIPTICA_MOCK = {
     d("doc_pmb_007", "fi_pmb_ap_01", "pmb_achizitii", "documentatie_atribuire_iluminat.pdf", "2026-03-18T13:15:00", "generat", "Documentație de atribuire", "DGAP", "DA-19/2026", "2026-03-18", "documentatie", "Fișa de date, caiet de sarcini și DUAE — procedură simplificată, criteriul „cel mai bun raport calitate-preț”.", 48),
     d("doc_pmb_008", "fi_pmb_ap_01", "pmb_achizitii", "oferta_luxten_lighting.pdf", "2026-04-10T10:00:00", "email", "Ofertă", "Luxten Lighting Company S.A.", "OF-2026-0442", "2026-04-09", "evaluare", "Ofertă tehnică și financiară depusă în SEAP; propunere financiară 1.712.400 RON fără TVA.", 62),
     d("doc_pmb_009", "fi_pmb_ap_04", "pmb_achizitii", "contract_proiectare_pasaj_unirii.pdf", "2026-01-22T15:45:00", "generat", "Contract de achiziție publică", "PMB / Search Corporation S.R.L.", "C-8/2026", "2026-01-22", "contractare", "Contract de servicii de proiectare semnat după procedura simplificată; durată 8 luni.", 27),
+    d("doc_pmb_024", "fi_pmb_ap_05", "pmb_achizitii", "chitanta_becuri_led_philips.pdf", "2026-02-18T11:05:00", "email", "Document de plată (factură / chitanță)", "Electric Plus Distribution S.R.L.", "CH-2026-0187", "2026-02-17", "contractare", "Chitanță pentru 240 becuri LED Philips CorePro 9W E27, achiziție directă; valoare totală 6.480 RON cu TVA, plătită din bugetul administrativ.", 1),
+    d("doc_pmb_025", "fi_pmb_ap_05", "pmb_achizitii", "factura_becuri_led_osram_oferta_respinsa.pdf", "2026-02-12T09:30:00", "email", "Ofertă", "Lumina Pro Trading S.R.L.", "OF-441/2026", "2026-02-11", "evaluare", "Ofertă pentru becuri LED Osram Value 8.5W; respinsă la consultarea catalogului SEAP — preț unitar mai mare cu 14%.", 2),
+    d("doc_pmb_026", "fi_pmb_ext_01", "pmb_solicitari_externe", "fotografii_santier_lipscani_18_04.pdf", "2026-04-18T20:35:00", "email", "Petiție", "Maria Ionescu", "P-2210/2026-A", "2026-04-18", "petitii", "Completare la petiție: 3 fotografii cu utilaje în funcțiune după ora 22:00 pe Str. Lipscani nr. 20, transmise de petentă.", 3),
     d("doc_pmb_010", "fi_pmb_ap_03", "pmb_achizitii", "nota_justificativa_act_aditional_2.pdf", "2026-04-15T12:20:00", "generat", "Act adițional", "DGAP", "AA-2/2026", "2026-04-15", "contractare", "Proiect de act adițional nr. 2 — prelungire durată contract pază cu 3 luni, art. 221 alin. (1) lit. e).", 6),
 
     d("doc_pmb_011", "fi_pmb_inv_01", "pmb_investitii", "nota_conceptuala_cresa_straulesti.pdf", "2026-01-19T09:30:00", "generat", "Notă conceptuală", "Direcția Generală Investiții", "NC-3/2026", "2026-01-15", "fundamentare", "Notă conceptuală: creșă 60 de locuri și grădiniță 120 de locuri, teren proprietate publică a Municipiului București.", 8),
@@ -4693,13 +4699,13 @@ window.SCRIPTICA_MOCK = {
   M.messages.push(
     { id: 901, situationId: "fi_pmb_ext_01", clientCompany: "Maria Ionescu", clientContact: "Maria Ionescu", sender: "client", senderName: "Maria Ionescu",
       date: "2026-04-18", body: "Bună ziua, revin cu fotografii de aseară — șantierul a lucrat din nou după ora 22:00. Vă rog să îmi comunicați ce măsuri s-au dispus.",
-      attachments: [{ count: 3, label: "fotografii la petiția privind zgomotul" }], chips: [{ label: "Petiție", style: "neutral" }], read: false },
+      attachments: [{ count: 3, label: "fotografii la petiția privind zgomotul", docIds: ["doc_pmb_026"] }], chips: [{ label: "Petiție", style: "neutral" }], read: false },
     { id: 902, situationId: "fi_pmb_ap_01", clientCompany: "Luxten Lighting Company S.A.", clientContact: "Dep. Ofertare", sender: "client", senderName: "Luxten Lighting Company S.A.",
       date: "2026-04-17", body: "Am transmis în SEAP clarificările solicitate la propunerea tehnică (fișele tehnice pentru corpurile de iluminat LED). Rămânem la dispoziție.",
-      attachments: [{ count: 2, label: "documente la evaluarea ofertelor" }], chips: [{ label: "Clarificări SEAP", style: "neutral" }], read: false },
+      attachments: [{ count: 2, label: "documente la evaluarea ofertelor", docIds: ["doc_pmb_008", "doc_pmb_007"] }], chips: [{ label: "Clarificări SEAP", style: "neutral" }], read: false },
     { id: 903, situationId: "fi_pmb_inv_02", clientCompany: "Erbașu Construcții S.A.", clientContact: "Diriginte de șantier", sender: "client", senderName: "Erbașu Construcții S.A.",
       date: "2026-04-16", body: "Situația de lucrări pe luna martie a fost vizată de dirigintele de șantier. Semnalăm o întârziere de 10 zile la lucrările structurale din cauza avizului de la Metrorex.",
-      attachments: [{ count: 1, label: "situație de lucrări martie 2026" }], chips: [{ label: "Întârziere", style: "critical" }], read: true }
+      attachments: [{ count: 1, label: "situație de lucrări martie 2026", docIds: ["doc_pmb_014"] }], chips: [{ label: "Întârziere", style: "critical" }], read: true }
   );
 
   /* Conversațiile cu asistentul intră și ele în arhivă (I.d.1) ca note ale asistentului */

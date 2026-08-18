@@ -793,6 +793,12 @@
     return h + 'h ' + m + 'm';
   }
 
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-open-doc]');
+    if (!btn) return;
+    if (typeof window.SCRIPTICA_OPEN_DOC_AI_MODAL === 'function') window.SCRIPTICA_OPEN_DOC_AI_MODAL(btn.getAttribute('data-open-doc'), { readOnly: true });
+  });
+
   function renderChat() {
     var listEl = document.getElementById('messaging-list');
     var countEl = document.querySelector('.messaging [data-messaging-count]');
@@ -1109,6 +1115,9 @@
   /* ---------- Message rendering ---------- */
 
   function messageCardHtml(m) {
+    if (m.sender === 'ai' && m.subtype === 'ai_command' && window.SCRIPTICA_AI_CHAT && typeof window.SCRIPTICA_AI_CHAT.cardHtml === 'function') {
+      return window.SCRIPTICA_AI_CHAT.cardHtml(m, currentSituation);
+    }
     if (m.sender === 'system' && m.subtype === 'step_completion')  return systemStepHtml(m);
     if (m.sender === 'system' && m.subtype === 'helper_request')   return systemHelperReqHtml(m);
     if (m.sender === 'system' && m.subtype === 'helper_response')  return systemHelperResHtml(m);
@@ -1178,6 +1187,16 @@
         attachHtml += '<div class="message-card__attach">A atașat ' + a.count +
           ' <span class="material-symbols-outlined" aria-hidden="true">attach_file</span> ' +
           esc(a.label) + '</div>';
+        /* documentele atașate se deschid în modalul de detalii (același ca în zona Documente) */
+        (a.docIds || []).forEach(function (docId) {
+          var doc = (MOCK.documents || []).find(function (d) { return d.id === docId; });
+          if (!doc) return;
+          attachHtml += '<button type="button" class="message-card__doc" data-open-doc="' + esc(doc.id) + '" title="Deschide detaliile documentului">' +
+            '<span class="material-symbols-outlined" aria-hidden="true">description</span>' +
+            '<span class="message-card__doc-name">' + esc(doc.filename) + '</span>' +
+            '<span class="message-card__doc-type">' + esc(doc.tipDocument || '') + '</span>' +
+          '</button>';
+        });
       });
     }
     var aiHtml = '';
@@ -1775,6 +1794,9 @@
   function sendMessage(text) {
     var trimmed = (text || '').trim();
     if (!trimmed) return;
+    /* „@ai <comandă>” — comandă rapidă către Asistentul AI, cu răspuns vizibil
+       tuturor participanților în chat (js/asistent-ai.js → SCRIPTICA_AI_CHAT). */
+    var mention = /^@ai\b\s*/i.test(trimmed) && window.SCRIPTICA_AI_CHAT && typeof window.SCRIPTICA_AI_CHAT.handle === 'function';
     MOCK.messages.push({
       id: nextMessageId(),
       situationId: currentSituation.id,
@@ -1789,7 +1811,18 @@
       read: true
     });
     renderChat();
+    if (mention) {
+      window.SCRIPTICA_AI_CHAT.handle(trimmed.replace(/^@ai\b\s*/i, ''), currentSituation, function () { renderChat(); });
+    }
   }
+
+  /* API minimal pentru modulul asistentului (comenzi @ai în chat) */
+  window.SCRIPTICA_WORKSPACE = {
+    renderChat: function () { renderChat(); },
+    persist: function () { persistFlowWorkspace(); },
+    current: function () { return currentSituation; },
+    kind: function () { return currentWorkspaceKind; }
+  };
 
   /* ---------- Global bindings ---------- */
 

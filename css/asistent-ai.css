@@ -329,3 +329,27 @@ body.ai-workspace .step-card { display: none; }
 .ai-insight { display: flex; gap: var(--space-2); align-items: flex-start; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--vertical-auriu-surface); color: var(--color-text-primary); font-size: var(--font-size-body); line-height: var(--line-height-normal); }
 .ai-insight .material-symbols-outlined { color: var(--vertical-auriu); flex: 0 0 auto; }
 @media (max-width: 760px) { .ai-chart__donut { grid-template-columns: 1fr; } }
+
+/* ---- „@ai” în chatul unui flux ---- */
+.ai-mention-hint { display: flex; align-items: flex-start; gap: var(--space-2); font-size: var(--font-size-small); color: var(--color-text-secondary); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--vertical-auriu-surface); margin-top: var(--space-3); line-height: var(--line-height-normal); }
+.ai-mention-hint .material-symbols-outlined { font-size: 16px; color: var(--vertical-auriu); flex: 0 0 auto; }
+.ai-mention-hint__ex { background: transparent; border: none; padding: 0; color: var(--color-default-highlight); font-weight: var(--font-weight-bold); cursor: pointer; text-decoration: underline; font-size: inherit; text-align: left; }
+.message-card--ai-cmd { border-color: var(--vertical-auriu); background: var(--color-surface-white); }
+.ai-cmd__sender { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--vertical-auriu); }
+.ai-cmd__sender .material-symbols-outlined { font-size: 16px; font-variation-settings: 'FILL' 1; }
+.ai-cmd__meta { font-size: var(--font-size-tiny); color: var(--color-text-muted); }
+.ai-cmd__doc { display: flex; gap: var(--space-2); align-items: flex-start; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-2); text-decoration: none; color: inherit; }
+.ai-cmd__doc--item:hover { border-color: var(--color-border-strong); }
+.ai-cmd__doc-icon { color: var(--color-default-highlight); font-size: 20px; flex: 0 0 auto; }
+.ai-cmd__doc-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ai-cmd__doc-name { font-weight: var(--font-weight-bold); color: var(--color-text-primary); background: transparent; border: none; padding: 0; text-align: left; cursor: pointer; font-size: var(--font-size-body); word-break: break-all; }
+.ai-cmd__doc-name:hover { color: var(--color-default-highlight); text-decoration: underline; }
+.ai-cmd__doc-sub { font-size: var(--font-size-small); color: var(--color-text-secondary); }
+.ai-cmd__doc-obs { font-size: var(--font-size-small); color: var(--color-text-secondary); }
+.ai-cmd__doc-src { font-size: var(--font-size-tiny); color: var(--color-default-highlight); }
+.ai-cmd__doc-actions { flex: 0 0 auto; align-self: center; }
+.ai-cmd__attach { padding: 4px var(--space-3); height: 30px; font-size: var(--font-size-small); gap: var(--space-1); }
+.ai-cmd__attach .material-symbols-outlined { font-size: 16px; }
+.ai-cmd__attached { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-small); color: var(--color-success); font-weight: var(--font-weight-bold); white-space: nowrap; }
+.ai-cmd__attached .material-symbols-outlined { font-size: 16px; }
+.ai-cmd__searched { font-size: var(--font-size-tiny); color: var(--color-text-muted); }
