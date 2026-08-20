@@ -1708,6 +1708,77 @@
 
   /* ---------- Finalize step ---------- */
 
+  /* „Arhivare la finalizare”: anexele completate ale fluxului devin documente
+     generate în dosarul de nomenclator ales pe șablon (template.archiveFolderId),
+     denumite după recomandările nomenclatorului: indicativ + denumire +
+     număr de înregistrare + dată. */
+  function archiveSlug(text) {
+    return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'anexa';
+  }
+
+  function archiveCompletedAnexe(s) {
+    if (currentWorkspaceKind !== 'flux') return null;
+    var template = flowTemplateById(s.templateId);
+    var folder = (template && template.archiveFolderId && typeof window.scripticaArchiveFolderById === 'function')
+      ? window.scripticaArchiveFolderById(template.archiveFolderId) : null;
+    if (!folder) return null;
+    var definition = workDefinition(s);
+    var anexaIds = [];
+    ((definition && definition.steps) || []).forEach(function (step) {
+      (step.anexeIds || []).forEach(function (id) {
+        if (anexaIds.indexOf(id) === -1) anexaIds.push(id);
+      });
+    });
+    if (!anexaIds.length) return null;
+    var dateISO = todayISO();
+    var year = dateISO.slice(0, 4);
+    var archived = 0;
+    anexaIds.forEach(function (anexaId, index) {
+      var anexa = (MOCK.anexeTypes || []).find(function (item) { return item.id === anexaId; });
+      if (!anexa) return;
+      var exists = (MOCK.documents || []).some(function (doc) {
+        return doc.situationId === s.id && doc.sourceAnexaId === anexaId;
+      });
+      if (exists) return;
+      var reg = (1000 + (MOCK.documents || []).length) + '/' + year;
+      var record = {
+        id: 'doc_anexa_' + Date.now().toString(36) + '_' + index,
+        situationId: s.id,
+        domain: s.domain || (workspaceVertical() && workspaceVertical().domain) || 'contabil',
+        filename: (folder.code ? folder.code + '_' : '') + archiveSlug(anexa.name) + '_nr-' + reg.replace(/\//g, '-') + '_' + dateISO + '.pdf',
+        uploadedAt: new Date().toISOString(),
+        source: 'generat',
+        sourceAnexaId: anexaId,
+        archiveFolderId: folder.id,
+        pagesCount: 1,
+        multiDoc: false,
+        multiDocConfidence: null,
+        tipDocument: anexa.name,
+        emitent: s.archiveContainer || s.clientCompany || 'Generat din Scriptica',
+        numarDocument: reg,
+        dataEmiterii: dateISO,
+        perioadaFiscala: dateISO.slice(0, 7),
+        valoareFaraTVA: null, tvaProcent: null, tvaValoare: null, valoareTotala: null, moneda: 'RON',
+        categoriePropusa: anexa.name,
+        broadCategory: 'necategorisit',
+        subFilter: null,
+        confidenceExtraction: 100,
+        confidenceCategorization: 100,
+        observatieAI: 'Anexă completată în flux, generată ca document la finalizare și arhivată în dosarul ' +
+          (folder.code || folder.name) + (folder.retention ? ' — termen de păstrare: ' + folder.retention + '.' : '.'),
+        verificat: true,
+        verificatManual: false,
+        pageThumbnails: []
+      };
+      MOCK.documents.unshift(record);
+      s.documents = s.documents || [];
+      s.documents.unshift(record);
+      archived++;
+    });
+    return archived ? { count: archived, folder: folder } : null;
+  }
+
   function onFinalizeStep() {
     var s = currentSituation;
     var stepKey = 'step' + s.currentStep;
@@ -1739,7 +1810,15 @@
       s.status = 'inchisa';
       s.totalSteps = total;
       s.stepsCompleted = total;
-      showToast('success', currentWorkspaceKind === 'flux' ? 'Fluxul a fost finalizat și închis.' : 'Situația a fost finalizată și închisă.');
+      var archivedResult = archiveCompletedAnexe(s);
+      if (archivedResult) {
+        showToast('success', 'Fluxul a fost finalizat. ' +
+          (archivedResult.count === 1 ? 'Anexa completată a fost arhivată' : archivedResult.count + ' anexe completate au fost arhivate') +
+          ' în dosarul ' + (archivedResult.folder.code || archivedResult.folder.name) + '.');
+        if (typeof window.SCRIPTICA_DOCS_REFRESH === 'function') window.SCRIPTICA_DOCS_REFRESH();
+      } else {
+        showToast('success', currentWorkspaceKind === 'flux' ? 'Fluxul a fost finalizat și închis.' : 'Situația a fost finalizată și închisă.');
+      }
     } else {
       s.currentStep = completedStep + 1;
       s.stepsCompleted = completedStep;

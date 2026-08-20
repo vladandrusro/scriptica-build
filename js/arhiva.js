@@ -42,8 +42,12 @@
       })(f);
       var label = typeof window.scripticaEffectiveArchiveFolderName === 'function'
         ? window.scripticaEffectiveArchiveFolderName(f.id, f.name, tenantAccount) : f.name;
-      /* `group` = verticala căreia îi aparține indicativul (arhivă după nomenclator) */
-      return { key: f.id, label: label, system: !!f.system, typeNames: names, group: f.group || '' };
+      /* `group` = verticala căreia îi aparține indicativul (arhivă după nomenclator);
+         direcția/serviciul/termenul vin din nomenclatorul arhivistic al organigramei. */
+      return { key: f.id, label: label, system: !!f.system, typeNames: names, group: f.group || '',
+        code: f.code || '', retention: f.retention || '',
+        directie: f.directie || '', directieCode: f.directieCode || '',
+        serviciu: f.serviciu || '', serviciuCode: f.serviciuCode || '' };
     });
     var assignments = typeof window.scripticaTenantModuleAssignments === 'function'
       ? window.scripticaTenantModuleAssignments(true) : [];
@@ -86,16 +90,21 @@
   var ARCH_FOLDERS = buildArchiveFolders();
   var CATEGORY_LABELS = {};
   var CATEGORY_GROUPS = {};
+  var CATEGORY_META = {};
   var CATEGORY_ORDER = [];
   var SYSTEM_FOLDER_KEY = null;
   ARCH_FOLDERS.forEach(function (f) {
     CATEGORY_ORDER.push(f.key);
     CATEGORY_LABELS[f.key] = f.label;
     CATEGORY_GROUPS[f.key] = f.group || '';
+    CATEGORY_META[f.key] = f;
     if (f.system) SYSTEM_FOLDER_KEY = f.key;
   });
 
   function docCategory(doc) {
+    /* Dosarul ales explicit la arhivare (ex. anexele generate la finalizarea
+       fluxului, conform setării „Arhivare la finalizare” a fluxului). */
+    if (doc.archiveFolderId && CATEGORY_META[doc.archiveFolderId]) return doc.archiveFolderId;
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
       var flowFolder = ARCH_FOLDERS.find(function (folder) { return folder.flowTemplateId === flowItem.templateId; });
@@ -112,6 +121,38 @@
       }
     }
     return SYSTEM_FOLDER_KEY;
+  }
+
+  /* ---------- Nomenclatorul arhivistic (instituții publice) ----------
+     Logica dosarelor cerută de stat (obs. prototip 3 AUG 2026):
+     Direcție → Serviciu → An → dosar cu indicativ (X.a.1) și termen de
+     păstrare. Nivelurile generice ale arborelui sunt refolosite astfel:
+     container = direcția, nivelul 2 = serviciul, nivelul 3 = anul. */
+  var NOM_CURRENT_YEAR = 2026; /* anul demo — anii anteriori sunt „închiși” */
+  function nomDirKey(folder) {
+    if (!folder || folder.system || !folder.directieCode) return 'dir_necat';
+    return 'dir_' + folder.directieCode.toLowerCase();
+  }
+  function nomDirLabel(folder) {
+    if (!folder || folder.system || !folder.directieCode) return 'Necategorisit';
+    return folder.directieCode + '. ' + folder.directie;
+  }
+  function nomSrvKey(folder) {
+    if (!folder || folder.system || !folder.serviciuCode) return 'srv_necat';
+    return folder.directieCode + '.' + folder.serviciuCode;
+  }
+  function nomSrvLabel(folder) {
+    if (!folder || folder.system || !folder.serviciuCode) return 'Fără serviciu';
+    return folder.serviciuCode + '. ' + folder.serviciu;
+  }
+  var NOM_SRV_LABELS = {};
+  var NOM_DIR_ORDER = {};
+  ARCH_FOLDERS.forEach(function (f, i) {
+    NOM_SRV_LABELS[nomSrvKey(f)] = nomSrvLabel(f);
+    if (!(nomDirKey(f) in NOM_DIR_ORDER)) NOM_DIR_ORDER[nomDirKey(f)] = i;
+  });
+  function nomYearClosed(year) {
+    return parseInt(year, 10) < NOM_CURRENT_YEAR;
   }
 
   var state = {
@@ -143,18 +184,17 @@
     return !!(clientType && clientType.archiveRouting === 'nomenclator');
   }
   function containerLabel() {
-    if (isNomenclator()) return 'Verticală';
+    if (isNomenclator()) return 'Direcție';
     return externalParty().singular;
   }
-  /* Indicativele afișate într-un container: la nomenclator, doar cele ale
-     verticalei respective (+ Necategorisit); altfel toate. */
-  function categoriesFor(clientId) {
-    var node = state.tree[clientId];
-    var name = node && node.client ? node.client.companyName : '';
-    if (!isNomenclator() || !name) return CATEGORY_ORDER;
+  /* Dosarele afișate într-un container: la nomenclator, doar indicativele
+     direcției (restrânse la serviciul selectat, dacă există); altfel toate. */
+  function categoriesFor(clientId, srvKey) {
+    if (!isNomenclator()) return CATEGORY_ORDER;
     return CATEGORY_ORDER.filter(function (cat) {
-      var g = CATEGORY_GROUPS[cat];
-      return !g || g === name;
+      var meta = CATEGORY_META[cat];
+      if (nomDirKey(meta) !== String(clientId)) return false;
+      return !srvKey || nomSrvKey(meta) === srvKey;
     });
   }
 
@@ -181,15 +221,16 @@
       if (!ent) return null;
       return { id: 'aud_' + ent.id, companyName: ent.name, _audit: true };
     }
+    /* Arhivă după nomenclator: nivelul 1 este direcția din nomenclatorul
+       arhivistic — o determină dosarul (indicativul) în care se rutează
+       documentul, nu fluxul din care provine. */
+    if (isNomenclator()) {
+      var meta = CATEGORY_META[docCategory(doc)];
+      return { id: nomDirKey(meta), companyName: nomDirLabel(meta), _flow: true };
+    }
     var flowItem = (MOCK.flowItems || []).find(function (item) { return item.id === doc.situationId; });
     if (flowItem) {
-      /* Arhivă după nomenclator: nivelul 1 este verticala (fiecare cu indicativele ei);
-         altfel `archiveContainer` (direcția) sau partea externă. */
       var containerName = flowItem.archiveContainer || flowItem.clientName;
-      if (isNomenclator()) {
-        var fv = typeof window.scripticaEffectiveVertical === 'function' ? window.scripticaEffectiveVertical(flowItem.verticalId) : null;
-        if (fv) containerName = fv.name;
-      }
       return { id: 'flow_' + String(containerName || flowItem.id).toLowerCase().replace(/[^a-z0-9]+/g, '_'), companyName: containerName || externalParty().singular + ' flux', _flow: true };
     }
     var sit = (MOCK.situations || []).find(function (s) { return s.id === doc.situationId; });
@@ -237,14 +278,25 @@
 
   /* ---------- Tree build ---------- */
 
+  /* La nomenclator, sloturile generice ale arborelui devin:
+     client = direcția, „year” = serviciul (cheie text), „month” = anul. */
+  function docLevelKeys(doc) {
+    var d = new Date(doc.uploadedAt);
+    if (isNomenclator()) {
+      var meta = CATEGORY_META[docCategory(doc)];
+      return { level2: nomSrvKey(meta), level3: d.getFullYear() };
+    }
+    return { level2: d.getFullYear(), level3: d.getMonth() + 1 };
+  }
+
   function buildTree() {
     var t = {};
     getArchiveDocs().forEach(function (doc) {
       var client = docContainer(doc);
       if (!client) return;
-      var d = new Date(doc.uploadedAt);
-      var year = d.getFullYear();
-      var month = d.getMonth() + 1;
+      var keys = docLevelKeys(doc);
+      var year = keys.level2;
+      var month = keys.level3;
       var cat = docCategory(doc);
 
       if (!t[client.id]) t[client.id] = { client: client, years: {}, total: 0 };
@@ -257,6 +309,21 @@
       t[client.id].years[year].total++;
       t[client.id].total++;
     });
+    /* „În arhivă trebuie să am toate structurile din nomenclator” — la
+       instituții publice, direcțiile/serviciile/dosarele apar și fără
+       documente (anul curent, cu 0 intrări). */
+    if (isNomenclator()) {
+      ARCH_FOLDERS.forEach(function (f) {
+        if (f.system) return;
+        var dirKey = nomDirKey(f);
+        var srvKey = nomSrvKey(f);
+        if (!t[dirKey]) t[dirKey] = { client: { id: dirKey, companyName: nomDirLabel(f), _flow: true }, years: {}, total: 0 };
+        if (!t[dirKey].years[srvKey]) t[dirKey].years[srvKey] = { months: {}, total: 0 };
+        if (!t[dirKey].years[srvKey].months[NOM_CURRENT_YEAR]) {
+          t[dirKey].years[srvKey].months[NOM_CURRENT_YEAR] = { categories: emptyCats(), total: 0 };
+        }
+      });
+    }
     return t;
   }
 
@@ -277,6 +344,8 @@
       if (!state.tree[sel.clientId]) return;
       /* selecție salvată cu o structură de arhivă veche → o ignorăm */
       if (sel.category && !CATEGORY_LABELS[sel.category]) return;
+      /* la nomenclator nivelul 2 e text (serviciul); altfel e an numeric */
+      if (sel.year != null && (typeof sel.year === 'string') !== isNomenclator()) return;
       state.selection = {
         level: sel.level,
         clientId: sel.clientId,
@@ -309,9 +378,9 @@
       var container = docContainer(d);
       if (!container) return false;
       if (sel.clientId && String(container.id) !== String(sel.clientId)) return false;
-      var dt = new Date(d.uploadedAt);
-      if (sel.year  && dt.getFullYear() !== sel.year)  return false;
-      if (sel.month && (dt.getMonth() + 1) !== sel.month) return false;
+      var keys = docLevelKeys(d);
+      if (sel.year  && String(keys.level2) !== String(sel.year))  return false;
+      if (sel.month && String(keys.level3) !== String(sel.month)) return false;
       if (sel.category && docCategory(d) !== sel.category) return false;
       return true;
     });
@@ -375,6 +444,13 @@
         return !q || c.companyName.toLowerCase().indexOf(q) !== -1;
       })
       .sort(function (a, b) {
+        /* La nomenclator, direcțiile păstrează ordinea indicativelor (I, II, V…),
+           nu ordinea alfabetică. */
+        if (isNomenclator()) {
+          var oa = (a in NOM_DIR_ORDER) ? NOM_DIR_ORDER[a] : 999;
+          var ob = (b in NOM_DIR_ORDER) ? NOM_DIR_ORDER[b] : 999;
+          return oa - ob;
+        }
         return state.tree[a].client.companyName.localeCompare(state.tree[b].client.companyName, 'ro');
       });
 
@@ -412,9 +488,11 @@
 
     var childrenHtml = '';
     if (expanded) {
-      var years = Object.keys(node.years)
-        .map(function (y) { return parseInt(y, 10); })
-        .sort(function (a, b) { return b - a; });
+      /* La nomenclator, nivelul 2 = serviciile (chei text, ordonate după literă);
+         altfel anii, descrescător. */
+      var years = isNomenclator()
+        ? Object.keys(node.years).sort(function (a, b) { return a.localeCompare(b, 'ro'); })
+        : Object.keys(node.years).map(function (y) { return parseInt(y, 10); }).sort(function (a, b) { return b - a; });
       years.forEach(function (year) { childrenHtml += yearNodeHtml(clientId, year); });
     }
 
@@ -447,6 +525,14 @@
     '</div>';
   }
 
+  /* Etichetele nivelurilor 2/3: serviciu + an la nomenclator, an + lună altfel. */
+  function level2Label(year) {
+    return isNomenclator() ? (NOM_SRV_LABELS[year] || String(year)) : String(year);
+  }
+  function level3Label(month) {
+    return isNomenclator() ? String(month) : RO_MONTHS[month - 1];
+  }
+
   function yearNodeHtml(clientId, year) {
     var node = state.tree[clientId].years[year];
     var kExp = key('year', clientId, year);
@@ -468,11 +554,11 @@
         (active ? 'aria-selected="true" ' : '') +
         'data-node-level="year" ' +
         'data-node-client="' + clientId + '" ' +
-        'data-node-year="' + year + '" ' +
+        'data-node-year="' + esc(String(year)) + '" ' +
         'data-expand="' + kExp + '">' +
         '<span class="material-symbols-outlined arhiva-tree__chevron" aria-hidden="true">chevron_right</span>' +
         '<span class="material-symbols-outlined arhiva-tree__folder" aria-hidden="true">folder</span>' +
-        '<span class="arhiva-tree__label">' + year + '</span>' +
+        '<span class="arhiva-tree__label">' + esc(level2Label(year)) + '</span>' +
         '<span class="arhiva-tree__count">' + node.total + '</span>' +
       '</button>' +
       '<div class="arhiva-tree__children' + (expanded ? ' is-open' : '') + '">' +
@@ -486,10 +572,13 @@
     var kExp = key('month', clientId, year, month);
     var expanded = state.expanded.has(kExp);
     var active = isActiveNode('month', clientId, year, month);
+    /* „De la un an la altul documentele devin sigure, închise” — anii
+       anteriori se marchează ca închiși în arhiva după nomenclator. */
+    var closed = isNomenclator() && nomYearClosed(month);
 
     var childrenHtml = '';
     if (expanded) {
-      categoriesFor(clientId).forEach(function (cat) {
+      categoriesFor(clientId, isNomenclator() ? year : null).forEach(function (cat) {
         childrenHtml += categoryNodeHtml(clientId, year, month, cat, (node.categories[cat] || []).length);
       });
     }
@@ -501,12 +590,13 @@
         (active ? 'aria-selected="true" ' : '') +
         'data-node-level="month" ' +
         'data-node-client="' + clientId + '" ' +
-        'data-node-year="' + year + '" ' +
+        'data-node-year="' + esc(String(year)) + '" ' +
         'data-node-month="' + month + '" ' +
         'data-expand="' + kExp + '">' +
         '<span class="material-symbols-outlined arhiva-tree__chevron" aria-hidden="true">chevron_right</span>' +
-        '<span class="material-symbols-outlined arhiva-tree__folder" aria-hidden="true">folder</span>' +
-        '<span class="arhiva-tree__label">' + esc(RO_MONTHS[month - 1]) + '</span>' +
+        '<span class="material-symbols-outlined arhiva-tree__folder" aria-hidden="true">' + (closed ? 'folder_zip' : 'folder') + '</span>' +
+        '<span class="arhiva-tree__label">' + esc(level3Label(month)) + '</span>' +
+        (closed ? '<span class="material-symbols-outlined arhiva-tree__lock" title="An închis — documentele nu mai pot fi modificate" aria-hidden="true">lock</span>' : '') +
         '<span class="arhiva-tree__count">' + node.total + '</span>' +
       '</button>' +
       '<div class="arhiva-tree__children' + (expanded ? ' is-open' : '') + '">' +
@@ -548,10 +638,13 @@
   }
 
   function noSelectionEmptyHtml() {
+    var path = isNomenclator()
+      ? 'Direcție → Serviciu → An → Dosar (indicativ din nomenclator)'
+      : esc(containerLabel()) + ' → An → Lună → Categorie';
     return '<div class="arhiva-empty">' +
       '<span class="material-symbols-outlined" aria-hidden="true" style="font-size:64px;">folder_open</span>' +
       '<h2>Selectează un folder pentru a vedea documentele</h2>' +
-      '<p>Navighează în structura din stânga: ' + esc(containerLabel()) + ' → An → Lună → Categorie</p>' +
+      '<p>Navighează în structura din stânga: ' + path + '</p>' +
     '</div>';
   }
 
@@ -575,17 +668,17 @@
     if (sel.year) {
       crumbs += '<span class="arhiva-breadcrumb__separator">▸</span>';
       if (sel.level === 'year') {
-        crumbs += '<span class="arhiva-breadcrumb__item arhiva-breadcrumb__item--current">' + sel.year + '</span>';
+        crumbs += '<span class="arhiva-breadcrumb__item arhiva-breadcrumb__item--current">' + esc(level2Label(sel.year)) + '</span>';
       } else {
-        crumbs += '<button class="arhiva-breadcrumb__item" data-crumb="year">' + sel.year + '</button>';
+        crumbs += '<button class="arhiva-breadcrumb__item" data-crumb="year">' + esc(level2Label(sel.year)) + '</button>';
       }
     }
     if (sel.month) {
       crumbs += '<span class="arhiva-breadcrumb__separator">▸</span>';
       if (sel.level === 'month') {
-        crumbs += '<span class="arhiva-breadcrumb__item arhiva-breadcrumb__item--current">' + esc(RO_MONTHS[sel.month - 1]) + '</span>';
+        crumbs += '<span class="arhiva-breadcrumb__item arhiva-breadcrumb__item--current">' + esc(level3Label(sel.month)) + '</span>';
       } else {
-        crumbs += '<button class="arhiva-breadcrumb__item" data-crumb="month">' + esc(RO_MONTHS[sel.month - 1]) + '</button>';
+        crumbs += '<button class="arhiva-breadcrumb__item" data-crumb="month">' + esc(level3Label(sel.month)) + '</button>';
       }
     }
     if (sel.level === 'category' && sel.category) {
@@ -594,11 +687,30 @@
     }
     crumbs += '</nav>';
 
+    /* Fișa dosarului din nomenclator: indicativ, termen de păstrare, an închis. */
+    var nomInfoHtml = '';
+    if (isNomenclator()) {
+      var folderMeta = sel.category ? CATEGORY_META[sel.category] : null;
+      var closedYear = sel.month && nomYearClosed(sel.month);
+      var bits = [];
+      if (folderMeta && folderMeta.code) {
+        bits.push('<span class="arhiva-nom-info__item"><span class="material-symbols-outlined" aria-hidden="true">tag</span>Indicativ: <b>' + esc(folderMeta.code) + '</b></span>');
+      }
+      if (folderMeta && folderMeta.retention) {
+        bits.push('<span class="arhiva-nom-info__item"><span class="material-symbols-outlined" aria-hidden="true">schedule</span>Termen de păstrare: <b>' + esc(folderMeta.retention) + '</b></span>');
+      }
+      if (closedYear) {
+        bits.push('<span class="arhiva-nom-info__item arhiva-nom-info__item--locked"><span class="material-symbols-outlined" aria-hidden="true">lock</span>An închis — documentele nu mai pot fi alterate, accesul se reglementează ulterior</span>');
+      }
+      if (bits.length) nomInfoHtml = '<div class="arhiva-nom-info">' + bits.join('') + '</div>';
+    }
+
     /* Category pills — only when the selected level is NOT a leaf. */
     var pillsHtml = '';
     if (sel.level !== 'category') {
       pillsHtml = pillsRowHtml(sel);
     }
+    pillsHtml = nomInfoHtml + pillsHtml;
 
     if (!docs.length) {
       return crumbs + pillsHtml + '<div class="arhiva-empty">' +
@@ -618,7 +730,7 @@
     var activeCat = sel.category || null;
     var html = '<div class="arhiva-main__filters">';
     html += pillHtml('all', 'Toate', counts.all, !activeCat, false);
-    categoriesFor(sel.clientId).forEach(function (c) {
+    categoriesFor(sel.clientId, isNomenclator() ? sel.year : null).forEach(function (c) {
       var empty = counts[c] === 0;
       html += pillHtml(c, CATEGORY_LABELS[c], counts[c], activeCat === c, empty);
     });
@@ -875,7 +987,8 @@
         state.selection = {
           level: level,
           clientId: clientId,
-          year:  year  ? parseInt(year, 10)  : null,
+          /* la nomenclator, nivelul 2 este serviciul — cheie text, nu an */
+          year:  year  ? (isNomenclator() ? year : parseInt(year, 10)) : null,
           month: month ? parseInt(month, 10) : null,
           category: cat || null
         };

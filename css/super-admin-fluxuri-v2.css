@@ -1238,6 +1238,15 @@ body[data-page="super-admin-fluxuri"] .main {
   color: var(--color-critical);
 }
 
+/* Notă informativă în locul unui control (ex. verticală fără nomenclator). */
+.fxv2-editor-note-inline {
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
 .fxv2-settings-danger {
   display: flex;
   align-items: center;

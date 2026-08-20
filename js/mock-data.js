@@ -2299,7 +2299,7 @@ window.SCRIPTICA_MOCK = {
 
   SA.flowTemplates.push(
     /* — Resurse Umane — */
-    { id: "ft_pmb_ru_recrutare", verticalId: "vert_pmb_ru", name: "Concurs de recrutare — ocuparea unei funcții publice vacante", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ru_recrutare", verticalId: "vert_pmb_ru", name: "Concurs de recrutare — ocuparea unei funcții publice vacante", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_recrutare",
       description: "Concurs organizat conform Codului administrativ (art. 618) și HG 611/2008: aprobare, publicitate, selecția dosarelor, probă scrisă și interviu, numire.",
       documentCategoryIds: ["recrutare", "cariera", "necategorisit"],
       steps: [
@@ -2328,7 +2328,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă actul administrativ de numire în funcția publică", "dt_pmb_act_numire", false)
         ])
       ] },
-    { id: "ft_pmb_ru_disciplina", verticalId: "vert_pmb_ru", name: "Sesizare disciplinară — cercetare administrativă", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ru_disciplina", verticalId: "vert_pmb_ru", name: "Sesizare disciplinară — cercetare administrativă", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_disciplina",
       description: "Procedura comisiei de disciplină (HG 1344/2007): înregistrarea sesizării, cercetarea administrativă, raportul comisiei și actul administrativ de sancționare.",
       documentCategoryIds: ["disciplina", "necategorisit"],
       steps: [
@@ -2351,7 +2351,7 @@ window.SCRIPTICA_MOCK = {
           "Comunică actul administrativ funcționarului public în termen de 15 zile"
         ])
       ] },
-    { id: "ft_pmb_ru_promovare", verticalId: "vert_pmb_ru", name: "Promovare în grad profesional", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ru_promovare", verticalId: "vert_pmb_ru", name: "Promovare în grad profesional", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_cariera",
       description: "Examen de promovare în gradul profesional imediat superior (Codul administrativ art. 478–479): verificarea condițiilor, organizarea examenului, actul de promovare.",
       documentCategoryIds: ["cariera", "recrutare", "necategorisit"],
       steps: [
@@ -2376,7 +2376,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Achiziții Publice — */
-    { id: "ft_pmb_ap_directa", verticalId: "vert_pmb_achizitii", name: "Achiziție directă", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ap_directa", verticalId: "vert_pmb_achizitii", name: "Achiziție directă", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_proceduri",
       description: "Achiziție sub pragurile art. 7 alin. (5) din Legea 98/2016: referat de necesitate, consultarea catalogului electronic SEAP, comandă sau contract.",
       documentCategoryIds: ["initiere", "evaluare", "contractare", "necategorisit"],
       steps: [
@@ -2394,7 +2394,7 @@ window.SCRIPTICA_MOCK = {
           "Înregistrează angajamentul bugetar și legal (ALOP)"
         ])
       ] },
-    { id: "ft_pmb_ap_simplificata", verticalId: "vert_pmb_achizitii", name: "Procedură simplificată", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ap_simplificata", verticalId: "vert_pmb_achizitii", name: "Procedură simplificată", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_proceduri",
       description: "Procedura simplificată (art. 113 Legea 98/2016): strategie de contractare, documentație de atribuire, publicare în SEAP, evaluarea ofertelor, atribuire și semnarea contractului.",
       documentCategoryIds: ["initiere", "documentatie", "evaluare", "contractare", "necategorisit"],
       steps: [
@@ -2423,7 +2423,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă contractul de achiziție publică semnat", "dt_pmb_contract_ap", false)
         ])
       ] },
-    { id: "ft_pmb_ap_act_aditional", verticalId: "vert_pmb_achizitii", name: "Modificarea contractului — act adițional", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ap_act_aditional", verticalId: "vert_pmb_achizitii", name: "Modificarea contractului — act adițional", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_contracte",
       description: "Modificarea unui contract de achiziție publică în condițiile art. 221 din Legea 98/2016: fundamentare, avize, semnare și publicare în SEAP.",
       documentCategoryIds: ["contractare", "necategorisit"],
       steps: [
@@ -2440,7 +2440,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Investiții și Lucrări — */
-    { id: "ft_pmb_inv_obiectiv_nou", verticalId: "vert_pmb_investitii", name: "Obiectiv de investiții nou", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_inv_obiectiv_nou", verticalId: "vert_pmb_investitii", name: "Obiectiv de investiții nou", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_docte",
       description: "Fundamentarea unui obiectiv de investiții conform HG 907/2016: notă conceptuală, temă de proiectare, studiu de fezabilitate, aprobarea indicatorilor tehnico-economici prin HCGMB.",
       documentCategoryIds: ["fundamentare", "aprobare", "necategorisit"],
       steps: [
@@ -2464,7 +2464,7 @@ window.SCRIPTICA_MOCK = {
           "Asigură sursa de finanțare (buget local / fonduri externe)"
         ])
       ] },
-    { id: "ft_pmb_inv_executie", verticalId: "vert_pmb_investitii", name: "Execuție lucrări și recepție", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_inv_executie", verticalId: "vert_pmb_investitii", name: "Execuție lucrări și recepție", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_executie",
       description: "Urmărirea execuției unei lucrări publice: ordin de începere, situații de lucrări vizate de dirigintele de șantier, recepția la terminarea lucrărilor și recepția finală (HG 343/2017).",
       documentCategoryIds: ["executie", "aprobare", "necategorisit"],
       steps: [
@@ -2487,7 +2487,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă procesul-verbal de recepție finală", "dt_pmb_pv_rf", false)
         ])
       ] },
-    { id: "ft_pmb_inv_reparatii", verticalId: "vert_pmb_investitii", name: "Reparații capitale — DALI și autorizare", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_inv_reparatii", verticalId: "vert_pmb_investitii", name: "Reparații capitale — DALI și autorizare", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_docte",
       description: "Lucrări de intervenție la construcții existente: expertiză tehnică, documentația de avizare a lucrărilor de intervenții (DALI), aprobare, proiect tehnic și autorizație de construire.",
       documentCategoryIds: ["fundamentare", "aprobare", "necategorisit"],
       steps: [
@@ -2506,7 +2506,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Solicitări Externe — */
-    { id: "ft_pmb_ext_petitie", verticalId: "vert_pmb_solicitari_externe", name: "Petiție (OG 27/2002)", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ext_petitie", verticalId: "vert_pmb_solicitari_externe", name: "Petiție (OG 27/2002)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_petitii",
       description: "Soluționarea petițiilor cetățenilor în termenul legal de 30 de zile: înregistrare, repartizare, soluționare de către compartimentul de specialitate, comunicarea răspunsului.",
       documentCategoryIds: ["petitii", "necategorisit"],
       steps: [
@@ -2526,7 +2526,7 @@ window.SCRIPTICA_MOCK = {
           "Clasează petiția"
         ])
       ] },
-    { id: "ft_pmb_ext_544", verticalId: "vert_pmb_solicitari_externe", name: "Cerere de informații de interes public (Legea 544/2001)", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ext_544", verticalId: "vert_pmb_solicitari_externe", name: "Cerere de informații de interes public (Legea 544/2001)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_544",
       description: "Accesul la informațiile de interes public: răspuns în 10 zile (sau 30 de zile pentru informații complexe), cu verificarea excepțiilor de la art. 12.",
       documentCategoryIds: ["informatii_publice", "necategorisit"],
       steps: [
@@ -2543,7 +2543,7 @@ window.SCRIPTICA_MOCK = {
           "Înregistrează cererea în evidența pentru raportul anual privind aplicarea Legii 544/2001"
         ])
       ] },
-    { id: "ft_pmb_ext_cu", verticalId: "vert_pmb_solicitari_externe", name: "Certificat de urbanism (Legea 50/1991)", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ext_cu", verticalId: "vert_pmb_solicitari_externe", name: "Certificat de urbanism (Legea 50/1991)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_urbanism",
       description: "Emiterea certificatului de urbanism în cel mult 30 de zile: verificarea documentației, analiza regimului juridic, economic și tehnic, semnare și eliberare.",
       documentCategoryIds: ["urbanism", "necategorisit"],
       steps: [
@@ -2563,7 +2563,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Solicitări Interne (ad-hoc întotdeauna prima opțiune) — */
-    { id: "ft_pmb_int_adhoc", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare ad-hoc", frequency: "punctual", status: "activ", adhoc: true,
+    { id: "ft_pmb_int_adhoc", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare ad-hoc", frequency: "punctual", status: "activ", adhoc: true, archiveFolderId: "af_pmb_int_coresp",
       description: "Flux liber între utilizatorii interni: solicitantul descrie ce are nevoie, iar pașii se stabilesc la deschidere. Configurarea detaliată a fluxurilor ad-hoc urmează.",
       documentCategoryIds: ["corespondenta_interna", "necategorisit"],
       steps: [
@@ -2572,7 +2572,7 @@ window.SCRIPTICA_MOCK = {
           "Confirmă rezolvarea împreună cu solicitantul"
         ], [], "Pas unic, definit de utilizator la deschiderea solicitării.")
       ] },
-    { id: "ft_pmb_int_referat", verticalId: "vert_pmb_solicitari_interne", name: "Referat / notă internă către altă direcție", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_int_referat", verticalId: "vert_pmb_solicitari_interne", name: "Referat / notă internă către altă direcție", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_int_coresp",
       description: "Corespondență internă între structuri: referatul se înregistrează, se repartizează prin rezoluție și primește răspuns de la structura destinatară.",
       documentCategoryIds: ["corespondenta_interna", "necategorisit"],
       steps: [
@@ -2589,7 +2589,7 @@ window.SCRIPTICA_MOCK = {
           "Clasează referatul la dosarul structurii"
         ])
       ] },
-    { id: "ft_pmb_int_aviz", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare aviz (juridic / CFPP)", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_int_aviz", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare aviz (juridic / CFPP)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_dj_avize",
       description: "Solicitarea avizului de legalitate de la Direcția Juridic sau a vizei de control financiar preventiv propriu pentru un proiect de act administrativ ori de angajament.",
       documentCategoryIds: ["corespondenta_interna", "avize", "necategorisit"],
       steps: [
@@ -2603,7 +2603,7 @@ window.SCRIPTICA_MOCK = {
         ], ["anx_pmb_int_aviz"])
       ] },
     /* — Asistentul AI (un singur pas: consultarea) — */
-    { id: "ft_pmb_ai_cerere", verticalId: "vert_pmb_asistent_ai", name: "Cerere de lămuriri către Asistentul AI", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_ai_cerere", verticalId: "vert_pmb_asistent_ai", name: "Cerere de lămuriri către Asistentul AI", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ai_lamuriri",
       description: "Conversație cu asistentul AI pe evidențele accesibile utilizatorului: întrebare, raționament, răspuns cu surse; cererea se închide când lămurirea este confirmată.",
       documentCategoryIds: ["raspunsuri", "necategorisit"],
       steps: [
@@ -2613,7 +2613,7 @@ window.SCRIPTICA_MOCK = {
           "Confirmă soluționarea cererii"
         ], [], "Pas unic: conversația cu asistentul se poartă în panoul din dreapta.")
       ] },
-    { id: "ft_pmb_int_deplasare", verticalId: "vert_pmb_solicitari_interne", name: "Deplasare în interes de serviciu", frequency: "punctual", status: "activ",
+    { id: "ft_pmb_int_deplasare", verticalId: "vert_pmb_solicitari_interne", name: "Deplasare în interes de serviciu", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_fin_deplasari",
       description: "Aprobarea deplasării prin ordin de deplasare și decontarea cheltuielilor (HG 714/2018) în 3 zile lucrătoare de la întoarcere.",
       documentCategoryIds: ["deplasari", "necategorisit"],
       steps: [
@@ -2720,28 +2720,44 @@ window.SCRIPTICA_MOCK = {
     ])
   );
 
-  /* ---- Categoria de client „Instituție publică" — arhivă după nomenclatorul arhivistic ---- */
+  /* ---- Categoria de client „Instituție publică" — arhivă după nomenclatorul arhivistic ----
+     Nomenclatorul este dictat de organigramă (obs. prototip 3 AUG 2026):
+     Direcție (cifră romană) → Serviciu (literă) → An → dosar cu indicativ
+     obligatoriu (X.a.1) și termen de păstrare. `group` leagă în continuare
+     dosarul de verticala din care provin fluxurile (setarea „Arhivare la
+     finalizare” a fluxului alege dintre dosarele verticalei). */
   SA.clientTypes.push({
     id: "ct_institutie_publica", name: "Instituție publică", icon: "account_balance", builtin: false,
-    description: "Autorități și instituții ale administrației publice — primării, consilii județene, instituții subordonate. Arhiva urmează nomenclatorul arhivistic (indicative pe direcții), iar verticalele contractate diferă de la o instituție la alta.",
+    description: "Autorități și instituții ale administrației publice — primării, consilii județene, instituții subordonate. Arhiva urmează nomenclatorul arhivistic dictat de organigramă (Direcție → Serviciu → An → dosar cu indicativ și termen de păstrare), iar verticalele contractate diferă de la o instituție la alta.",
     verticalIds: [],
     defaultTemplateIds: [],
     clientLabel: "Solicitant", clientLabelPlural: "Solicitanți",
     archiveRouting: "nomenclator",
     dashboardLayout: [],
     archiveTree: [
-      { id: "af_pmb_ru_recrutare", group: "Resurse Umane", name: "X.a.1 — Recrutare și concursuri", docTypeIds: ["dt_pmb_anunt_concurs", "dt_pmb_dosar_inscriere", "dt_pmb_pv_concurs", "dt_pmb_raport_concurs", "dt_pmb_act_numire"], children: [] },
-      { id: "af_pmb_ru_disciplina", group: "Resurse Umane", name: "X.a.2 — Comisia de disciplină", docTypeIds: ["dt_pmb_sesizare_disciplinara", "dt_pmb_raport_disciplina", "dt_pmb_act_sanctionare"], children: [] },
-      { id: "af_pmb_ru_cariera", group: "Resurse Umane", name: "X.b.1 — Evoluție în carieră și evaluare", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg", "dt_pmb_fisa_post"], children: [] },
-      { id: "af_pmb_ap_proceduri", group: "Achiziții Publice", name: "V.a.1 — Proceduri de achiziție publică", docTypeIds: ["dt_pmb_referat_necesitate", "dt_pmb_strategie_contractare", "dt_pmb_caiet_sarcini_ap", "dt_pmb_documentatie_atribuire", "dt_pmb_anunt_participare", "dt_pmb_oferta", "dt_pmb_raport_procedura"], children: [] },
-      { id: "af_pmb_ap_contracte", group: "Achiziții Publice", name: "V.a.2 — Contracte de achiziție publică", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional", "dt_pmb_document_plata"], children: [] },
-      { id: "af_pmb_inv_docte", group: "Investiții și Lucrări", name: "VII.a.1 — Documentații tehnico-economice", docTypeIds: ["dt_pmb_nota_conceptuala", "dt_pmb_tema_proiectare", "dt_pmb_sf", "dt_pmb_dali", "dt_pmb_hcgmb", "dt_pmb_aviz_cte", "dt_pmb_pt", "dt_pmb_ac"], children: [] },
-      { id: "af_pmb_inv_executie", group: "Investiții și Lucrări", name: "VII.b.1 — Execuție lucrări și recepții", docTypeIds: ["dt_pmb_ordin_incepere", "dt_pmb_situatie_lucrari", "dt_pmb_pv_rtl", "dt_pmb_pv_rf"], children: [] },
-      { id: "af_pmb_ext_petitii", group: "Solicitări Externe", name: "I.a.1 — Petiții și răspunsuri (OG 27/2002)", docTypeIds: ["dt_pmb_petitie", "dt_pmb_raspuns_petitie"], children: [] },
-      { id: "af_pmb_ext_544", group: "Solicitări Externe", name: "I.a.2 — Informații de interes public (Legea 544/2001)", docTypeIds: ["dt_pmb_cerere_544", "dt_pmb_raspuns_544"], children: [] },
-      { id: "af_pmb_ext_urbanism", group: "Solicitări Externe", name: "I.b.1 — Certificate de urbanism", docTypeIds: ["dt_pmb_cerere_cu", "dt_pmb_cu"], children: [] },
-      { id: "af_pmb_int_coresp", group: "Solicitări Interne", name: "I.c.1 — Corespondență internă, avize și deplasări", docTypeIds: ["dt_pmb_nota_interna", "dt_pmb_referat", "dt_pmb_adresa_interna", "dt_pmb_aviz_legalitate", "dt_pmb_viza_cfpp", "dt_pmb_ordin_deplasare", "dt_pmb_decont"], children: [] },
-      { id: "af_pmb_ai_lamuriri", group: "Asistentul AI Scriptica", name: "I.d.1 — Cereri de lămuriri către Asistentul AI", docTypeIds: ["dt_pmb_ai_nota"], children: [] },
+      /* I. Direcția Relații cu Publicul și Registratură */
+      { id: "af_pmb_ext_petitii", group: "Solicitări Externe", code: "I.a.1", directieCode: "I", directie: "Direcția Relații cu Publicul și Registratură", serviciuCode: "a", serviciu: "Serviciul Registratură Generală și Petiții", retention: "5 ani", name: "I.a.1 — Petiții și răspunsuri (OG 27/2002)", docTypeIds: ["dt_pmb_petitie", "dt_pmb_raspuns_petitie"], children: [] },
+      { id: "af_pmb_ext_544", group: "Solicitări Externe", code: "I.a.2", directieCode: "I", directie: "Direcția Relații cu Publicul și Registratură", serviciuCode: "a", serviciu: "Serviciul Registratură Generală și Petiții", retention: "5 ani", name: "I.a.2 — Informații de interes public (Legea 544/2001)", docTypeIds: ["dt_pmb_cerere_544", "dt_pmb_raspuns_544"], children: [] },
+      { id: "af_pmb_int_coresp", group: "Solicitări Interne", code: "I.b.1", directieCode: "I", directie: "Direcția Relații cu Publicul și Registratură", serviciuCode: "b", serviciu: "Serviciul Corespondență Internă și Secretariat", retention: "5 ani", name: "I.b.1 — Corespondență internă între structuri (note, referate, adrese)", docTypeIds: ["dt_pmb_nota_interna", "dt_pmb_referat", "dt_pmb_adresa_interna"], children: [] },
+      { id: "af_pmb_ai_lamuriri", group: "Asistentul AI Scriptica", code: "I.c.1", directieCode: "I", directie: "Direcția Relații cu Publicul și Registratură", serviciuCode: "c", serviciu: "Serviciul Evidența Electronică a Documentelor", retention: "3 ani", name: "I.c.1 — Cereri de lămuriri și note ale Asistentului AI", docTypeIds: ["dt_pmb_ai_nota"], children: [] },
+      /* II. Direcția Financiar-Contabilitate */
+      { id: "af_pmb_fin_deplasari", group: "Solicitări Interne", code: "II.a.1", directieCode: "II", directie: "Direcția Financiar-Contabilitate", serviciuCode: "a", serviciu: "Serviciul Buget și Execuție Bugetară", retention: "5 ani", name: "II.a.1 — Ordine de deplasare și deconturi de cheltuieli", docTypeIds: ["dt_pmb_ordin_deplasare", "dt_pmb_decont"], children: [] },
+      /* V. Direcția Generală Achiziții Publice */
+      { id: "af_pmb_ap_proceduri", group: "Achiziții Publice", code: "V.a.1", directieCode: "V", directie: "Direcția Generală Achiziții Publice", serviciuCode: "a", serviciu: "Serviciul Proceduri de Atribuire", retention: "10 ani", name: "V.a.1 — Proceduri de achiziție publică (dosarul achiziției)", docTypeIds: ["dt_pmb_referat_necesitate", "dt_pmb_strategie_contractare", "dt_pmb_caiet_sarcini_ap", "dt_pmb_documentatie_atribuire", "dt_pmb_anunt_participare", "dt_pmb_oferta", "dt_pmb_raport_procedura"], children: [] },
+      { id: "af_pmb_ap_contracte", group: "Achiziții Publice", code: "V.b.1", directieCode: "V", directie: "Direcția Generală Achiziții Publice", serviciuCode: "b", serviciu: "Serviciul Monitorizare Contracte", retention: "10 ani", name: "V.b.1 — Contracte de achiziție publică și acte adiționale", docTypeIds: ["dt_pmb_contract_ap", "dt_pmb_act_aditional", "dt_pmb_document_plata"], children: [] },
+      /* VI. Direcția Generală Urbanism și Amenajarea Teritoriului */
+      { id: "af_pmb_ext_urbanism", group: "Solicitări Externe", code: "VI.a.1", directieCode: "VI", directie: "Direcția Generală Urbanism și Amenajarea Teritoriului", serviciuCode: "a", serviciu: "Serviciul Autorizare și Certificate", retention: "Permanent", name: "VI.a.1 — Certificate de urbanism", docTypeIds: ["dt_pmb_cerere_cu", "dt_pmb_cu"], children: [] },
+      /* VII. Direcția Generală Investiții */
+      { id: "af_pmb_inv_docte", group: "Investiții și Lucrări", code: "VII.a.1", directieCode: "VII", directie: "Direcția Generală Investiții", serviciuCode: "a", serviciu: "Serviciul Pregătire Investiții", retention: "Permanent", name: "VII.a.1 — Documentații tehnico-economice", docTypeIds: ["dt_pmb_nota_conceptuala", "dt_pmb_tema_proiectare", "dt_pmb_sf", "dt_pmb_dali", "dt_pmb_hcgmb", "dt_pmb_aviz_cte", "dt_pmb_pt", "dt_pmb_ac"], children: [] },
+      { id: "af_pmb_inv_executie", group: "Investiții și Lucrări", code: "VII.b.1", directieCode: "VII", directie: "Direcția Generală Investiții", serviciuCode: "b", serviciu: "Serviciul Urmărire Lucrări", retention: "Permanent", name: "VII.b.1 — Execuție lucrări și recepții", docTypeIds: ["dt_pmb_ordin_incepere", "dt_pmb_situatie_lucrari", "dt_pmb_pv_rtl", "dt_pmb_pv_rf"], children: [] },
+      /* IX. Direcția Juridic */
+      { id: "af_pmb_dj_avize", group: "Solicitări Interne", code: "IX.a.1", directieCode: "IX", directie: "Direcția Juridic", serviciuCode: "a", serviciu: "Serviciul Avizare și Contencios", retention: "10 ani", name: "IX.a.1 — Avize de legalitate și vize CFPP", docTypeIds: ["dt_pmb_aviz_legalitate", "dt_pmb_viza_cfpp"], children: [] },
+      /* X. Direcția Managementul Resurselor Umane — conform nomenclatorului de stat */
+      { id: "af_pmb_ru_inventare", group: "Resurse Umane", code: "X.a.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "a", serviciu: "Serviciul Salarizare și Organizare", retention: "Permanent", name: "X.a.1 — Inventarele și procesele-verbale de predare-primire a documentelor create de compartimente la depozitul de arhivă", docTypeIds: [], children: [] },
+      { id: "af_pmb_ru_organizare", group: "Resurse Umane", code: "X.a.2", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "a", serviciu: "Serviciul Salarizare și Organizare", retention: "Permanent", name: "X.a.2 — Documentație privind organizarea instituției: R.O.F., stat de funcții, scheme de încadrare", docTypeIds: ["dt_pmb_fisa_post"], children: [] },
+      { id: "af_pmb_ru_recrutare", group: "Resurse Umane", code: "X.b.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "b", serviciu: "Serviciul Recrutare și Evaluare", retention: "Permanent", name: "X.b.1 — Recrutare și concursuri (dosarele concursurilor)", docTypeIds: ["dt_pmb_anunt_concurs", "dt_pmb_dosar_inscriere", "dt_pmb_pv_concurs", "dt_pmb_raport_concurs", "dt_pmb_act_numire"], children: [] },
+      { id: "af_pmb_ru_cariera", group: "Resurse Umane", code: "X.b.2", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "b", serviciu: "Serviciul Recrutare și Evaluare", retention: "10 ani", name: "X.b.2 — Evoluție în carieră și evaluarea performanțelor", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg"], children: [] },
+      { id: "af_pmb_ru_disciplina", group: "Resurse Umane", code: "X.c.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "c", serviciu: "Secretariatul Comisiei de Disciplină", retention: "10 ani", name: "X.c.1 — Cercetări administrative — comisia de disciplină", docTypeIds: ["dt_pmb_sesizare_disciplinara", "dt_pmb_raport_disciplina", "dt_pmb_act_sanctionare"], children: [] },
       { id: "af_pmb_necat", name: "Necategorisit", system: true, docTypeIds: [], children: [] }
     ]
   });
@@ -2873,7 +2889,7 @@ window.SCRIPTICA_MOCK = {
       answerHtml: "Am găsit <b>1 procedură</b> de achiziție pentru servicii de iluminat public: <b>Servicii de mentenanță iluminat public — sector central</b> (procedură simplificată, în evaluarea ofertelor). Operatorul economic cu ofertă depusă este <b>Luxten Lighting Company S.A.</b>, propunere financiară 1.712.400 RON fără TVA.",
       references: [
         { kind: "dosar", label: "Servicii de mentenanță iluminat public — sector central", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" },
-        { kind: "document", label: "oferta_luxten_lighting.pdf", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" }
+        { kind: "document", label: "V.a.1_oferta-luxten-lighting_nr-OF-2026-0442_2026-04-09.pdf", href: "situatie-detaliu.html?flowId=fi_pmb_ap_01" }
       ],
       contextShift: { label: "1 dosar · Achiziții Publice", names: ["Servicii de mentenanță iluminat public — sector central"] },
       chips: ["Rezumă dosarul din context", "Care este stadiul?", "Cine este responsabil?"] },
@@ -3353,7 +3369,12 @@ window.SCRIPTICA_MOCK = {
         system: !!folder.system,
         source: 'clientType',
         inactive: false,
-        docTypeIds: (folder.docTypeIds || []).slice()
+        docTypeIds: (folder.docTypeIds || []).slice(),
+        /* nomenclator arhivistic (instituții publice) */
+        code: folder.code || '', retention: folder.retention || '',
+        directie: folder.directie || '', directieCode: folder.directieCode || '',
+        serviciu: folder.serviciu || '', serviciuCode: folder.serviciuCode || '',
+        group: folder.group || ''
       });
       archiveTreeNodes(folder.children || [], out, depth + 1, folder.id);
     });
@@ -3421,6 +3442,38 @@ window.SCRIPTICA_MOCK = {
     var client = terminologyClient(clientOrId);
     var names = terminologyOverrides(client).archiveFolders || {};
     return terminologyText(names[folderKey], terminologyText(defaultName, 'Folder'));
+  };
+  /* ---- Nomenclatorul arhivistic (instituții publice) ----
+     Dosarele verticalei = dosarele din arhivele „nomenclator” al căror
+     `group` este numele verticalei. Fluxul alege dintre ele dosarul în
+     care i se arhivează anexele la finalizare (`template.archiveFolderId`). */
+  function walkArchiveFolders(tree, visit) {
+    (tree || []).forEach(function (folder) {
+      visit(folder);
+      walkArchiveFolders(folder.children || [], visit);
+    });
+  }
+  window.scripticaNomenclatorFoldersForVertical = function (verticalId) {
+    var vertical = window.scripticaVerticalById(verticalId);
+    if (!vertical) return [];
+    var out = [];
+    (window.SCRIPTICA_MOCK.superAdmin.clientTypes || []).forEach(function (type) {
+      if (type.archiveRouting !== 'nomenclator') return;
+      walkArchiveFolders(type.archiveTree || [], function (folder) {
+        if (!folder.system && folder.group === vertical.name) out.push(folder);
+      });
+    });
+    return out;
+  };
+  window.scripticaArchiveFolderById = function (folderId) {
+    if (!folderId) return null;
+    var found = null;
+    (window.SCRIPTICA_MOCK.superAdmin.clientTypes || []).forEach(function (type) {
+      walkArchiveFolders(type.archiveTree || [], function (folder) {
+        if (!found && folder.id === folderId) found = folder;
+      });
+    });
+    return found;
   };
   /* ---- Asistentul AI (verticala marcată `assistant`) ----
      Butonul din Mesagerie și lista verticalei creează o cerere de lămuriri
@@ -4663,36 +4716,36 @@ window.SCRIPTICA_MOCK = {
       verificat: true, verificatManual: false, pageThumbnails: [] };
   }
   M.documents.push(
-    d("doc_pmb_001", "fi_pmb_ru_01", "pmb_ru", "anunt_concurs_consilier_superior_buget.pdf", "2026-03-16T10:05:00", "generat", "Anunț de concurs", "Primăria Municipiului București — DMRU", "12/DMRU/2026", "2026-03-16", "recrutare", "Anunț de concurs pentru funcția publică de consilier superior, Serviciul Buget; termen de depunere a dosarelor 20 de zile.", 2),
-    d("doc_pmb_002", "fi_pmb_ru_01", "pmb_ru", "dosar_inscriere_candidat_1.pdf", "2026-04-02T14:40:00", "registratura", "Dosar de înscriere la concurs", "Candidat — A. Marinescu", "31207/2026", "2026-04-02", "recrutare", "Dosar de înscriere complet: formular, CV, diplomă, adeverință vechime, cazier.", 14),
-    d("doc_pmb_003", "fi_pmb_ru_01", "pmb_ru", "pv_selectie_dosare.pdf", "2026-04-08T16:20:00", "generat", "Proces-verbal al comisiei de concurs", "Comisia de concurs", "PV-3/2026", "2026-04-08", "recrutare", "Selecția dosarelor: 4 candidați admiși, 1 respins pentru lipsa vechimii în specialitate.", 3),
-    d("doc_pmb_004", "fi_pmb_ru_03", "pmb_ru", "sesizare_disciplinara_4412.pdf", "2026-03-25T09:10:00", "registratura", "Sesizare disciplinară", "Direcția Generală Achiziții Publice", "4412/2026", "2026-03-24", "disciplina", "Sesizare privind neîndeplinirea atribuțiilor de serviciu; îndeplinește condițiile de formă din HG 1344/2007.", 4),
-    d("doc_pmb_005", "fi_pmb_ru_05", "pmb_ru", "dispozitie_pg_promovare_dj.pdf", "2026-03-06T11:30:00", "generat", "Dispoziție a Primarului General", "Primarul General", "418/2026", "2026-03-06", "cariera", "Dispoziție de promovare în grad profesional superior pentru 2 funcționari publici din Direcția Juridic.", 2),
+    d("doc_pmb_001", "fi_pmb_ru_01", "pmb_ru", "X.b.1_anunt-concurs-consilier-superior-buget_nr-12-DMRU-2026_2026-03-16.pdf", "2026-03-16T10:05:00", "generat", "Anunț de concurs", "Primăria Municipiului București — DMRU", "12/DMRU/2026", "2026-03-16", "recrutare", "Anunț de concurs pentru funcția publică de consilier superior, Serviciul Buget; termen de depunere a dosarelor 20 de zile.", 2),
+    d("doc_pmb_002", "fi_pmb_ru_01", "pmb_ru", "X.b.1_dosar-inscriere-candidat-1_nr-31207-2026_2026-04-02.pdf", "2026-04-02T14:40:00", "registratura", "Dosar de înscriere la concurs", "Candidat — A. Marinescu", "31207/2026", "2026-04-02", "recrutare", "Dosar de înscriere complet: formular, CV, diplomă, adeverință vechime, cazier.", 14),
+    d("doc_pmb_003", "fi_pmb_ru_01", "pmb_ru", "X.b.1_pv-selectie-dosare_nr-PV-3-2026_2026-04-08.pdf", "2026-04-08T16:20:00", "generat", "Proces-verbal al comisiei de concurs", "Comisia de concurs", "PV-3/2026", "2026-04-08", "recrutare", "Selecția dosarelor: 4 candidați admiși, 1 respins pentru lipsa vechimii în specialitate.", 3),
+    d("doc_pmb_004", "fi_pmb_ru_03", "pmb_ru", "X.c.1_sesizare-disciplinara_nr-4412-2026_2026-03-24.pdf", "2026-03-25T09:10:00", "registratura", "Sesizare disciplinară", "Direcția Generală Achiziții Publice", "4412/2026", "2026-03-24", "disciplina", "Sesizare privind neîndeplinirea atribuțiilor de serviciu; îndeplinește condițiile de formă din HG 1344/2007.", 4),
+    d("doc_pmb_005", "fi_pmb_ru_05", "pmb_ru", "X.b.2_dispozitie-pg-promovare-dj_nr-418-2026_2026-03-06.pdf", "2026-03-06T11:30:00", "generat", "Dispoziție a Primarului General", "Primarul General", "418/2026", "2026-03-06", "cariera", "Dispoziție de promovare în grad profesional superior pentru 2 funcționari publici din Direcția Juridic.", 2),
 
-    d("doc_pmb_006", "fi_pmb_ap_01", "pmb_achizitii", "referat_necesitate_iluminat_public.pdf", "2026-02-23T09:00:00", "generat", "Referat de necesitate", "Direcția Utilități Publice", "RN-77/2026", "2026-02-20", "initiere", "Referat de necesitate pentru servicii de mentenanță iluminat public; valoare estimată 1.840.000 RON fără TVA.", 5),
-    d("doc_pmb_007", "fi_pmb_ap_01", "pmb_achizitii", "documentatie_atribuire_iluminat.pdf", "2026-03-18T13:15:00", "generat", "Documentație de atribuire", "DGAP", "DA-19/2026", "2026-03-18", "documentatie", "Fișa de date, caiet de sarcini și DUAE — procedură simplificată, criteriul „cel mai bun raport calitate-preț”.", 48),
-    d("doc_pmb_008", "fi_pmb_ap_01", "pmb_achizitii", "oferta_luxten_lighting.pdf", "2026-04-10T10:00:00", "email", "Ofertă", "Luxten Lighting Company S.A.", "OF-2026-0442", "2026-04-09", "evaluare", "Ofertă tehnică și financiară depusă în SEAP; propunere financiară 1.712.400 RON fără TVA.", 62),
-    d("doc_pmb_009", "fi_pmb_ap_04", "pmb_achizitii", "contract_proiectare_pasaj_unirii.pdf", "2026-01-22T15:45:00", "generat", "Contract de achiziție publică", "PMB / Search Corporation S.R.L.", "C-8/2026", "2026-01-22", "contractare", "Contract de servicii de proiectare semnat după procedura simplificată; durată 8 luni.", 27),
-    d("doc_pmb_024", "fi_pmb_ap_05", "pmb_achizitii", "chitanta_becuri_led_philips.pdf", "2026-02-18T11:05:00", "email", "Document de plată (factură / chitanță)", "Electric Plus Distribution S.R.L.", "CH-2026-0187", "2026-02-17", "contractare", "Chitanță pentru 240 becuri LED Philips CorePro 9W E27, achiziție directă; valoare totală 6.480 RON cu TVA, plătită din bugetul administrativ.", 1),
-    d("doc_pmb_025", "fi_pmb_ap_05", "pmb_achizitii", "factura_becuri_led_osram_oferta_respinsa.pdf", "2026-02-12T09:30:00", "email", "Ofertă", "Lumina Pro Trading S.R.L.", "OF-441/2026", "2026-02-11", "evaluare", "Ofertă pentru becuri LED Osram Value 8.5W; respinsă la consultarea catalogului SEAP — preț unitar mai mare cu 14%.", 2),
-    d("doc_pmb_026", "fi_pmb_ext_01", "pmb_solicitari_externe", "fotografii_santier_lipscani_18_04.pdf", "2026-04-18T20:35:00", "email", "Petiție", "Maria Ionescu", "P-2210/2026-A", "2026-04-18", "petitii", "Completare la petiție: 3 fotografii cu utilaje în funcțiune după ora 22:00 pe Str. Lipscani nr. 20, transmise de petentă.", 3),
-    d("doc_pmb_010", "fi_pmb_ap_03", "pmb_achizitii", "nota_justificativa_act_aditional_2.pdf", "2026-04-15T12:20:00", "generat", "Act adițional", "DGAP", "AA-2/2026", "2026-04-15", "contractare", "Proiect de act adițional nr. 2 — prelungire durată contract pază cu 3 luni, art. 221 alin. (1) lit. e).", 6),
+    d("doc_pmb_006", "fi_pmb_ap_01", "pmb_achizitii", "V.a.1_referat-necesitate-iluminat-public_nr-RN-77-2026_2026-02-20.pdf", "2026-02-23T09:00:00", "generat", "Referat de necesitate", "Direcția Utilități Publice", "RN-77/2026", "2026-02-20", "initiere", "Referat de necesitate pentru servicii de mentenanță iluminat public; valoare estimată 1.840.000 RON fără TVA.", 5),
+    d("doc_pmb_007", "fi_pmb_ap_01", "pmb_achizitii", "V.a.1_documentatie-atribuire-iluminat_nr-DA-19-2026_2026-03-18.pdf", "2026-03-18T13:15:00", "generat", "Documentație de atribuire", "DGAP", "DA-19/2026", "2026-03-18", "documentatie", "Fișa de date, caiet de sarcini și DUAE — procedură simplificată, criteriul „cel mai bun raport calitate-preț”.", 48),
+    d("doc_pmb_008", "fi_pmb_ap_01", "pmb_achizitii", "V.a.1_oferta-luxten-lighting_nr-OF-2026-0442_2026-04-09.pdf", "2026-04-10T10:00:00", "email", "Ofertă", "Luxten Lighting Company S.A.", "OF-2026-0442", "2026-04-09", "evaluare", "Ofertă tehnică și financiară depusă în SEAP; propunere financiară 1.712.400 RON fără TVA.", 62),
+    d("doc_pmb_009", "fi_pmb_ap_04", "pmb_achizitii", "V.b.1_contract-proiectare-pasaj-unirii_nr-C-8-2026_2026-01-22.pdf", "2026-01-22T15:45:00", "generat", "Contract de achiziție publică", "PMB / Search Corporation S.R.L.", "C-8/2026", "2026-01-22", "contractare", "Contract de servicii de proiectare semnat după procedura simplificată; durată 8 luni.", 27),
+    d("doc_pmb_024", "fi_pmb_ap_05", "pmb_achizitii", "V.b.1_chitanta-becuri-led-philips_nr-CH-2026-0187_2026-02-17.pdf", "2026-02-18T11:05:00", "email", "Document de plată (factură / chitanță)", "Electric Plus Distribution S.R.L.", "CH-2026-0187", "2026-02-17", "contractare", "Chitanță pentru 240 becuri LED Philips CorePro 9W E27, achiziție directă; valoare totală 6.480 RON cu TVA, plătită din bugetul administrativ.", 1),
+    d("doc_pmb_025", "fi_pmb_ap_05", "pmb_achizitii", "V.a.1_oferta-becuri-led-osram-respinsa_nr-OF-441-2026_2026-02-11.pdf", "2026-02-12T09:30:00", "email", "Ofertă", "Lumina Pro Trading S.R.L.", "OF-441/2026", "2026-02-11", "evaluare", "Ofertă pentru becuri LED Osram Value 8.5W; respinsă la consultarea catalogului SEAP — preț unitar mai mare cu 14%.", 2),
+    d("doc_pmb_026", "fi_pmb_ext_01", "pmb_solicitari_externe", "I.a.1_fotografii-santier-lipscani_nr-P-2210-2026-A_2026-04-18.pdf", "2026-04-18T20:35:00", "email", "Petiție", "Maria Ionescu", "P-2210/2026-A", "2026-04-18", "petitii", "Completare la petiție: 3 fotografii cu utilaje în funcțiune după ora 22:00 pe Str. Lipscani nr. 20, transmise de petentă.", 3),
+    d("doc_pmb_010", "fi_pmb_ap_03", "pmb_achizitii", "V.b.1_nota-justificativa-act-aditional-2_nr-AA-2-2026_2026-04-15.pdf", "2026-04-15T12:20:00", "generat", "Act adițional", "DGAP", "AA-2/2026", "2026-04-15", "contractare", "Proiect de act adițional nr. 2 — prelungire durată contract pază cu 3 luni, art. 221 alin. (1) lit. e).", 6),
 
-    d("doc_pmb_011", "fi_pmb_inv_01", "pmb_investitii", "nota_conceptuala_cresa_straulesti.pdf", "2026-01-19T09:30:00", "generat", "Notă conceptuală", "Direcția Generală Investiții", "NC-3/2026", "2026-01-15", "fundamentare", "Notă conceptuală: creșă 60 de locuri și grădiniță 120 de locuri, teren proprietate publică a Municipiului București.", 8),
-    d("doc_pmb_012", "fi_pmb_inv_01", "pmb_investitii", "studiu_fezabilitate_cresa_straulesti.pdf", "2026-03-27T17:00:00", "email", "Studiu de fezabilitate", "Urban Design Studio S.R.L.", "SF-118/2026", "2026-03-25", "fundamentare", "Studiu de fezabilitate cu două scenarii; scenariul recomandat 14,2 mil. RON cu TVA, durată de execuție 18 luni.", 96),
-    d("doc_pmb_013", "fi_pmb_inv_02", "pmb_investitii", "ordin_incepere_pasaj_unirii.pdf", "2025-12-01T08:45:00", "generat", "Ordin de începere a lucrărilor", "Direcția Generală Investiții", "OI-41/2025", "2025-12-01", "executie", "Ordin de începere a lucrărilor structurale la Pasajul Unirii; predare amplasament la 03.12.2025.", 2),
-    d("doc_pmb_014", "fi_pmb_inv_02", "pmb_investitii", "situatie_lucrari_martie_2026.pdf", "2026-04-07T11:10:00", "email", "Situație de lucrări", "Erbașu Construcții S.A.", "SL-4/2026", "2026-04-03", "executie", "Situație de lucrări luna martie 2026, vizată de dirigintele de șantier; stadiu fizic cumulat 38%.", 22),
-    d("doc_pmb_015", "fi_pmb_inv_03", "pmb_investitii", "dali_consolidare_scoala_12.pdf", "2026-04-11T14:00:00", "email", "DALI", "Popp & Asociații S.R.L.", "DALI-27/2026", "2026-04-10", "fundamentare", "Documentație de avizare a lucrărilor de intervenții — consolidare seismică, clasa de risc RsI.", 71),
+    d("doc_pmb_011", "fi_pmb_inv_01", "pmb_investitii", "VII.a.1_nota-conceptuala-cresa-straulesti_nr-NC-3-2026_2026-01-15.pdf", "2026-01-19T09:30:00", "generat", "Notă conceptuală", "Direcția Generală Investiții", "NC-3/2026", "2026-01-15", "fundamentare", "Notă conceptuală: creșă 60 de locuri și grădiniță 120 de locuri, teren proprietate publică a Municipiului București.", 8),
+    d("doc_pmb_012", "fi_pmb_inv_01", "pmb_investitii", "VII.a.1_studiu-fezabilitate-cresa-straulesti_nr-SF-118-2026_2026-03-25.pdf", "2026-03-27T17:00:00", "email", "Studiu de fezabilitate", "Urban Design Studio S.R.L.", "SF-118/2026", "2026-03-25", "fundamentare", "Studiu de fezabilitate cu două scenarii; scenariul recomandat 14,2 mil. RON cu TVA, durată de execuție 18 luni.", 96),
+    d("doc_pmb_013", "fi_pmb_inv_02", "pmb_investitii", "VII.b.1_ordin-incepere-pasaj-unirii_nr-OI-41-2025_2025-12-01.pdf", "2025-12-01T08:45:00", "generat", "Ordin de începere a lucrărilor", "Direcția Generală Investiții", "OI-41/2025", "2025-12-01", "executie", "Ordin de începere a lucrărilor structurale la Pasajul Unirii; predare amplasament la 03.12.2025.", 2),
+    d("doc_pmb_014", "fi_pmb_inv_02", "pmb_investitii", "VII.b.1_situatie-lucrari-martie-2026_nr-SL-4-2026_2026-04-03.pdf", "2026-04-07T11:10:00", "email", "Situație de lucrări", "Erbașu Construcții S.A.", "SL-4/2026", "2026-04-03", "executie", "Situație de lucrări luna martie 2026, vizată de dirigintele de șantier; stadiu fizic cumulat 38%.", 22),
+    d("doc_pmb_015", "fi_pmb_inv_03", "pmb_investitii", "VII.a.1_dali-consolidare-scoala-12_nr-DALI-27-2026_2026-04-10.pdf", "2026-04-11T14:00:00", "email", "DALI", "Popp & Asociații S.R.L.", "DALI-27/2026", "2026-04-10", "fundamentare", "Documentație de avizare a lucrărilor de intervenții — consolidare seismică, clasa de risc RsI.", 71),
 
-    d("doc_pmb_016", "fi_pmb_ext_01", "pmb_solicitari_externe", "petitie_zgomot_lipscani.pdf", "2026-04-02T09:20:00", "registratura", "Petiție", "Maria Ionescu", "P-2210/2026", "2026-04-02", "petitii", "Petiție privind zgomotul produs de un șantier în afara programului legal; repartizată Poliției Locale.", 2),
-    d("doc_pmb_017", "fi_pmb_ext_04", "pmb_solicitari_externe", "raspuns_petitie_calea_mosilor.pdf", "2026-03-30T13:00:00", "generat", "Răspuns la petiție", "Primăria Municipiului București", "P-1804/2026", "2026-03-30", "petitii", "Răspuns comunicat în termen: lucrările de reparații au fost programate în luna aprilie 2026.", 1),
-    d("doc_pmb_018", "fi_pmb_ext_02", "pmb_solicitari_externe", "cerere_544_contracte_salubrizare.pdf", "2026-04-15T10:30:00", "email", "Cerere de informații de interes public", "Asociația Pro Transparență", "IP-96/2026", "2026-04-15", "informatii_publice", "Solicitare a listei contractelor de salubrizare încheiate în 2025, cu valori și durate.", 1),
-    d("doc_pmb_019", "fi_pmb_ext_03", "pmb_solicitari_externe", "cerere_certificat_urbanism_dacia_45.pdf", "2026-03-30T15:15:00", "registratura", "Cerere certificat de urbanism", "Imobiliare Dacia S.R.L.", "CU-518/2026", "2026-03-30", "urbanism", "Cerere-tip însoțită de plan de situație și extras CF; imobil situat în zonă protejată.", 9),
+    d("doc_pmb_016", "fi_pmb_ext_01", "pmb_solicitari_externe", "I.a.1_petitie-zgomot-lipscani_nr-P-2210-2026_2026-04-02.pdf", "2026-04-02T09:20:00", "registratura", "Petiție", "Maria Ionescu", "P-2210/2026", "2026-04-02", "petitii", "Petiție privind zgomotul produs de un șantier în afara programului legal; repartizată Poliției Locale.", 2),
+    d("doc_pmb_017", "fi_pmb_ext_04", "pmb_solicitari_externe", "I.a.1_raspuns-petitie-calea-mosilor_nr-P-1804-2026_2026-03-30.pdf", "2026-03-30T13:00:00", "generat", "Răspuns la petiție", "Primăria Municipiului București", "P-1804/2026", "2026-03-30", "petitii", "Răspuns comunicat în termen: lucrările de reparații au fost programate în luna aprilie 2026.", 1),
+    d("doc_pmb_018", "fi_pmb_ext_02", "pmb_solicitari_externe", "I.a.2_cerere-544-contracte-salubrizare_nr-IP-96-2026_2026-04-15.pdf", "2026-04-15T10:30:00", "email", "Cerere de informații de interes public", "Asociația Pro Transparență", "IP-96/2026", "2026-04-15", "informatii_publice", "Solicitare a listei contractelor de salubrizare încheiate în 2025, cu valori și durate.", 1),
+    d("doc_pmb_019", "fi_pmb_ext_03", "pmb_solicitari_externe", "VI.a.1_cerere-certificat-urbanism-dacia-45_nr-CU-518-2026_2026-03-30.pdf", "2026-03-30T15:15:00", "registratura", "Cerere certificat de urbanism", "Imobiliare Dacia S.R.L.", "CU-518/2026", "2026-03-30", "urbanism", "Cerere-tip însoțită de plan de situație și extras CF; imobil situat în zonă protejată.", 9),
 
-    d("doc_pmb_020", "fi_pmb_int_01", "pmb_solicitari_interne", "proiect_hcgmb_taxe_locale_2027.pdf", "2026-04-16T09:00:00", "generat", "Referat", "Direcția Venituri", "R-233/2026", "2026-04-16", "corespondenta_interna", "Proiect de hotărâre privind taxele și impozitele locale 2027, transmis spre aviz de legalitate.", 34),
-    d("doc_pmb_021", "fi_pmb_int_02", "pmb_solicitari_interne", "referat_suplimentare_posturi_registratura.pdf", "2026-04-13T11:40:00", "generat", "Referat", "Direcția Relații cu Publicul și Registratură", "R-219/2026", "2026-04-13", "corespondenta_interna", "Referat privind suplimentarea cu 2 posturi a Serviciului Registratură, cu fundamentarea volumului de lucru.", 3),
-    d("doc_pmb_022", "fi_pmb_int_04", "pmb_solicitari_interne", "ordin_deplasare_cluj_2026.pdf", "2026-03-16T08:30:00", "generat", "Ordin de deplasare", "DGAP", "OD-14/2026", "2026-03-16", "deplasari", "Ordin de deplasare pentru conferința națională de achiziții publice, Cluj-Napoca, 18–19 martie 2026.", 1),
-    d("doc_pmb_023", "fi_pmb_int_04", "pmb_solicitari_interne", "decont_cheltuieli_cluj.pdf", "2026-03-23T16:10:00", "registratura", "Decont de cheltuieli", "Andrei Constantin", "DC-9/2026", "2026-03-23", "deplasari", "Decont de cheltuieli de deplasare: transport, cazare 2 nopți, diurnă; documente justificative atașate.", 6)
+    d("doc_pmb_020", "fi_pmb_int_01", "pmb_solicitari_interne", "I.b.1_referat-proiect-hcgmb-taxe-locale-2027_nr-R-233-2026_2026-04-16.pdf", "2026-04-16T09:00:00", "generat", "Referat", "Direcția Venituri", "R-233/2026", "2026-04-16", "corespondenta_interna", "Proiect de hotărâre privind taxele și impozitele locale 2027, transmis spre aviz de legalitate.", 34),
+    d("doc_pmb_021", "fi_pmb_int_02", "pmb_solicitari_interne", "I.b.1_referat-suplimentare-posturi-registratura_nr-R-219-2026_2026-04-13.pdf", "2026-04-13T11:40:00", "generat", "Referat", "Direcția Relații cu Publicul și Registratură", "R-219/2026", "2026-04-13", "corespondenta_interna", "Referat privind suplimentarea cu 2 posturi a Serviciului Registratură, cu fundamentarea volumului de lucru.", 3),
+    d("doc_pmb_022", "fi_pmb_int_04", "pmb_solicitari_interne", "II.a.1_ordin-deplasare-cluj_nr-OD-14-2026_2026-03-16.pdf", "2026-03-16T08:30:00", "generat", "Ordin de deplasare", "DGAP", "OD-14/2026", "2026-03-16", "deplasari", "Ordin de deplasare pentru conferința națională de achiziții publice, Cluj-Napoca, 18–19 martie 2026.", 1),
+    d("doc_pmb_023", "fi_pmb_int_04", "pmb_solicitari_interne", "II.a.1_decont-cheltuieli-cluj_nr-DC-9-2026_2026-03-23.pdf", "2026-03-23T16:10:00", "registratura", "Decont de cheltuieli", "Andrei Constantin", "DC-9/2026", "2026-03-23", "deplasari", "Decont de cheltuieli de deplasare: transport, cazare 2 nopți, diurnă; documente justificative atașate.", 6)
   );
 
   /* Mesaje din fluxurile PMB (panoul Mesagerie) — vizibile când domeniul lor e în scope */
@@ -4717,8 +4770,8 @@ window.SCRIPTICA_MOCK = {
       observatieAI: "Transcriptul conversației cu asistentul — " + n + " mesaje. Ultima întrebare: „" + q + "”.", verificat: false, verificatManual: false, pageThumbnails: [], aiTranscript: true };
   }
   M.documents.push(
-    transcript("doc_ai_transcript_fi_pmb_ai_01", "fi_pmb_ai_01", "conversatie_asistent_furnizori_iluminat.pdf", "2026-04-17T09:13:13", "Care este stadiul?", 4),
-    transcript("doc_ai_transcript_fi_pmb_ai_02", "fi_pmb_ai_02", "conversatie_asistent_concursuri_recrutare.pdf", "2026-04-19T14:02:03", "Câte concursuri de recrutare sunt în derulare?", 2)
+    transcript("doc_ai_transcript_fi_pmb_ai_01", "fi_pmb_ai_01", "I.c.1_conversatie-asistent-furnizori-iluminat_2026-04-17.pdf", "2026-04-17T09:13:13", "Care este stadiul?", 4),
+    transcript("doc_ai_transcript_fi_pmb_ai_02", "fi_pmb_ai_02", "I.c.1_conversatie-asistent-concursuri-recrutare_2026-04-19.pdf", "2026-04-19T14:02:03", "Câte concursuri de recrutare sunt în derulare?", 2)
   );
 
   /* Persona „Utilizator Intern PMB": echipa vizibilă în aplicație (responsabili,

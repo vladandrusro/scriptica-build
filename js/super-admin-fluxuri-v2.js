@@ -1373,9 +1373,27 @@
 
   function openTemplateSettings(template) {
     if (!template) return;
-    var initial = JSON.stringify({ name: template.name, frequency: template.frequency, status: template.status, description: template.description, documentCategoryIds: template.documentCategoryIds || [] });
+    var initial = JSON.stringify({ name: template.name, frequency: template.frequency, status: template.status, description: template.description, archiveFolderId: template.archiveFolderId || '', documentCategoryIds: template.documentCategoryIds || [] });
     function current(dialog) {
-      return JSON.stringify({ name: fval(dialog, 'name'), frequency: fval(dialog, 'frequency'), status: fval(dialog, 'status'), description: fval(dialog, 'description'), documentCategoryIds: selectedCategoryIds(dialog, template.verticalId) });
+      return JSON.stringify({ name: fval(dialog, 'name'), frequency: fval(dialog, 'frequency'), status: fval(dialog, 'status'), description: fval(dialog, 'description'), archiveFolderId: fval(dialog, 'archiveFolder'), documentCategoryIds: selectedCategoryIds(dialog, template.verticalId) });
+    }
+    /* „Arhivare la finalizare”: dosarul din nomenclatorul arhivistic (dintre
+       dosarele verticalei) în care se salvează anexele completate ale
+       fluxului, cu denumire după nomenclator (indicativ + nr. + dată). */
+    var nomenclatorFolders = typeof window.scripticaNomenclatorFoldersForVertical === 'function'
+      ? window.scripticaNomenclatorFoldersForVertical(template.verticalId) : [];
+    var archiveFieldHtml;
+    if (nomenclatorFolders.length) {
+      var archiveOptions = '<option value="">Fără arhivare automată</option>' + nomenclatorFolders.map(function (folder) {
+        var label = folder.name + (folder.retention ? ' · păstrare: ' + folder.retention : '');
+        return '<option value="' + esc(folder.id) + '"' + (folder.id === template.archiveFolderId ? ' selected' : '') + '>' + esc(label) + '</option>';
+      }).join('');
+      archiveFieldHtml = fieldHtml('Arhivare la finalizare — dosar din nomenclator',
+        '<select class="select" data-f="archiveFolder">' + archiveOptions + '</select>',
+        'La finalizarea fluxului, anexele completate se salvează automat ca documente în dosarul ales, denumite după nomenclator (indicativ, număr de înregistrare, dată).');
+    } else {
+      archiveFieldHtml = fieldHtml('Arhivare la finalizare',
+        '<input class="input" type="hidden" data-f="archiveFolder" value=""><div class="fxv2-editor-note-inline">Verticala nu are dosare de nomenclator arhivistic — documentele fluxului urmează dosarul propriu al fluxului din arhivă.</div>');
     }
     openDialog({
       title: 'Setările fluxului',
@@ -1387,6 +1405,7 @@
           fieldHtml('Status', '<select class="select" data-f="status"><option value="activ"' + ((template.status || 'activ') === 'activ' ? ' selected' : '') + '>activ</option><option value="inactiv"' + (template.status === 'inactiv' ? ' selected' : '') + '>inactiv</option></select>') +
         '</div>' +
         fieldHtml('Descriere', '<textarea class="input" rows="3" data-f="description">' + esc(template.description || '') + '</textarea>') +
+        archiveFieldHtml +
         '<section class="fxv2-category-settings" data-field="categories"><div class="fxv2-category-settings__head"><div><h3>Categorii vizibile în acest flux</h3>' +
           '<p>Fluxul moștenește vocabularul verticalei. Poți ascunde categoriile nerelevante, fără să le redenumești.</p></div>' +
           '<button class="btn btn--ghost" type="button" data-open-vertical-categories><span class="material-symbols-outlined" aria-hidden="true">category</span>Editează vocabularul verticalei</button></div>' +
@@ -1409,6 +1428,7 @@
         template.frequency = fval(dialog, 'frequency');
         template.status = fval(dialog, 'status');
         template.description = fval(dialog, 'description');
+        template.archiveFolderId = fval(dialog, 'archiveFolder') || null;
         template.documentCategoryIds = selectedCategories;
         markDirty(template);
         close();

@@ -5120,6 +5120,49 @@ img.avatar { background: var(--color-surface-1); }
   text-decoration: underline;
 }
 
+/* Arhivă după nomenclator (instituții publice): indicativ, termen de
+   păstrare și marcajul de an închis. */
+.arhiva-nom-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.arhiva-nom-info__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+}
+
+.arhiva-nom-info__item b {
+  color: var(--color-text-primary);
+}
+
+.arhiva-nom-info__item .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--color-default-highlight);
+}
+
+.arhiva-nom-info__item--locked,
+.arhiva-nom-info__item--locked .material-symbols-outlined {
+  color: var(--color-critical);
+}
+
+.arhiva-tree__lock {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+  flex: none;
+}
+
 /* Override any leftover unread treatments — enforce uniform message cards. */
 .message-card,
 .message-card.unread,
