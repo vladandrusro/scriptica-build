@@ -2391,7 +2391,7 @@ window.SCRIPTICA_MOCK = {
 
   SA.flowTemplates.push(
     /* — Resurse Umane — */
-    { id: "ft_pmb_ru_recrutare", verticalId: "vert_pmb_ru", name: "Concurs de recrutare — ocuparea unei funcții publice vacante", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_recrutare",
+    { id: "ft_pmb_ru_recrutare", verticalId: "vert_pmb_ru", name: "Concurs de recrutare — ocuparea unei funcții publice vacante", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ru_referat_concurs: "af_pmb_ru_recrutare", anx_pmb_ru_pv_concurs: "af_pmb_ru_recrutare" },
       description: "Concurs organizat conform Codului administrativ (art. 618) și HG 611/2008: aprobare, publicitate, selecția dosarelor, probă scrisă și interviu, numire.",
       documentCategoryIds: ["recrutare", "cariera", "necategorisit"],
       steps: [
@@ -2420,7 +2420,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă actul administrativ de numire în funcția publică", "dt_pmb_act_numire", false)
         ])
       ] },
-    { id: "ft_pmb_ru_disciplina", verticalId: "vert_pmb_ru", name: "Sesizare disciplinară — cercetare administrativă", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_disciplina",
+    { id: "ft_pmb_ru_disciplina", verticalId: "vert_pmb_ru", name: "Sesizare disciplinară — cercetare administrativă", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ru_raport_disciplina: "af_pmb_ru_disciplina" },
       description: "Procedura comisiei de disciplină (HG 1344/2007): înregistrarea sesizării, cercetarea administrativă, raportul comisiei și actul administrativ de sancționare.",
       documentCategoryIds: ["disciplina", "necategorisit"],
       steps: [
@@ -2443,7 +2443,7 @@ window.SCRIPTICA_MOCK = {
           "Comunică actul administrativ funcționarului public în termen de 15 zile"
         ])
       ] },
-    { id: "ft_pmb_ru_promovare", verticalId: "vert_pmb_ru", name: "Promovare în grad profesional", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ru_cariera",
+    { id: "ft_pmb_ru_promovare", verticalId: "vert_pmb_ru", name: "Promovare în grad profesional", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ru_pv_concurs: "af_pmb_ru_cariera" },
       description: "Examen de promovare în gradul profesional imediat superior (Codul administrativ art. 478–479): verificarea condițiilor, organizarea examenului, actul de promovare.",
       documentCategoryIds: ["cariera", "recrutare", "necategorisit"],
       steps: [
@@ -2468,7 +2468,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Achiziții Publice — */
-    { id: "ft_pmb_ap_directa", verticalId: "vert_pmb_achizitii", name: "Achiziție directă", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_proceduri",
+    { id: "ft_pmb_ap_directa", verticalId: "vert_pmb_achizitii", name: "Achiziție directă", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ap_nota_justificativa: "af_pmb_ap_proceduri" },
       description: "Achiziție sub pragurile art. 7 alin. (5) din Legea 98/2016: referat de necesitate, consultarea catalogului electronic SEAP, comandă sau contract.",
       documentCategoryIds: ["initiere", "evaluare", "contractare", "necategorisit"],
       steps: [
@@ -2486,7 +2486,7 @@ window.SCRIPTICA_MOCK = {
           "Înregistrează angajamentul bugetar și legal (ALOP)"
         ])
       ] },
-    { id: "ft_pmb_ap_simplificata", verticalId: "vert_pmb_achizitii", name: "Procedură simplificată", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_proceduri",
+    { id: "ft_pmb_ap_simplificata", verticalId: "vert_pmb_achizitii", name: "Procedură simplificată", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ap_raport_procedura: "af_pmb_ap_proceduri" },
       description: "Procedura simplificată (art. 113 Legea 98/2016): strategie de contractare, documentație de atribuire, publicare în SEAP, evaluarea ofertelor, atribuire și semnarea contractului.",
       documentCategoryIds: ["initiere", "documentatie", "evaluare", "contractare", "necategorisit"],
       steps: [
@@ -2515,7 +2515,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă contractul de achiziție publică semnat", "dt_pmb_contract_ap", false)
         ])
       ] },
-    { id: "ft_pmb_ap_act_aditional", verticalId: "vert_pmb_achizitii", name: "Modificarea contractului — act adițional", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ap_contracte",
+    { id: "ft_pmb_ap_act_aditional", verticalId: "vert_pmb_achizitii", name: "Modificarea contractului — act adițional", frequency: "punctual", status: "activ",
       description: "Modificarea unui contract de achiziție publică în condițiile art. 221 din Legea 98/2016: fundamentare, avize, semnare și publicare în SEAP.",
       documentCategoryIds: ["contractare", "necategorisit"],
       steps: [
@@ -2532,7 +2532,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Investiții și Lucrări — */
-    { id: "ft_pmb_inv_obiectiv_nou", verticalId: "vert_pmb_investitii", name: "Obiectiv de investiții nou", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_docte",
+    { id: "ft_pmb_inv_obiectiv_nou", verticalId: "vert_pmb_investitii", name: "Obiectiv de investiții nou", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_inv_indicatori: "af_pmb_inv_docte" },
       description: "Fundamentarea unui obiectiv de investiții conform HG 907/2016: notă conceptuală, temă de proiectare, studiu de fezabilitate, aprobarea indicatorilor tehnico-economici prin HCGMB.",
       documentCategoryIds: ["fundamentare", "aprobare", "necategorisit"],
       steps: [
@@ -2556,7 +2556,7 @@ window.SCRIPTICA_MOCK = {
           "Asigură sursa de finanțare (buget local / fonduri externe)"
         ])
       ] },
-    { id: "ft_pmb_inv_executie", verticalId: "vert_pmb_investitii", name: "Execuție lucrări și recepție", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_executie",
+    { id: "ft_pmb_inv_executie", verticalId: "vert_pmb_investitii", name: "Execuție lucrări și recepție", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_inv_stadiu: "af_pmb_inv_executie" },
       description: "Urmărirea execuției unei lucrări publice: ordin de începere, situații de lucrări vizate de dirigintele de șantier, recepția la terminarea lucrărilor și recepția finală (HG 343/2017).",
       documentCategoryIds: ["executie", "aprobare", "necategorisit"],
       steps: [
@@ -2579,7 +2579,7 @@ window.SCRIPTICA_MOCK = {
           upload("Încarcă procesul-verbal de recepție finală", "dt_pmb_pv_rf", false)
         ])
       ] },
-    { id: "ft_pmb_inv_reparatii", verticalId: "vert_pmb_investitii", name: "Reparații capitale — DALI și autorizare", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_inv_docte",
+    { id: "ft_pmb_inv_reparatii", verticalId: "vert_pmb_investitii", name: "Reparații capitale — DALI și autorizare", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_inv_indicatori: "af_pmb_inv_docte" },
       description: "Lucrări de intervenție la construcții existente: expertiză tehnică, documentația de avizare a lucrărilor de intervenții (DALI), aprobare, proiect tehnic și autorizație de construire.",
       documentCategoryIds: ["fundamentare", "aprobare", "necategorisit"],
       steps: [
@@ -2598,7 +2598,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Solicitări Externe — */
-    { id: "ft_pmb_ext_petitie", verticalId: "vert_pmb_solicitari_externe", name: "Petiție (OG 27/2002)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_petitii",
+    { id: "ft_pmb_ext_petitie", verticalId: "vert_pmb_solicitari_externe", name: "Petiție (OG 27/2002)", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ext_fisa_petitie: "af_pmb_ext_petitii" },
       description: "Soluționarea petițiilor cetățenilor în termenul legal de 30 de zile: înregistrare, repartizare, soluționare de către compartimentul de specialitate, comunicarea răspunsului.",
       documentCategoryIds: ["petitii", "necategorisit"],
       steps: [
@@ -2618,7 +2618,7 @@ window.SCRIPTICA_MOCK = {
           "Clasează petiția"
         ])
       ] },
-    { id: "ft_pmb_ext_544", verticalId: "vert_pmb_solicitari_externe", name: "Cerere de informații de interes public (Legea 544/2001)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_544",
+    { id: "ft_pmb_ext_544", verticalId: "vert_pmb_solicitari_externe", name: "Cerere de informații de interes public (Legea 544/2001)", frequency: "punctual", status: "activ",
       description: "Accesul la informațiile de interes public: răspuns în 10 zile (sau 30 de zile pentru informații complexe), cu verificarea excepțiilor de la art. 12.",
       documentCategoryIds: ["informatii_publice", "necategorisit"],
       steps: [
@@ -2635,7 +2635,7 @@ window.SCRIPTICA_MOCK = {
           "Înregistrează cererea în evidența pentru raportul anual privind aplicarea Legii 544/2001"
         ])
       ] },
-    { id: "ft_pmb_ext_cu", verticalId: "vert_pmb_solicitari_externe", name: "Certificat de urbanism (Legea 50/1991)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ext_urbanism",
+    { id: "ft_pmb_ext_cu", verticalId: "vert_pmb_solicitari_externe", name: "Certificat de urbanism (Legea 50/1991)", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ext_regim_urbanistic: "af_pmb_ext_urbanism" },
       description: "Emiterea certificatului de urbanism în cel mult 30 de zile: verificarea documentației, analiza regimului juridic, economic și tehnic, semnare și eliberare.",
       documentCategoryIds: ["urbanism", "necategorisit"],
       steps: [
@@ -2655,7 +2655,7 @@ window.SCRIPTICA_MOCK = {
       ] },
 
     /* — Solicitări Interne (ad-hoc întotdeauna prima opțiune) — */
-    { id: "ft_pmb_int_adhoc", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare ad-hoc", frequency: "punctual", status: "activ", adhoc: true, archiveFolderId: "af_pmb_int_coresp",
+    { id: "ft_pmb_int_adhoc", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare ad-hoc", frequency: "punctual", status: "activ", adhoc: true,
       description: "Flux liber între utilizatorii interni: solicitantul descrie ce are nevoie, iar pașii se stabilesc la deschidere. Configurarea detaliată a fluxurilor ad-hoc urmează.",
       documentCategoryIds: ["corespondenta_interna", "necategorisit"],
       steps: [
@@ -2664,7 +2664,7 @@ window.SCRIPTICA_MOCK = {
           "Confirmă rezolvarea împreună cu solicitantul"
         ], [], "Pas unic, definit de utilizator la deschiderea solicitării.")
       ] },
-    { id: "ft_pmb_int_referat", verticalId: "vert_pmb_solicitari_interne", name: "Referat / notă internă către altă direcție", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_int_coresp",
+    { id: "ft_pmb_int_referat", verticalId: "vert_pmb_solicitari_interne", name: "Referat / notă internă către altă direcție", frequency: "punctual", status: "activ",
       description: "Corespondență internă între structuri: referatul se înregistrează, se repartizează prin rezoluție și primește răspuns de la structura destinatară.",
       documentCategoryIds: ["corespondenta_interna", "necategorisit"],
       steps: [
@@ -2681,7 +2681,7 @@ window.SCRIPTICA_MOCK = {
           "Clasează referatul la dosarul structurii"
         ])
       ] },
-    { id: "ft_pmb_int_aviz", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare aviz (juridic / CFPP)", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_dj_avize",
+    { id: "ft_pmb_int_aviz", verticalId: "vert_pmb_solicitari_interne", name: "Solicitare aviz (juridic / CFPP)", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_int_aviz: "af_pmb_dj_avize" },
       description: "Solicitarea avizului de legalitate de la Direcția Juridic sau a vizei de control financiar preventiv propriu pentru un proiect de act administrativ ori de angajament.",
       documentCategoryIds: ["corespondenta_interna", "avize", "necategorisit"],
       steps: [
@@ -2695,7 +2695,7 @@ window.SCRIPTICA_MOCK = {
         ], ["anx_pmb_int_aviz"])
       ] },
     /* — Asistentul AI (un singur pas: consultarea) — */
-    { id: "ft_pmb_ai_cerere", verticalId: "vert_pmb_asistent_ai", name: "Cerere de lămuriri către Asistentul AI", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_ai_lamuriri",
+    { id: "ft_pmb_ai_cerere", verticalId: "vert_pmb_asistent_ai", name: "Cerere de lămuriri către Asistentul AI", frequency: "punctual", status: "activ",
       description: "Conversație cu asistentul AI pe evidențele accesibile utilizatorului: întrebare, raționament, răspuns cu surse; cererea se închide când lămurirea este confirmată.",
       documentCategoryIds: ["raspunsuri", "necategorisit"],
       steps: [
@@ -2705,7 +2705,7 @@ window.SCRIPTICA_MOCK = {
           "Confirmă soluționarea cererii"
         ], [], "Pas unic: conversația cu asistentul se poartă în panoul din dreapta.")
       ] },
-    { id: "ft_pmb_int_deplasare", verticalId: "vert_pmb_solicitari_interne", name: "Deplasare în interes de serviciu", frequency: "punctual", status: "activ", archiveFolderId: "af_pmb_fin_deplasari",
+    { id: "ft_pmb_int_deplasare", verticalId: "vert_pmb_solicitari_interne", name: "Deplasare în interes de serviciu", frequency: "punctual", status: "activ",
       description: "Aprobarea deplasării prin ordin de deplasare și decontarea cheltuielilor (HG 714/2018) în 3 zile lucrătoare de la întoarcere.",
       documentCategoryIds: ["deplasari", "necategorisit"],
       steps: [

@@ -1709,20 +1709,20 @@
   /* ---------- Finalize step ---------- */
 
   /* „Arhivare la finalizare”: anexele completate ale fluxului devin documente
-     generate în dosarul de nomenclator ales pe șablon (template.archiveFolderId),
-     denumite după recomandările nomenclatorului: indicativ + denumire +
-     număr de înregistrare + dată. */
+     generate în dosarele de nomenclator alese PER ANEXĂ pe șablon
+     (template.anexaArchiveFolders[anexaId]; template.archiveFolderId rămâne
+     doar ca destinație implicită pentru configurări vechi), denumite după
+     recomandările nomenclatorului: indicativ + denumire + nr. + dată. */
   function archiveSlug(text) {
     return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'anexa';
   }
 
   function archiveCompletedAnexe(s) {
-    if (currentWorkspaceKind !== 'flux') return null;
+    if (currentWorkspaceKind !== 'flux' || typeof window.scripticaArchiveFolderById !== 'function') return null;
     var template = flowTemplateById(s.templateId);
-    var folder = (template && template.archiveFolderId && typeof window.scripticaArchiveFolderById === 'function')
-      ? window.scripticaArchiveFolderById(template.archiveFolderId) : null;
-    if (!folder) return null;
+    if (!template) return null;
+    var folderMap = template.anexaArchiveFolders || {};
     var definition = workDefinition(s);
     var anexaIds = [];
     ((definition && definition.steps) || []).forEach(function (step) {
@@ -1734,9 +1734,13 @@
     var dateISO = todayISO();
     var year = dateISO.slice(0, 4);
     var archived = 0;
+    var folderCodes = [];
     anexaIds.forEach(function (anexaId, index) {
       var anexa = (MOCK.anexeTypes || []).find(function (item) { return item.id === anexaId; });
       if (!anexa) return;
+      /* fiecare anexă își are propriul dosar; fără dosar → nu se arhivează */
+      var folder = window.scripticaArchiveFolderById(folderMap[anexaId] || template.archiveFolderId);
+      if (!folder) return;
       var exists = (MOCK.documents || []).some(function (doc) {
         return doc.situationId === s.id && doc.sourceAnexaId === anexaId;
       });
@@ -1775,8 +1779,10 @@
       s.documents = s.documents || [];
       s.documents.unshift(record);
       archived++;
+      var code = folder.code || folder.name;
+      if (folderCodes.indexOf(code) === -1) folderCodes.push(code);
     });
-    return archived ? { count: archived, folder: folder } : null;
+    return archived ? { count: archived, folderCodes: folderCodes } : null;
   }
 
   function onFinalizeStep() {
@@ -1814,7 +1820,7 @@
       if (archivedResult) {
         showToast('success', 'Fluxul a fost finalizat. ' +
           (archivedResult.count === 1 ? 'Anexa completată a fost arhivată' : archivedResult.count + ' anexe completate au fost arhivate') +
-          ' în dosarul ' + (archivedResult.folder.code || archivedResult.folder.name) + '.');
+          (archivedResult.folderCodes.length === 1 ? ' în dosarul ' + archivedResult.folderCodes[0] : ' în dosarele ' + archivedResult.folderCodes.join(', ')) + '.');
         if (typeof window.SCRIPTICA_DOCS_REFRESH === 'function') window.SCRIPTICA_DOCS_REFRESH();
       } else {
         showToast('success', currentWorkspaceKind === 'flux' ? 'Fluxul a fost finalizat și închis.' : 'Situația a fost finalizată și închisă.');

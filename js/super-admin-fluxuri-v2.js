@@ -802,12 +802,28 @@
         '<label class="fxv2-task__required"><input type="checkbox" data-task-required="' + taskIndex + '"' + (task.required !== false ? ' checked' : '') + '><span>Obligatoriu</span></label>' +
         '<button type="button" data-remove-task="' + taskIndex + '" aria-label="Șterge task-ul" title="Șterge task-ul"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>' + uploadConfig + '</div>';
     }).join('');
+    /* Arhivare la finalizare — dosarul din nomenclator se alege PER ANEXĂ:
+       la închiderea fluxului, fiecare anexă completată devine document în
+       dosarul ei (anexele aceluiași flux pot ajunge în dosare diferite). */
+    var nomenclatorFolders = typeof window.scripticaNomenclatorFoldersForVertical === 'function'
+      ? window.scripticaNomenclatorFoldersForVertical(template.verticalId) : [];
+    function anexaFolderSelectHtml(anexaId) {
+      if (!nomenclatorFolders.length) return '';
+      var selectedFolderId = (template.anexaArchiveFolders || {})[anexaId] || '';
+      var folderOptions = '<option value="">Fără arhivare automată</option>' + nomenclatorFolders.map(function (folder) {
+        var label = folder.name + (folder.retention ? ' · păstrare: ' + folder.retention : '');
+        return '<option value="' + esc(folder.id) + '"' + (folder.id === selectedFolderId ? ' selected' : '') + '>' + esc(label) + '</option>';
+      }).join('');
+      return '<label class="fxv2-anexa-chip__folder"><span><span class="material-symbols-outlined" aria-hidden="true">folder</span>Dosar la finalizarea fluxului</span>' +
+        '<select class="select" data-anexa-folder="' + esc(anexaId) + '">' + folderOptions + '</select></label>';
+    }
     var anexe = (step.anexeIds || []).map(function (id) {
       var anexa = anexaById(id);
       var count = requiredFieldCount(anexa);
       if (count) { blockingAnexe++; requiredFields += count; }
       return '<div class="fxv2-anexa-chip"><span class="material-symbols-outlined" aria-hidden="true">description</span><div><b>' + esc(anexa ? anexa.name : id) + '</b>' +
-        (count ? '<small class="is-required"><span class="material-symbols-outlined" aria-hidden="true">lock</span>' + count + ' ' + plural(count, 'câmp obligatoriu', 'câmpuri obligatorii') + '</small>' : '<small>Fără câmpuri obligatorii</small>') + '</div>' +
+        (count ? '<small class="is-required"><span class="material-symbols-outlined" aria-hidden="true">lock</span>' + count + ' ' + plural(count, 'câmp obligatoriu', 'câmpuri obligatorii') + '</small>' : '<small>Fără câmpuri obligatorii</small>') +
+        anexaFolderSelectHtml(id) + '</div>' +
         '<button type="button" data-remove-anexa="' + esc(id) + '" aria-label="Elimină anexa"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>';
     }).join('');
     var options = '';
@@ -965,6 +981,13 @@
       refreshEditingSignals(template);
     } else if (event.target.hasAttribute('data-task-minimum-files')) {
       step.tasks[parseInt(event.target.getAttribute('data-task-minimum-files'), 10)].minimumFiles = Math.max(1, parseInt(event.target.value, 10) || 1);
+      markDirty(template);
+      refreshEditingSignals(template);
+    } else if (event.target.hasAttribute('data-anexa-folder')) {
+      template.anexaArchiveFolders = template.anexaArchiveFolders || {};
+      var folderAnexaId = event.target.getAttribute('data-anexa-folder');
+      if (event.target.value) template.anexaArchiveFolders[folderAnexaId] = event.target.value;
+      else delete template.anexaArchiveFolders[folderAnexaId];
       markDirty(template);
       refreshEditingSignals(template);
     }
@@ -1373,28 +1396,19 @@
 
   function openTemplateSettings(template) {
     if (!template) return;
-    var initial = JSON.stringify({ name: template.name, frequency: template.frequency, status: template.status, description: template.description, archiveFolderId: template.archiveFolderId || '', documentCategoryIds: template.documentCategoryIds || [] });
+    var initial = JSON.stringify({ name: template.name, frequency: template.frequency, status: template.status, description: template.description, documentCategoryIds: template.documentCategoryIds || [] });
     function current(dialog) {
-      return JSON.stringify({ name: fval(dialog, 'name'), frequency: fval(dialog, 'frequency'), status: fval(dialog, 'status'), description: fval(dialog, 'description'), archiveFolderId: fval(dialog, 'archiveFolder'), documentCategoryIds: selectedCategoryIds(dialog, template.verticalId) });
+      return JSON.stringify({ name: fval(dialog, 'name'), frequency: fval(dialog, 'frequency'), status: fval(dialog, 'status'), description: fval(dialog, 'description'), documentCategoryIds: selectedCategoryIds(dialog, template.verticalId) });
     }
-    /* „Arhivare la finalizare”: dosarul din nomenclatorul arhivistic (dintre
-       dosarele verticalei) în care se salvează anexele completate ale
-       fluxului, cu denumire după nomenclator (indicativ + nr. + dată). */
+    /* Arhivarea la finalizare se configurează PER ANEXĂ, în pasul unde este
+       atașată anexa — aici doar amintim regula pentru verticalele cu
+       nomenclator arhivistic. */
     var nomenclatorFolders = typeof window.scripticaNomenclatorFoldersForVertical === 'function'
       ? window.scripticaNomenclatorFoldersForVertical(template.verticalId) : [];
-    var archiveFieldHtml;
-    if (nomenclatorFolders.length) {
-      var archiveOptions = '<option value="">Fără arhivare automată</option>' + nomenclatorFolders.map(function (folder) {
-        var label = folder.name + (folder.retention ? ' · păstrare: ' + folder.retention : '');
-        return '<option value="' + esc(folder.id) + '"' + (folder.id === template.archiveFolderId ? ' selected' : '') + '>' + esc(label) + '</option>';
-      }).join('');
-      archiveFieldHtml = fieldHtml('Arhivare la finalizare — dosar din nomenclator',
-        '<select class="select" data-f="archiveFolder">' + archiveOptions + '</select>',
-        'La finalizarea fluxului, anexele completate se salvează automat ca documente în dosarul ales, denumite după nomenclator (indicativ, număr de înregistrare, dată).');
-    } else {
-      archiveFieldHtml = fieldHtml('Arhivare la finalizare',
-        '<input class="input" type="hidden" data-f="archiveFolder" value=""><div class="fxv2-editor-note-inline">Verticala nu are dosare de nomenclator arhivistic — documentele fluxului urmează dosarul propriu al fluxului din arhivă.</div>');
-    }
+    var archiveFieldHtml = nomenclatorFolders.length
+      ? fieldHtml('Arhivare la finalizare',
+        '<div class="fxv2-editor-note-inline">Dosarul din nomenclator se alege pentru fiecare anexă în parte, în pasul unde este atașată („Anexe implicite” → „Dosar la finalizarea fluxului”). Anexele aceluiași flux pot ajunge în dosare diferite.</div>')
+      : '';
     openDialog({
       title: 'Setările fluxului',
       subtitle: template.name,
@@ -1428,7 +1442,6 @@
         template.frequency = fval(dialog, 'frequency');
         template.status = fval(dialog, 'status');
         template.description = fval(dialog, 'description');
-        template.archiveFolderId = fval(dialog, 'archiveFolder') || null;
         template.documentCategoryIds = selectedCategories;
         markDirty(template);
         close();
