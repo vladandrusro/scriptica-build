@@ -139,7 +139,7 @@
 
 .org-legend__swatch--live {
   border-color: var(--color-default-highlight);
-  background: #efeaff;
+  background: var(--color-surface-1);
 }
 
 /* ---------- Canvas panoramabil ---------- */
@@ -193,8 +193,8 @@
   content: '';
   position: absolute;
   top: 0;
-  left: var(--org-rail-inset, 110px);
-  right: var(--org-rail-inset, 110px);
+  left: var(--org-rail-inset, 100px);
+  right: var(--org-rail-inset, 100px);
   height: 2px;
   background: var(--color-border-strong);
   border-radius: 2px;
@@ -218,17 +218,26 @@
   background: var(--color-border-strong);
 }
 
-/* trunchiul vertical dintre benzi */
-.org-trunk {
+/* fiecare bandă poartă racordul vertical continuu către banda anterioară:
+   linia pleacă de la marginea de jos a benzii precedente și atinge exact
+   șina (sau chenarul panoului) benzii curente — fără segmente rupte */
+.org-band {
+  position: relative;
+  margin-top: 56px;
+}
+
+.org-band::before {
+  content: '';
+  position: absolute;
+  top: -56px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 2px;
-  height: 28px;
-  margin: 0 auto;
+  height: 56px;
   background: var(--color-border-strong);
 }
 
 .org-band-label {
-  margin: 0 auto var(--space-3);
-  width: max-content;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -238,6 +247,13 @@
   color: var(--color-text-secondary);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-bold);
+}
+
+/* eticheta plutește în stânga, în golul dintre benzi, fără să rupă linia */
+.org-band--labeled .org-band-label {
+  position: absolute;
+  top: -42px;
+  left: 0;
 }
 
 .org-band-label .material-symbols-outlined {
@@ -291,15 +307,14 @@
   font-size: var(--font-size-tiny);
   font-weight: var(--font-weight-bold);
   color: var(--color-default-highlight);
-  background: #efeaff;
+  background: var(--color-surface-1);
   border-radius: var(--radius-pill);
   padding: 2px 8px;
 }
 
 /* structură „vie" — are evidențe în Scriptica; întregul card se poate deschide */
 .org-card--live {
-  border-color: var(--color-default-highlight);
-  border-left-width: 3px;
+  border: 2px solid var(--color-default-highlight);
 }
 
 .org-card[data-org-code] {
@@ -321,7 +336,7 @@
   width: 240px;
   border-color: var(--color-default-highlight);
   border-width: 2px;
-  background: linear-gradient(180deg, #f7f4ff 0%, var(--color-surface-white) 70%);
+  background: linear-gradient(180deg, var(--color-surface-2) 0%, var(--color-surface-white) 70%);
 }
 
 .org-card--primar .org-card__name {
@@ -336,7 +351,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  border-top: 1px dashed var(--color-border);
+  border-top: 1px solid var(--color-border);
   padding-top: var(--space-2);
   margin-top: auto;
 }
@@ -435,10 +450,10 @@
 .org-direct-panel {
   position: relative;
   width: 100%;
-  border: 1px dashed var(--color-border-strong);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  background: rgba(236, 236, 246, 0.35);
+  background: var(--color-surface-2);
 }
 
 .org-direct-grid {

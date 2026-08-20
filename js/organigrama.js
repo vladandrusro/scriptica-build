@@ -277,25 +277,30 @@
         cellHtml(org.conducere[2]) +
       '</div>';
 
+    /* fiecare bandă poartă propriul racord vertical continuu (::before)
+       către banda anterioară; eticheta plutește în stânga, fără să rupă linia */
     var demnitari =
-      '<div class="org-trunk"></div>' +
-      '<div class="org-row org-row--railed">' +
-        org.demnitari.map(function (node) { return cellHtml(node); }).join('') +
+      '<div class="org-band">' +
+        '<div class="org-row org-row--railed">' +
+          org.demnitari.map(function (node) { return cellHtml(node); }).join('') +
+        '</div>' +
       '</div>';
 
     var directiiGenerale =
-      '<div class="org-trunk"></div>' +
-      '<div class="org-band-label"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Direcții generale — aparatul de specialitate</div>' +
-      '<div class="org-row org-row--railed">' +
-        org.directiiGenerale.map(function (node) { return branchCellHtml(node); }).join('') +
+      '<div class="org-band org-band--labeled">' +
+        '<div class="org-band-label"><span class="material-symbols-outlined" aria-hidden="true">account_tree</span>Direcții generale — aparatul de specialitate</div>' +
+        '<div class="org-row org-row--railed">' +
+          org.directiiGenerale.map(function (node) { return branchCellHtml(node); }).join('') +
+        '</div>' +
       '</div>';
 
     var subordonare =
-      '<div class="org-trunk"></div>' +
-      '<div class="org-band-label"><span class="material-symbols-outlined" aria-hidden="true">supervisor_account</span>În subordinea directă a Primarului General</div>' +
-      '<div class="org-direct-panel"><div class="org-direct-grid">' +
-        org.subordonareDirecta.map(function (node) { return cardHtml(node); }).join('') +
-      '</div></div>';
+      '<div class="org-band org-band--labeled">' +
+        '<div class="org-band-label"><span class="material-symbols-outlined" aria-hidden="true">supervisor_account</span>În subordinea directă a Primarului General</div>' +
+        '<div class="org-direct-panel"><div class="org-direct-grid">' +
+          org.subordonareDirecta.map(function (node) { return cardHtml(node); }).join('') +
+        '</div></div>' +
+      '</div>';
 
     return conducere + demnitari + directiiGenerale + subordonare;
   }
