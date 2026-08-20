@@ -11,8 +11,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  height: 100%;
-  min-height: 0;
+  /* umple tot spațiul vizibil sub antet (padding-ul lui .main sus/jos),
+     ca organigrama să folosească întreaga înălțime a ecranului */
+  min-height: calc(100vh - var(--header-height) - 3 * var(--space-5));
 }
 
 .org-page-header {
@@ -428,10 +429,12 @@
   padding: var(--space-2) var(--space-3);
 }
 
-/* banda „subordonare directă" — panou-grup cu grilă */
+/* banda „subordonare directă" — panou-grup cu grilă care umple lățimea
+   organigramei (mai multe coloane → banda mai scundă → zoom de încadrare
+   mai mare pe ecranele late) */
 .org-direct-panel {
   position: relative;
-  margin: 0 auto;
+  width: 100%;
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
@@ -440,7 +443,8 @@
 
 .org-direct-grid {
   display: grid;
-  grid-template-columns: repeat(6, 200px);
+  grid-template-columns: repeat(auto-fill, 200px);
+  justify-content: space-between;
   gap: var(--space-3);
 }
 
@@ -670,10 +674,6 @@ a.org-item:hover {
 }
 
 @media (max-width: 960px) {
-  .org-direct-grid {
-    grid-template-columns: repeat(4, 200px);
-  }
-
   .org-drawer {
     width: 360px;
   }

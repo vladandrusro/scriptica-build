@@ -526,11 +526,16 @@
     var worldEl = world();
     if (!canvasEl || !worldEl) return;
     var worldWidth = worldEl.scrollWidth || worldEl.offsetWidth;
-    if (!worldWidth) return;
-    var available = canvasEl.clientWidth - 32;
-    state.scale = Math.min(1, Math.max(0.35, available / worldWidth));
+    var worldHeight = worldEl.scrollHeight || worldEl.offsetHeight;
+    if (!worldWidth || !worldHeight) return;
+    /* încadrează pe ambele axe: pe ecrane mari organigrama întreagă e
+       vizibilă (inclusiv banda de subordonare directă), pe ecrane mici
+       scala nu coboară sub 35% — restul se panoramează */
+    var fitW = (canvasEl.clientWidth - 32) / worldWidth;
+    var fitH = (canvasEl.clientHeight - 32) / worldHeight;
+    state.scale = Math.min(1, Math.max(0.35, Math.min(fitW, fitH)));
     state.x = Math.max(16, (canvasEl.clientWidth - worldWidth * state.scale) / 2);
-    state.y = 16;
+    state.y = Math.max(16, (canvasEl.clientHeight - worldHeight * state.scale) / 2);
     applyTransform();
   }
 
