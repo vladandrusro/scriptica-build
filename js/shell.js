@@ -141,6 +141,7 @@
     applyViewBodyClass();
     initSidebar();
     applyTenantTerminologyToNav();
+    injectOrganigramaNav();
     injectAuditNav();
     injectPlanificareNav();
     injectCustomVerticalNav();
@@ -192,6 +193,30 @@
     var item = document.querySelector('.sidebar__nav [href="situatii.html"]');
     var label = item && item.querySelector('.nav-item__label');
     if (label && accounting) label.textContent = accounting.name;
+  }
+
+  /* „Organigramă" — sinteza instituției pentru conturile cu arhivă după
+     nomenclator (instituții publice, ex. PMB): organigrama dictează
+     nomenclatorul, iar fiecare structură își expune dosarele, fluxurile și
+     notificările. Injectat imediat după Acasă. */
+  function injectOrganigramaNav() {
+    var view = getCurrentView();
+    if (view === 'superadmin' || view === 'client') return;
+    if (typeof window.scripticaClientTypeById !== 'function' || typeof window.scripticaTenantClientTypeId !== 'function') return;
+    var clientType = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());
+    if (!clientType || clientType.archiveRouting !== 'nomenclator') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="organigrama"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'organigrama.html';
+    a.setAttribute('data-nav', 'organigrama');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">lan</span>' +
+      '<span class="nav-item__label">Organigramă</span>';
+    var anchor = nav.querySelector('[href="acasa.html"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else nav.appendChild(a);
   }
 
   /* „Misiuni Audit" — item de navigație injectat dinamic lângă „Situații

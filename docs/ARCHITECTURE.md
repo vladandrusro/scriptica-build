@@ -11,6 +11,7 @@ Scriptica Build/
 │   ├── acasa.html          Home dashboard (static regions OR configurable widget dashboard)
 │   ├── situatii.html / situatie-detaliu.html       contabil vertical (list + workspace)
 │   ├── arhiva.html         document archive tree
+│   ├── organigrama.html    institution org chart (nomenclator tenants — PMB)
 │   ├── time-tracking.html  personal time tracking
 │   ├── misiuni-audit.html / misiune-audit-workspace.html / planificare-audit.html   audit vertical
 │   ├── administrare.html / constructor-anexe.html  tenant back-office + form builder
@@ -69,6 +70,7 @@ flowchart TD
 | `js/super-admin-fluxuri-v2.js` | canonical HQ flow constructor: per-template steps/tasks/anexe, local drafts, validation/preview, guarded publish into the shared registry | — |
 | `js/super-admin-tipuri-clienti-v2.js` | client-category editor and its base archive routing; Acasă is deliberately absent because its owner is the individual client | — |
 | `js/asistent-ai.js` | Asistentul AI Scriptica: on situatie-detaliu for flow items of the `assistant` vertical, replaces the Mesagerie panel with the chat (reasoning, sources, context shift, chips); deterministic search engine over persona-accessible flow items/documents/people; persists `aiMessages`/`aiContext` on the flow item | — |
+| `js/organigrama.js` | Organigrama instituției (nomenclator tenants, ex. PMB): pannable/zoomable canvas over `MOCK.pmb.organigrama`, live structures matched by `directieCode` to nomenclator folders/flows, right-side drawer (Dosare/Fluxuri/Notificări derived at render), deep links into arhiva (`?folder=`/`?dir=`) | — |
 | `js/prezentare.js` | slide deck (exposes nothing) | — |
 
 ## Component boundaries and data flow

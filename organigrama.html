@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arhivă — Scriptica</title>
+  <title>Organigramă — Scriptica</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/base.css?v=14">
   <link rel="stylesheet" href="css/components.css?v=20">
+  <link rel="stylesheet" href="css/organigrama.css?v=1">
 </head>
 <body>
   <div class="shell shell--messaging-closed">
@@ -79,68 +80,8 @@
       </nav>
     </aside>
 
-    <main class="main" id="arhiva-main" role="main"></main>
+    <main class="main" id="organigrama-main" role="main"></main>
 
-  </div>
-
-  <!-- Modal: AI Extraction (reused from Phase 4b in read-only mode) -->
-  <div class="modal modal--doc-ai" id="modal-ai" role="dialog" aria-modal="true" aria-labelledby="modal-ai-title" aria-hidden="true">
-    <div class="doc-modal__layout">
-      <aside class="doc-preview-card" data-ai-preview-card role="button" tabindex="0" aria-label="Deschide previzualizarea documentului în ecran complet">
-        <div class="doc-preview-card__page" data-ai-preview-svg></div>
-        <div class="doc-preview-card__footer">
-          <span class="doc-preview-card__filename" data-ai-preview-filename></span>
-          <span class="doc-preview-card__hint">
-            <span class="material-symbols-outlined" aria-hidden="true">open_in_full</span>
-            Click pentru ecran complet
-          </span>
-        </div>
-      </aside>
-
-      <div class="modal__dialog doc-modal doc-modal__panel" role="document">
-        <header class="doc-modal__header">
-          <button type="button" class="doc-modal__close" data-modal-close aria-label="Închide">
-            <span class="material-symbols-outlined" aria-hidden="true">close</span>
-          </button>
-          <h2 class="doc-modal__title" id="modal-ai-title">Detalii document</h2>
-          <p class="doc-modal__meta" data-ai-meta></p>
-        </header>
-
-        <div class="doc-modal__body">
-          <div class="doc-modal__status-strip" data-ai-status></div>
-          <div class="doc-modal__observation" data-ai-observation></div>
-          <section class="doc-modal__fields" data-ai-fields></section>
-        </div>
-
-        <footer class="doc-modal__footer">
-          <button type="button" class="btn btn--ghost doc-modal__footer-download" data-ai-download>
-            <span class="material-symbols-outlined" aria-hidden="true">download</span>
-            Descarcă
-          </button>
-          <div class="doc-modal__footer-spacer"></div>
-          <button type="button" class="btn btn--ghost" data-ai-edit>Editează detalii</button>
-          <button type="button" class="btn btn--ghost" data-ai-reclass>Reclasifică</button>
-          <button type="button" class="btn btn--primary" data-ai-close>Închide</button>
-        </footer>
-      </div>
-    </div>
-  </div>
-
-  <!-- Fullscreen preview overlay -->
-  <div class="doc-preview-fullscreen" id="doc-preview-fullscreen" role="dialog" aria-modal="true" aria-hidden="true" hidden>
-    <div class="doc-preview-fullscreen__backdrop" data-preview-backdrop></div>
-    <div class="doc-preview-fullscreen__panel" role="document">
-      <header class="doc-preview-fullscreen__header">
-        <span class="doc-preview-fullscreen__filename" data-preview-filename></span>
-        <span class="doc-preview-fullscreen__pagenum" data-preview-pagenum></span>
-        <button type="button" class="doc-preview-fullscreen__close" data-preview-close aria-label="Închide previzualizarea">
-          <span class="material-symbols-outlined" aria-hidden="true">close</span>
-        </button>
-      </header>
-      <div class="doc-preview-fullscreen__body">
-        <div class="doc-preview-fullscreen__page" data-preview-svg></div>
-      </div>
-    </div>
   </div>
 
   <!-- Toast stack -->
@@ -150,7 +91,6 @@
   <script src="js/mock-data.js?v=53"></script>
   <script src="js/timer.js?v=30"></script>
   <script src="js/dashboard.js?v=34"></script>
-  <script src="js/documents.js?v=30"></script>
-  <script src="js/arhiva.js?v=39"></script>
+  <script src="js/organigrama.js?v=1"></script>
 </body>
 </html>

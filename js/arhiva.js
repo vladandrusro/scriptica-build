@@ -266,6 +266,7 @@
   function init() {
     state.tree = buildTree();
     restoreSelection();
+    applyDeepLink();
     // Auto-expand the single client branch for client view so the user
     // lands on a years-first tree instead of a collapsed client node.
     if (isClientView()) {
@@ -274,6 +275,38 @@
       });
     }
     render();
+  }
+
+  /* Deep-link din Organigramă (arhiva după nomenclator):
+     ?folder=<idDosar> selectează dosarul (în ultimul an cu documente),
+     ?dir=<cheieDirecție> selectează direcția. */
+  function applyDeepLink() {
+    if (!isNomenclator()) return;
+    var params = new URLSearchParams(window.location.search);
+    var folderKey = params.get('folder');
+    var dirParam = params.get('dir');
+    if (folderKey && CATEGORY_META[folderKey]) {
+      var meta = CATEGORY_META[folderKey];
+      var dirKey = nomDirKey(meta);
+      var srvKey = nomSrvKey(meta);
+      var years = [];
+      var srvNode = state.tree[dirKey] && state.tree[dirKey].years[srvKey];
+      Object.keys((srvNode && srvNode.months) || {}).forEach(function (year) {
+        if ((srvNode.months[year].categories[folderKey] || []).length) years.push(parseInt(year, 10));
+      });
+      var year = years.length ? Math.max.apply(null, years) : NOM_CURRENT_YEAR;
+      state.selection = { level: 'category', clientId: dirKey, year: srvKey, month: year, category: folderKey };
+      state.expanded.add(key('client', dirKey));
+      state.expanded.add(key('year', dirKey, srvKey));
+      state.expanded.add(key('month', dirKey, srvKey, year));
+      saveSelection();
+      return;
+    }
+    if (dirParam && state.tree[dirParam]) {
+      state.selection = { level: 'client', clientId: dirParam, year: null, month: null, category: null };
+      state.expanded.add(key('client', dirParam));
+      saveSelection();
+    }
   }
 
   /* ---------- Tree build ---------- */

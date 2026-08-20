@@ -2148,6 +2148,98 @@ window.SCRIPTICA_MOCK = {
     ]
   };
 
+  /* ---- Organigrama PMB (sursa: organigrama oficială publicată pe pmb.ro) ----
+     Organigrama dictează nomenclatorul arhivistic: structurile cu
+     `directieCode` sunt „vii" în Scriptica — codul le leagă de dosarele
+     nomenclatorului (arhiveTree), de fluxurile lor (flowItem.archiveContainer
+     = numele direcției) și de notificările derivate. `posts` = numărul total
+     de posturi al structurii, ca în casetele organigramei oficiale. */
+  function orgNode(id, name, posts, directieCode, children) {
+    return { id: id, name: name, posts: posts || null, directieCode: directieCode || null, children: children || [] };
+  }
+  M.pmb.organigrama = {
+    conducere: [
+      orgNode("org_admin_public", "Administrator Public", null),
+      orgNode("org_primar_general", "Primar General", null),
+      orgNode("org_corp_control", "Corpul de Control al Primarului General", 24)
+    ],
+    demnitari: [
+      orgNode("org_cab_vp1", "Cabinet Viceprimar 1", 2),
+      orgNode("org_vp1", "Viceprimar 1", null),
+      orgNode("org_vp2", "Viceprimar 2", null),
+      orgNode("org_cab_vp2", "Cabinet Viceprimar 2", 2),
+      orgNode("org_secretar_general", "Secretar General al Municipiului București", null),
+      orgNode("org_cab_sg", "Cabinet Secretar General", 4),
+      orgNode("org_cab_pg", "Cabinet Primar General", 6)
+    ],
+    directiiGenerale: [
+      orgNode("org_dg_economica", "Direcția Generală Economică", 84, null, [
+        orgNode("org_d_fin_contab", "Direcția Financiar-Contabilitate", 43, "II"),
+        orgNode("org_d_venituri", "Direcția Venituri", 17),
+        orgNode("org_d_prog_bugetara", "Direcția Programare și Execuție Bugetară", 23)
+      ]),
+      orgNode("org_dg_investitii", "Direcția Generală Investiții", 71, "VII", [
+        orgNode("org_d_planificare_inv", "Direcția Planificare Investiții", 29),
+        orgNode("org_d_urmarire_inv", "Direcția Urmărire Investiții", 41)
+      ]),
+      orgNode("org_dg_proiecte", "Direcția Generală Management Proiecte cu Finanțare Externă", 47, null, [
+        orgNode("org_d_fonduri_neramb", "Direcția Fonduri Nerambursabile", 20),
+        orgNode("org_b_accesare_fonduri", "Biroul Accesare Fonduri Rambursabile", 6),
+        orgNode("org_b_derulare_fonduri", "Biroul Derulare și Raportare Fonduri Rambursabile", 6),
+        orgNode("org_s_uip_glina", "Serviciul UIP Faza 2 Glina", 14)
+      ]),
+      orgNode("org_dg_urbanism", "Direcția Generală Urbanism și Amenajarea Teritoriului", 69, "VI", [
+        orgNode("org_d_urbanism", "Direcția Urbanism", 40),
+        orgNode("org_s_proiecte_urbane", "Serviciul Proiecte Urbane", 16),
+        orgNode("org_s_publicitate", "Serviciul Publicitate Stradală", 12)
+      ]),
+      orgNode("org_dg_administratie", "Direcția Generală Administrație și Relația cu CGMB", 122, null, [
+        orgNode("org_d_admin_publica", "Direcția Administrație Publică", 29),
+        orgNode("org_d_asist_juridica", "Direcția Asistență Tehnică și Juridică", 39),
+        orgNode("org_d_relatii_public", "Direcția Relații cu Publicul și Registratură", 53, "I")
+      ]),
+      orgNode("org_dg_servicii", "Direcția Generală Servicii Publice", 82, null, [
+        orgNode("org_d_servicii_publice", "Direcția Servicii Publice", 30),
+        orgNode("org_d_servicii_integrate", "Direcția Servicii Integrate", 51)
+      ]),
+      orgNode("org_dg_achizitii", "Direcția Generală Achiziții Publice", 43, "V", [
+        orgNode("org_d_planificare_ach", "Direcția Planificare Achiziții", 16),
+        orgNode("org_d_proceduri", "Direcția Proceduri", 18),
+        orgNode("org_s_monitorizare_contracte", "Serviciul Monitorizare Derulare Contracte", 8)
+      ]),
+      orgNode("org_dg_urgenta", "Direcția Generală Situații de Urgență, Statistici și Strategii", 71, null, [
+        orgNode("org_s_integrare", "Serviciul Integrare Multiculturală", 8),
+        orgNode("org_d_inzestrare", "Direcția Înzestrare Materială și Situații de Urgență", 29),
+        orgNode("org_d_statistici", "Direcția Statistici și Strategii", 24),
+        orgNode("org_s_cmisu", "Serviciul Administrare Centrul Municipal Integrat pentru Situații de Urgență", 9)
+      ]),
+      orgNode("org_dg_logistica", "Direcția Generală Logistică", 125, null, [
+        orgNode("org_d_informatica", "Direcția Informatică", 32),
+        orgNode("org_d_administrativa", "Direcția Administrativă", 92)
+      ])
+    ],
+    subordonareDirecta: [
+      orgNode("org_d_patrimoniu", "Direcția Patrimoniu", 58),
+      orgNode("org_d_mediu", "Direcția de Mediu", 45),
+      orgNode("org_d_juridic", "Direcția Juridic", 86, "IX"),
+      orgNode("org_d_mru", "Direcția Managementul Resurselor Umane", 36, "X"),
+      orgNode("org_d_audit_calitate", "Direcția Auditul și Managementul Calității", 20),
+      orgNode("org_d_integritate", "Direcția de Integritate", 16),
+      orgNode("org_d_transporturi", "Direcția Transporturi", 42),
+      orgNode("org_d_audit_intern", "Direcția Audit Public Intern", 27),
+      orgNode("org_d_guvernanta", "Direcția Guvernanță Corporativă", 17),
+      orgNode("org_d_presa", "Direcția de Presă", 25),
+      orgNode("org_d_ong", "Direcția Relația cu ONG, Sindicate și Patronate", 17),
+      orgNode("org_d_protocol", "Direcția Relații Externe și Protocol", 20),
+      orgNode("org_d_cultura", "Direcția Cultură, Învățământ, Turism", 28),
+      orgNode("org_s_euro", "Serviciul Euro 2020", 8),
+      orgNode("org_s_ssm", "Serviciul Sănătate și Securitate în Muncă", 8),
+      orgNode("org_b_secrete", "Biroul Documente Secrete", 6),
+      orgNode("org_d_spatiu", "Direcția Spațiu Locativ și cu Altă Destinație", 24),
+      orgNode("org_d_debite", "Direcția Monitorizare Recuperare Debite / Creanțe", 25)
+    ]
+  };
+
   /* ---- Verticalele PMB — vocabularul documentelor + partea externă proprie ---- */
   SA.flowVerticals.push(
     {
