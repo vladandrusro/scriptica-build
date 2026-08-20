@@ -40,8 +40,46 @@
     var categories = allCategories.filter(function (category) { return category.system || visibleIds.indexOf(category.id) !== -1; });
     var system = categories.find(function (category) { return category.system; }) || { id: 'necategorisit', name: 'Necategorisit', system: true, documentTypes: [] };
     if (!categories.some(function (category) { return category.id === system.id; })) categories.push(system);
-    contextCache = { item: item, vertical: vertical, template: template, categories: categories, system: system, filters: (vertical && vertical.documentFilters) || [] };
+    /* Arhivă după nomenclator (instituții publice): în interiorul fluxului,
+       documentele se grupează după DOSARELE nomenclatorului în care se
+       clasează (indicativ X.a.1…), nu după categoriile de clasificare —
+       aceeași structură de foldere ca în Arhivă. */
+    var nomenclator = false;
+    var clientType = (typeof window.scripticaClientTypeById === 'function' && typeof window.scripticaTenantClientTypeId === 'function')
+      ? window.scripticaClientTypeById(window.scripticaTenantClientTypeId()) : null;
+    if (item && clientType && clientType.archiveRouting === 'nomenclator' && typeof window.scripticaArchiveTreeFor === 'function') {
+      var visibleTypes = [];
+      categories.forEach(function (category) {
+        (category.documentTypes || []).forEach(function (type) { visibleTypes.push(type); });
+      });
+      var anexaFolderIds = template && template.anexaArchiveFolders
+        ? Object.keys(template.anexaArchiveFolders).map(function (key) { return template.anexaArchiveFolders[key]; })
+        : [];
+      var folderCategories = [];
+      (window.scripticaArchiveTreeFor(clientType.id) || []).forEach(function (folder) {
+        if (folder.system) return;
+        var types = visibleTypes.filter(function (type) { return (folder.docTypeIds || []).indexOf(type.id) !== -1; });
+        if (!types.length && anexaFolderIds.indexOf(folder.id) === -1) return;
+        folderCategories.push({ id: folder.id, name: shortFolderName(folder), fullName: folder.name, folder: true, documentTypes: types });
+      });
+      if (folderCategories.length) {
+        nomenclator = true;
+        system = { id: system.id, name: system.name || 'Necategorisit', system: true, documentTypes: [] };
+        categories = folderCategories.concat([system]);
+      }
+    }
+    contextCache = { item: item, vertical: vertical, template: template, categories: categories, system: system, nomenclator: nomenclator, filters: (vertical && vertical.documentFilters) || [] };
     return contextCache;
+  }
+
+  /* „X.a.1 — Inventarele și procesele-verbale…” → etichetă compactă de tab */
+  function shortFolderName(folder) {
+    var title = String(folder.name || '');
+    var dash = title.indexOf('—');
+    if (dash !== -1) title = title.slice(dash + 1);
+    title = title.split(':')[0].split('(')[0].trim();
+    if (title.length > 34) title = title.slice(0, 33).trim() + '…';
+    return (folder.code ? folder.code + ' — ' : '') + title;
   }
 
   function categoryLabel(key) {
@@ -94,6 +132,7 @@
   function effectiveCategory(d) {
     var context = documentContext();
     if (isLowConf(d)) return context.system.id;
+    if (context.nomenclator && d.archiveFolderId && context.categories.some(function (category) { return category.id === d.archiveFolderId; })) return d.archiveFolderId;
     if (context.categories.some(function (category) { return category.id === d.broadCategory; })) return d.broadCategory;
     var matched = context.categories.find(function (category) {
       return (category.documentTypes || []).some(function (type) { return type.name === d.tipDocument || type.id === d.tipDocument; });
@@ -449,7 +488,11 @@
       el.addEventListener('click', function () {
         var to = el.getAttribute('data-bulk-move');
         (MOCK.documents || []).forEach(function (d) {
-          if (state.selected.has(d.id)) d.broadCategory = to;
+          if (state.selected.has(d.id)) {
+            d.broadCategory = to;
+            /* la nomenclator, mutarea între dosare se reflectă și în Arhivă */
+            if (documentContext().nomenclator) d.archiveFolderId = (to === documentContext().system.id) ? null : to;
+          }
         });
         showToast('success', state.selected.size + ' documente reclasificate.');
         state.selected.clear();
@@ -504,6 +547,7 @@
           var doc = findDoc(docId);
           if (!doc) return;
           doc.broadCategory = el.getAttribute('data-row-move');
+          if (documentContext().nomenclator) doc.archiveFolderId = (doc.broadCategory === documentContext().system.id) ? null : doc.broadCategory;
           state.rowMenuOpenFor = null;
           showToast('success', 'Document reclasificat.');
           render();
@@ -1111,6 +1155,7 @@
         return (item.documentTypes || []).some(function (type) { return type.name === d.tipDocument; });
       });
       d.broadCategory = category ? category.id : documentContext().system.id;
+      if (documentContext().nomenclator) d.archiveFolderId = (category && category.folder) ? category.id : null;
       d.emitent         = modal.querySelector('[name="emitent"]').value.trim();
       d.numarDocument   = modal.querySelector('[name="numarDocument"]').value.trim();
       d.dataEmiterii    = modal.querySelector('[name="dataEmiterii"]').value;

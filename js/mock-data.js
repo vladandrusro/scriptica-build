@@ -2263,6 +2263,9 @@ window.SCRIPTICA_MOCK = {
           { id: "dt_pmb_cerere_promovare", name: "Cerere de promovare" }, { id: "dt_pmb_raport_evaluare", name: "Raport de evaluare a performanțelor" },
           { id: "dt_pmb_dispozitie_pg", name: "Dispoziție a Primarului General" }, { id: "dt_pmb_fisa_post", name: "Fișa postului" }
         ] },
+        { id: "arhivare", name: "Predare la arhivă", documentTypes: [
+          { id: "dt_pmb_inventar_predare", name: "Inventar de predare-primire" }, { id: "dt_pmb_pv_predare_arhiva", name: "Proces-verbal de predare-primire la depozitul de arhivă" }
+        ] },
         { id: "necategorisit", name: "Necategorisit", system: true, documentTypes: [] }
       ]
     },
@@ -2441,6 +2444,19 @@ window.SCRIPTICA_MOCK = {
         step("ft_pmb_ru_disciplina_step_4", "Actul administrativ de sancționare", 60, [
           upload("Încarcă dispoziția de sancționare (dacă este cazul)", "dt_pmb_act_sanctionare", false),
           "Comunică actul administrativ funcționarului public în termen de 15 zile"
+        ])
+      ] },
+    { id: "ft_pmb_ru_predare_arhiva", verticalId: "vert_pmb_ru", name: "Predare-primire dosare la depozitul de arhivă", frequency: "anual", status: "activ", anexaArchiveFolders: { anx_pmb_ru_inventar: "af_pmb_ru_inventare" },
+      description: "Predarea documentelor create de compartimente la depozitul de arhivă (Legea Arhivelor 16/1996): inventarele pe ani extremi și procesul-verbal de predare-primire se clasează la indicativul X.a.1 din nomenclator.",
+      documentCategoryIds: ["arhivare", "necategorisit"],
+      steps: [
+        step("ft_pmb_ru_predare_arhiva_step_1", "Întocmirea inventarelor", 7, [
+          "Grupează dosarele pe ani extremi și termene de păstrare, conform nomenclatorului arhivistic",
+          "Verifică numerotarea, legarea și certificarea dosarelor"
+        ], ["anx_pmb_ru_inventar"]),
+        step("ft_pmb_ru_predare_arhiva_step_2", "Predarea la depozitul de arhivă", 14, [
+          upload("Încarcă procesul-verbal de predare-primire semnat de ambele părți", "dt_pmb_pv_predare_arhiva", false),
+          "Confirmă primirea dosarelor cu responsabilul depozitului de arhivă"
         ])
       ] },
     { id: "ft_pmb_ru_promovare", verticalId: "vert_pmb_ru", name: "Promovare în grad profesional", frequency: "punctual", status: "activ", anexaArchiveFolders: { anx_pmb_ru_pv_concurs: "af_pmb_ru_cariera" },
@@ -2744,6 +2760,15 @@ window.SCRIPTICA_MOCK = {
       { type: "text_long", label: "Candidați și punctaje", required: true, help: "Un candidat pe rând: nume — punctaj — admis/respins.", rows: 5 },
       { type: "boolean", label: "S-au înregistrat contestații", required: false, help: "" }
     ]),
+    anexa("anx_pmb_ru_inventar", "Inventarul documentelor predate la depozitul de arhivă", "vert_pmb_ru", [
+      { type: "section_title", text: "Predarea la depozit" },
+      { type: "text_short", label: "Compartimentul care predă", required: true, help: "", maxLength: 160 },
+      { type: "text_short", label: "Anii extremi ai documentelor", required: true, help: "ex. 2020–2021", maxLength: 40 },
+      { type: "number", label: "Număr dosare predate", required: true, help: "", ref: "NR_DOSARE" },
+      { type: "text_long", label: "Conținutul pe scurt al dosarelor", required: true, help: "", rows: 3 },
+      { type: "date", label: "Data predării", required: true, help: "" },
+      { type: "text_short", label: "Responsabilul depozitului de arhivă", required: true, help: "", maxLength: 120 }
+    ]),
     anexa("anx_pmb_ru_raport_disciplina", "Raport al comisiei de disciplină", "vert_pmb_ru", [
       { type: "section_title", text: "Concluziile cercetării administrative" },
       { type: "text_long", label: "Fapta sesizată și încadrarea", required: true, help: "", rows: 4 },
@@ -2845,7 +2870,7 @@ window.SCRIPTICA_MOCK = {
       /* IX. Direcția Juridic */
       { id: "af_pmb_dj_avize", group: "Solicitări Interne", code: "IX.a.1", directieCode: "IX", directie: "Direcția Juridic", serviciuCode: "a", serviciu: "Serviciul Avizare și Contencios", retention: "10 ani", name: "IX.a.1 — Avize de legalitate și vize CFPP", docTypeIds: ["dt_pmb_aviz_legalitate", "dt_pmb_viza_cfpp"], children: [] },
       /* X. Direcția Managementul Resurselor Umane — conform nomenclatorului de stat */
-      { id: "af_pmb_ru_inventare", group: "Resurse Umane", code: "X.a.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "a", serviciu: "Serviciul Salarizare și Organizare", retention: "Permanent", name: "X.a.1 — Inventarele și procesele-verbale de predare-primire a documentelor create de compartimente la depozitul de arhivă", docTypeIds: [], children: [] },
+      { id: "af_pmb_ru_inventare", group: "Resurse Umane", code: "X.a.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "a", serviciu: "Serviciul Salarizare și Organizare", retention: "Permanent", name: "X.a.1 — Inventarele și procesele-verbale de predare-primire a documentelor create de compartimente la depozitul de arhivă", docTypeIds: ["dt_pmb_inventar_predare", "dt_pmb_pv_predare_arhiva"], children: [] },
       { id: "af_pmb_ru_organizare", group: "Resurse Umane", code: "X.a.2", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "a", serviciu: "Serviciul Salarizare și Organizare", retention: "Permanent", name: "X.a.2 — Documentație privind organizarea instituției: R.O.F., stat de funcții, scheme de încadrare", docTypeIds: ["dt_pmb_fisa_post"], children: [] },
       { id: "af_pmb_ru_recrutare", group: "Resurse Umane", code: "X.b.1", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "b", serviciu: "Serviciul Recrutare și Evaluare", retention: "Permanent", name: "X.b.1 — Recrutare și concursuri (dosarele concursurilor)", docTypeIds: ["dt_pmb_anunt_concurs", "dt_pmb_dosar_inscriere", "dt_pmb_pv_concurs", "dt_pmb_raport_concurs", "dt_pmb_act_numire"], children: [] },
       { id: "af_pmb_ru_cariera", group: "Resurse Umane", code: "X.b.2", directieCode: "X", directie: "Direcția Managementul Resurselor Umane", serviciuCode: "b", serviciu: "Serviciul Recrutare și Evaluare", retention: "10 ani", name: "X.b.2 — Evoluție în carieră și evaluarea performanțelor", docTypeIds: ["dt_pmb_cerere_promovare", "dt_pmb_raport_evaluare", "dt_pmb_dispozitie_pg"], children: [] },
@@ -2881,7 +2906,7 @@ window.SCRIPTICA_MOCK = {
     ] },
     moduleAssignmentsVersion: 1,
     moduleAssignments: [
-      assignment("vert_pmb_ru", ["ft_pmb_ru_recrutare", "ft_pmb_ru_disciplina", "ft_pmb_ru_promovare"]),
+      assignment("vert_pmb_ru", ["ft_pmb_ru_recrutare", "ft_pmb_ru_disciplina", "ft_pmb_ru_promovare", "ft_pmb_ru_predare_arhiva"]),
       assignment("vert_pmb_achizitii", ["ft_pmb_ap_directa", "ft_pmb_ap_simplificata", "ft_pmb_ap_act_aditional"]),
       assignment("vert_pmb_investitii", ["ft_pmb_inv_obiectiv_nou", "ft_pmb_inv_executie", "ft_pmb_inv_reparatii"]),
       assignment("vert_pmb_solicitari_externe", ["ft_pmb_ext_petitie", "ft_pmb_ext_544", "ft_pmb_ext_cu"]),
@@ -2927,6 +2952,8 @@ window.SCRIPTICA_MOCK = {
       "Promovare grad principal — 6 funcționari DGAP", DGAP, "Andrei Constantin", DMRU, "2026-04-01", 2, 1, "analiza", [501]),
     fi("fi_pmb_ru_05", "vert_pmb_ru", "pmb_ru", "ft_pmb_ru_promovare", "Promovare în grad profesional",
       "Promovare grad superior — Direcția Juridic", DJ, "Gabriela Marin", DMRU, "2026-01-12", 4, 4, "finalizat", [502]),
+    fi("fi_pmb_ru_06", "vert_pmb_ru", "pmb_ru", "ft_pmb_ru_predare_arhiva", "Predare-primire dosare la depozitul de arhivă",
+      "Predare dosare de concurs 2020–2021 la depozitul de arhivă", "Serviciul Recrutare și Evaluare", "Elena Radu", DMRU, "2026-04-06", 2, 1, "in_verificare", [501, 502]),
 
     fi("fi_pmb_ap_01", "vert_pmb_achizitii", "pmb_achizitii", "ft_pmb_ap_simplificata", "Procedură simplificată",
       "Servicii de mentenanță iluminat public — sector central", "Luxten Lighting Company S.A.", "Andrei Constantin", DGAP, "2026-02-23", 4, 3, "in_verificare", [503]),
@@ -4813,6 +4840,7 @@ window.SCRIPTICA_MOCK = {
     d("doc_pmb_003", "fi_pmb_ru_01", "pmb_ru", "X.b.1_pv-selectie-dosare_nr-PV-3-2026_2026-04-08.pdf", "2026-04-08T16:20:00", "generat", "Proces-verbal al comisiei de concurs", "Comisia de concurs", "PV-3/2026", "2026-04-08", "recrutare", "Selecția dosarelor: 4 candidați admiși, 1 respins pentru lipsa vechimii în specialitate.", 3),
     d("doc_pmb_004", "fi_pmb_ru_03", "pmb_ru", "X.c.1_sesizare-disciplinara_nr-4412-2026_2026-03-24.pdf", "2026-03-25T09:10:00", "registratura", "Sesizare disciplinară", "Direcția Generală Achiziții Publice", "4412/2026", "2026-03-24", "disciplina", "Sesizare privind neîndeplinirea atribuțiilor de serviciu; îndeplinește condițiile de formă din HG 1344/2007.", 4),
     d("doc_pmb_005", "fi_pmb_ru_05", "pmb_ru", "X.b.2_dispozitie-pg-promovare-dj_nr-418-2026_2026-03-06.pdf", "2026-03-06T11:30:00", "generat", "Dispoziție a Primarului General", "Primarul General", "418/2026", "2026-03-06", "cariera", "Dispoziție de promovare în grad profesional superior pentru 2 funcționari publici din Direcția Juridic.", 2),
+    d("doc_pmb_027", "fi_pmb_ru_06", "pmb_ru", "X.a.1_inventar-dosare-concurs-2020-2021_nr-INV-3-2026_2026-04-08.pdf", "2026-04-08T12:00:00", "generat", "Inventar de predare-primire", "Serviciul Recrutare și Evaluare", "INV-3/2026", "2026-04-08", "arhivare", "Inventarul celor 42 de dosare de concurs din anii extremi 2020–2021, pregătite pentru predarea la depozitul de arhivă conform indicativului X.a.1.", 5),
 
     d("doc_pmb_006", "fi_pmb_ap_01", "pmb_achizitii", "V.a.1_referat-necesitate-iluminat-public_nr-RN-77-2026_2026-02-20.pdf", "2026-02-23T09:00:00", "generat", "Referat de necesitate", "Direcția Utilități Publice", "RN-77/2026", "2026-02-20", "initiere", "Referat de necesitate pentru servicii de mentenanță iluminat public; valoare estimată 1.840.000 RON fără TVA.", 5),
     d("doc_pmb_007", "fi_pmb_ap_01", "pmb_achizitii", "V.a.1_documentatie-atribuire-iluminat_nr-DA-19-2026_2026-03-18.pdf", "2026-03-18T13:15:00", "generat", "Documentație de atribuire", "DGAP", "DA-19/2026", "2026-03-18", "documentatie", "Fișa de date, caiet de sarcini și DUAE — procedură simplificată, criteriul „cel mai bun raport calitate-preț”.", 48),
