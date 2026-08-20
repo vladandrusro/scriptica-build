@@ -10,10 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/tokens.css?v=14">
+  <link rel="stylesheet" href="css/tokens.css?v=16">
   <link rel="stylesheet" href="css/base.css?v=14">
-  <link rel="stylesheet" href="css/components.css?v=14">
-  <link rel="stylesheet" href="css/administrare.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=20">
+  <link rel="stylesheet" href="css/administrare.css?v=20">
+  <link rel="stylesheet" href="css/client-onboarding.css?v=2">
+  <link rel="stylesheet" href="css/super-admin.css?v=24">
 </head>
 <body>
   <div class="shell shell--messaging-closed">
@@ -91,7 +93,8 @@
       <div class="admin-tabs" id="admin-tabs" role="tablist" aria-label="Secțiuni de administrare">
         <button type="button" class="admin-tab" id="tab-utilizatori-interni" role="tab" data-tab="utilizatori-interni" aria-selected="false" aria-controls="panel-utilizatori-interni">Utilizatori interni</button>
         <button type="button" class="admin-tab" id="tab-utilizatori-externi" role="tab" data-tab="utilizatori-externi" aria-selected="false" aria-controls="panel-utilizatori-externi">Utilizatori externi</button>
-        <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Tipuri de Situații Contabile</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-situatii" role="tab" data-tab="tipuri-situatii" aria-selected="false" aria-controls="panel-tipuri-situatii">Șabloane de Situații Contabile</button>
+        <button type="button" class="admin-tab" id="tab-tipuri-audit" role="tab" data-tab="tipuri-audit" aria-selected="false" aria-controls="panel-tipuri-audit">Șabloane de Misiuni de Audit</button>
         <button type="button" class="admin-tab admin-tab--disabled" id="tab-solicitari-interne" role="tab" data-tab="solicitari-interne" aria-selected="false" aria-disabled="true" title="Disponibil într-o versiune viitoare">Tipuri de solicitări interne</button>
         <button type="button" class="admin-tab" id="tab-tipuri-anexe" role="tab" data-tab="tipuri-anexe" aria-selected="false" aria-controls="panel-tipuri-anexe">Tipuri de Anexe</button>
         <button type="button" class="admin-tab" id="tab-taguri" role="tab" data-tab="taguri" aria-selected="false" aria-controls="panel-taguri">Taguri</button>
@@ -148,19 +151,24 @@
             <label for="ue-search" class="sr-only">Caută client</label>
             <input id="ue-search" class="input" type="search" placeholder="Caută după nume, CUI, email sau telefon" autocomplete="off">
           </div>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="ue-add" class="btn btn--primary" type="button">
+            Client nou
+            <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+          </button>
         </div>
-        <p class="admin-helper">Clienții sunt adăugați prin fluxul de colaborare, nu din panoul de administrare.</p>
+        <p class="admin-helper">Configurează identitatea clientului, persoanele de contact, accesul în Scriptica și toate sursele autorizate pentru documente.</p>
         <div class="table-wrap" id="ue-table-wrap">
           <table class="admin-table">
-            <thead>
+            <thead id="ue-thead">
               <tr>
                 <th style="min-width:220px;">Client</th>
-                <th style="width:180px;">Contact</th>
-                <th style="width:130px;">CNP/CUI</th>
-                <th style="width:150px;">Telefon</th>
-                <th>Email</th>
-                <th style="width:160px;">Tip</th>
+                <th style="width:180px;">Contact principal</th>
+                <th style="width:140px;">Identificator</th>
+                <th>Surse documente</th>
+                <th style="width:160px;">Fluxuri</th>
                 <th style="width:110px;">Status</th>
+                <th style="width:80px;">Acțiuni</th>
               </tr>
             </thead>
             <tbody id="ue-tbody"></tbody>
@@ -177,7 +185,7 @@
         <div class="admin-toolbar">
           <div class="filter-input-search">
             <span class="material-symbols-outlined" aria-hidden="true">search</span>
-            <label for="ts-search" class="sr-only">Caută tip de situație</label>
+            <label for="ts-search" class="sr-only">Caută șablon de situație</label>
             <input id="ts-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
           </div>
           <label for="ts-status" class="sr-only">Status</label>
@@ -217,7 +225,58 @@
         </div>
         <div class="table-empty table-wrap" id="ts-empty" role="status">
           <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
-          <p>Niciun tip de situație nu corespunde filtrelor selectate.</p>
+          <p>Niciun șablon de situație nu corespunde filtrelor selectate.</p>
+        </div>
+      </section>
+
+      <!-- TAB 3b: Tipuri de Misiuni de Audit (același component, domain='audit') -->
+      <section class="admin-panel" id="panel-tipuri-audit" role="tabpanel" aria-labelledby="tab-tipuri-audit">
+        <div class="admin-toolbar">
+          <div class="filter-input-search">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="tma-search" class="sr-only">Caută șablon de misiune de audit</label>
+            <input id="tma-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
+          </div>
+          <label for="tma-status" class="sr-only">Status</label>
+          <select id="tma-status" class="select" style="width:140px;">
+            <option value="">Toate</option>
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+          <label for="tma-freq" class="sr-only">Periodicitate</label>
+          <select id="tma-freq" class="select" style="width:160px;">
+            <option value="">Toate</option>
+            <option value="anual">Anual</option>
+            <option value="semestrial">Semestrial</option>
+            <option value="trimestrial">Trimestrial</option>
+            <option value="treime">Pe treimi</option>
+            <option value="lunar">Lunar</option>
+            <option value="la_cerere">La cerere (neperiodică)</option>
+          </select>
+          <div class="admin-toolbar__spacer"></div>
+          <button id="tma-add" class="btn btn--primary" type="button">
+            Adaugă
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          </button>
+        </div>
+        <div class="table-wrap" id="tma-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width:200px;">Nume</th>
+                <th>Descriere</th>
+                <th style="width:130px;">Periodicitate</th>
+                <th style="width:190px;">Pași</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:100px;">Acțiuni</th>
+              </tr>
+            </thead>
+            <tbody id="tma-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-empty table-wrap" id="tma-empty" role="status">
+          <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+          <p>Niciun șablon de misiune de audit nu corespunde filtrelor selectate.</p>
         </div>
       </section>
 
@@ -229,9 +288,17 @@
             <label for="ta-search" class="sr-only">Caută anexă</label>
             <input id="ta-search" class="input" type="search" placeholder="Caută după nume" autocomplete="off">
           </div>
+          <label for="ta-vertical" class="sr-only">Verticală</label>
+          <select id="ta-vertical" class="select admin-anexa-filter">
+            <option value="">Toate verticalele</option>
+          </select>
+          <label for="ta-activity" class="sr-only">Tip de activitate</label>
+          <select id="ta-activity" class="select admin-anexa-filter">
+            <option value="">Toate tipurile de activitate</option>
+          </select>
           <label for="ta-status" class="sr-only">Status</label>
-          <select id="ta-status" class="select" style="width:140px;">
-            <option value="">Toate</option>
+          <select id="ta-status" class="select" style="width:calc(var(--space-8) * 2.5);">
+            <option value="">Active și inactive</option>
             <option value="activ">Activ</option>
             <option value="inactiv">Inactiv</option>
           </select>
@@ -245,12 +312,13 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th style="min-width:240px;">Nume anexă</th>
-                <th style="width:90px;">Câmpuri</th>
+                <th style="min-width:220px;">Nume anexă</th>
+                <th style="min-width:170px;">Verticale</th>
                 <th style="min-width:220px;">Folosită în</th>
-                <th style="width:150px;">Ultima modificare</th>
+                <th style="width:120px;">Relații</th>
+                <th style="width:80px;">Câmpuri</th>
                 <th style="width:110px;">Status</th>
-                <th style="width:130px;">Acțiuni</th>
+                <th style="width:170px;">Acțiuni</th>
               </tr>
             </thead>
             <tbody id="ta-tbody"></tbody>
@@ -392,7 +460,7 @@
       </button>
 
       <header class="modal__header">
-        <h2 class="modal__title" id="mt-title">Tip de situație contabilă</h2>
+        <h2 class="modal__title" id="mt-title">Șablon de situație contabilă</h2>
       </header>
 
       <form class="modal__body" novalidate>
@@ -409,7 +477,7 @@
 
         <div class="admin-form-row">
           <div class="form-field" data-field="frecventa">
-            <label class="form-label" for="mt-frecventa">Frecvență*</label>
+            <label class="form-label" for="mt-frecventa" id="mt-frecventa-label">Frecvență*</label>
             <select id="mt-frecventa" class="select">
               <option value="">Selectează frecvența...</option>
               <option value="lunar">Lunar</option>
@@ -439,12 +507,59 @@
             </button>
           </div>
         </div>
+
+        <div class="form-field" data-field="formule" id="mt-formule-field" hidden>
+          <span class="form-label">Formule automate</span>
+          <span class="form-helper">Calcule automate între câmpuri numerice (cu cod „ref") ale anexelor atașate. Se aplică tuturor misiunilor de acest tip.</span>
+          <div class="admin-formulas" id="mt-formulas"></div>
+          <button type="button" class="admin-add-btn" id="mt-add-formula">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            Adaugă formulă
+          </button>
+        </div>
       </form>
 
       <footer class="modal__footer">
         <span class="modal__footer-helper">* Câmpuri obligatorii</span>
         <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
         <button type="button" class="btn btn--primary" id="mt-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: Formulă automată (sub-modal al editorului de tip) -->
+  <div class="modal" id="modal-formula" role="dialog" aria-modal="true" aria-labelledby="mf-title" aria-hidden="true">
+    <div class="modal__dialog" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="mf-title">Formulă automată</h2>
+        <p class="modal__subtitle">Rezultatul se calculează automat la completarea anexei.</p>
+      </header>
+      <form class="modal__body" novalidate>
+        <div class="form-field" data-field="mf-result">
+          <label class="form-label" for="mf-result">Câmp-rezultat*<span class="field-info" tabindex="0" role="note" aria-label="Ce înseamnă câmpul-rezultat"><span class="material-symbols-outlined" aria-hidden="true">info</span><span class="field-info__tip" role="tooltip">Câmpul numeric din anexă în care <strong>aterizează rezultatul calculat automat</strong> al formulei. La completare se umple singur din câmpurile-sursă și poate fi suprascris manual de auditor.</span></span></label>
+          <select id="mf-result" class="select"></select>
+          <span class="form-helper">Câmpul numeric (cu „ref") unde aterizează rezultatul.</span>
+          <span class="form-error" role="alert"></span>
+        </div>
+        <div class="form-field" data-field="mf-expr">
+          <label class="form-label" for="mf-expr">Expresie*</label>
+          <input id="mf-expr" type="text" class="input" autocomplete="off" placeholder="ex. anx_criterii.PROB * anx_criterii.IMP">
+          <span class="form-helper">Folosește codurile de mai jos, operatorii + − * / și paranteze.</span>
+          <span class="form-error" role="alert"></span>
+        </div>
+        <div class="form-field">
+          <span class="form-label">Câmpuri disponibile</span>
+          <span class="form-helper">Click pe un câmp pentru a-l insera în expresie.</span>
+          <div class="admin-formula-refs" id="mf-refs"></div>
+        </div>
+      </form>
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">* Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
+        <button type="button" class="btn btn--primary" id="mf-save">Salvează formula</button>
       </footer>
     </div>
   </div>
@@ -480,6 +595,24 @@
     </div>
   </div>
 
+  <!-- Modal: impact și relații anexă -->
+  <div class="modal" id="modal-anexa-impact" role="dialog" aria-modal="true" aria-labelledby="mai-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide" role="document">
+      <button type="button" class="modal__close" data-modal-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+      <header class="modal__header">
+        <h2 class="modal__title" id="mai-title">Unde este folosită anexa</h2>
+        <p class="modal__subtitle" id="mai-subtitle"></p>
+      </header>
+      <div class="modal__body" id="mai-body"></div>
+      <footer class="modal__footer">
+        <span class="modal__footer-helper">Relațiile sunt calculate automat din fluxuri și formule.</span>
+        <button type="button" class="btn btn--primary" data-modal-close>Închide</button>
+      </footer>
+    </div>
+  </div>
+
   <!-- Modal: Tag (adăugare/editare) -->
   <div class="modal" id="modal-tag" role="dialog" aria-modal="true" aria-labelledby="mtag-title" aria-hidden="true">
     <div class="modal__dialog modal__dialog--narrow" role="document">
@@ -502,6 +635,212 @@
       <footer class="modal__footer">
         <button type="button" class="btn btn--ghost" data-modal-cancel>Anulează</button>
         <button type="button" class="btn btn--primary" id="mtag-save">Salvează</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal: onboarding client extern -->
+  <div class="modal co-modal" id="modal-client-onboarding" role="dialog" aria-modal="true" aria-labelledby="co-title" aria-hidden="true">
+    <div class="modal__dialog modal__dialog--wide co-modal__dialog" role="document">
+      <button type="button" class="modal__close" data-co-close aria-label="Închide fereastra">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+
+      <header class="modal__header co-modal__header">
+        <div>
+          <h2 class="modal__title" id="co-title">Client nou</h2>
+          <p class="modal__subtitle">Creează profilul folosit pentru fluxuri, conversații, documente și accesul clientului.</p>
+        </div>
+        <ol class="co-progress" aria-label="Pașii configurării">
+          <li class="co-progress__item is-current" data-co-progress="1"><span>1</span><b>Identitate</b></li>
+          <li class="co-progress__item" data-co-progress="2"><span>2</span><b>Contacte</b></li>
+          <li class="co-progress__item" data-co-progress="3"><span>3</span><b>Acces</b></li>
+          <li class="co-progress__item" data-co-progress="4"><span>4</span><b>Colaborare</b></li>
+          <li class="co-progress__item" data-co-progress="5"><span>5</span><b>Verificare</b></li>
+        </ol>
+      </header>
+
+      <form class="modal__body co-modal__body" id="co-form" novalidate>
+        <div class="co-error-summary" id="co-error-summary" role="alert" hidden></div>
+
+        <section class="co-step" data-co-step="1" aria-labelledby="co-step-1-title">
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">domain</span>
+            <div><h3 id="co-step-1-title">Identitatea clientului</h3><p>Datele stabile care vor lega toate fluxurile și documentele aceluiași client.</p></div>
+          </div>
+          <div class="co-grid">
+            <div class="form-field" data-co-field="personType">
+              <label class="form-label" for="co-person-type">Tip client*</label>
+              <select id="co-person-type" class="select">
+                <option value="">Selectează tipul...</option>
+                <option value="pj">Persoană juridică</option>
+                <option value="pfa">PFA</option>
+                <option value="pf">Persoană fizică</option>
+                <option value="institutie">Instituție publică</option>
+              </select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="identifier">
+              <label class="form-label" for="co-identifier">CUI / CNP / identificator*</label>
+              <input id="co-identifier" type="text" class="input" autocomplete="off" placeholder="ex. RO18234561">
+              <span class="form-helper">Identificatorul trebuie să fie unic în portofoliul firmei.</span>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="legalName">
+              <label class="form-label" for="co-legal-name">Denumire legală*</label>
+              <input id="co-legal-name" type="text" class="input" autocomplete="organization" placeholder="ex. Canvas S.R.L.">
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="displayName">
+              <label class="form-label" for="co-display-name">Denumire afișată</label>
+              <input id="co-display-name" type="text" class="input" autocomplete="off" placeholder="Se completează automat din denumirea legală">
+            </div>
+            <div class="form-field" data-co-field="country">
+              <label class="form-label" for="co-country">Țară*</label>
+              <select id="co-country" class="select">
+                <option value="România">România</option>
+                <option value="Altă țară UE">Altă țară UE</option>
+                <option value="Țară non-UE">Țară non-UE</option>
+              </select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="startDate">
+              <label class="form-label" for="co-start-date">Colaborare începând cu*</label>
+              <input id="co-start-date" type="date" class="input">
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field co-grid__full" data-co-field="address">
+              <label class="form-label" for="co-address">Sediu / adresă</label>
+              <input id="co-address" type="text" class="input" autocomplete="street-address" placeholder="Adresă completă">
+            </div>
+          </div>
+          <div class="co-profile-schema" id="co-profile-schema">
+            <div class="co-profile-schema__head">
+              <span class="material-symbols-outlined" aria-hidden="true">dynamic_form</span>
+              <div><h4>Date configurate pentru profil</h4><p>Câmpurile sunt stabilite la nivelul contului de business.</p></div>
+            </div>
+            <div id="co-profile-fields"></div>
+          </div>
+        </section>
+
+        <section class="co-step" data-co-step="2" aria-labelledby="co-step-2-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">contacts</span>
+            <div><h3 id="co-step-2-title">Contacte și expeditori autorizați</h3><p>Un client poate avea mai multe persoane, adrese de e-mail și numere de telefon sau WhatsApp.</p></div>
+          </div>
+          <div class="co-contact-list" id="co-contact-list"></div>
+          <button type="button" class="admin-add-btn co-add-contact" id="co-add-contact">
+            <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+            Adaugă persoană de contact
+          </button>
+        </section>
+
+        <section class="co-step" data-co-step="3" aria-labelledby="co-step-3-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+            <div><h3 id="co-step-3-title">Acces în Scriptica</h3><p>Alege cine primește cont și ce poate face în fluxurile acestui client.</p></div>
+          </div>
+          <div class="co-access-list" id="co-access-list"></div>
+        </section>
+
+        <section class="co-step" data-co-step="4" aria-labelledby="co-step-4-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">hub</span>
+            <div><h3 id="co-step-4-title">Colaborare și intrarea documentelor</h3><p>Configurează responsabilul, fluxurile active și traseul fiecărui document primit.</p></div>
+          </div>
+
+          <div class="co-grid">
+            <div class="form-field" data-co-field="responsible">
+              <label class="form-label" for="co-responsible">Responsabil intern*</label>
+              <select id="co-responsible" class="select"></select>
+              <span class="form-error" role="alert"></span>
+            </div>
+            <div class="form-field" data-co-field="status">
+              <label class="form-label" for="co-status">Status după salvare</label>
+              <select id="co-status" class="select">
+                <option value="activ">Activ</option>
+                <option value="inactiv">Inactiv</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field" data-co-field="services">
+            <span class="form-label">Fluxuri și servicii*</span>
+            <span class="form-helper">Selectează cel puțin un flux. Acesta va deveni disponibil pentru client după activare.</span>
+            <div class="co-choice-grid" id="co-service-list"></div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="form-field" data-co-field="sources">
+            <span class="form-label">Surse autorizate pentru documente*</span>
+            <div class="co-source-grid" id="co-source-list">
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="scriptica" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">forum</span>
+                <span><b>Conversațiile din Scriptica</b><small>Fișierele încărcate în chat rămân legate direct de flux.</small></span>
+              </label>
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="email" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+                <span><b>E-mail</b><small>Expeditorul este identificat dintre adresele autorizate ale contactelor.</small></span>
+              </label>
+              <label class="co-source-card">
+                <input type="checkbox" name="co-source" value="whatsapp" checked>
+                <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+                <span><b>WhatsApp</b><small>Numărul expeditorului identifică persoana și clientul; contextul stabilește fluxul.</small></span>
+              </label>
+            </div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="form-field" data-co-field="notifications">
+            <span class="form-label">Canale pentru notificări automate*</span>
+            <div class="checkbox-group co-notification-channels">
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="scriptica" checked> Scriptica</label>
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="email" checked> E-mail</label>
+              <label class="checkbox"><input type="checkbox" name="co-notification" value="whatsapp" checked> WhatsApp</label>
+            </div>
+            <span class="form-error" role="alert"></span>
+          </div>
+
+          <div class="co-routing-note">
+            <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+            <div><b>Regulă de siguranță</b><p>Dacă expeditorul este cunoscut, dar fluxul nu poate fi stabilit sigur, documentul ajunge în „De clasificat”. Un expeditor necunoscut nu este asociat automat niciunui client.</p></div>
+          </div>
+        </section>
+
+        <section class="co-step" data-co-step="5" aria-labelledby="co-step-5-title" hidden>
+          <div class="co-step__intro">
+            <span class="co-step__icon material-symbols-outlined" aria-hidden="true">fact_check</span>
+            <div><h3 id="co-step-5-title">Verificare și activare</h3><p>Confirmă profilul complet înainte ca persoanele invitate și sursele de documente să devină active.</p></div>
+          </div>
+          <div class="co-review" id="co-review"></div>
+          <div class="form-field" data-co-field="confirmation">
+            <label class="checkbox co-confirmation">
+              <input type="checkbox" id="co-confirm">
+              Am verificat identitatea, expeditorii autorizați, permisiunile și fluxurile clientului.
+            </label>
+            <span class="form-error" role="alert"></span>
+          </div>
+        </section>
+      </form>
+
+      <footer class="modal__footer co-modal__footer">
+        <span class="modal__footer-helper" id="co-footer-helper">Pasul 1 din 5 · * Câmpuri obligatorii</span>
+        <button type="button" class="btn btn--ghost" data-co-close>Anulează</button>
+        <button type="button" class="btn btn--ghost" id="co-save-draft">Salvează ciornă</button>
+        <button type="button" class="btn btn--secondary" id="co-back" hidden>
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+          Înapoi
+        </button>
+        <button type="button" class="btn btn--primary" id="co-next">
+          Continuă
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+        </button>
+        <button type="button" class="btn btn--primary" id="co-activate" hidden>
+          Activează clientul
+          <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+        </button>
       </footer>
     </div>
   </div>
@@ -531,10 +870,12 @@
   <!-- Toast stack -->
   <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="js/shell.js?v=17"></script>
-  <script src="js/mock-data.js?v=17"></script>
-  <script src="js/timer.js?v=17"></script>
-  <script src="js/dashboard.js?v=17"></script>
-  <script src="js/administrare.js?v=17"></script>
+  <script src="js/shell.js?v=35"></script>
+  <script src="js/mock-data.js?v=55"></script>
+  <script src="js/beneficiary-profile.js?v=2"></script>
+  <script src="js/timer.js?v=30"></script>
+  <script src="js/dashboard.js?v=34"></script>
+  <script src="js/administrare.js?v=36"></script>
+  <script src="js/client-onboarding.js?v=3"></script>
 </body>
 </html>

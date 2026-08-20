@@ -12,13 +12,13 @@
 
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/prezentare.css">
+  <link rel="stylesheet" href="css/prezentare.css?v=4">
 </head>
 <body class="prez-body">
 
   <div class="prez-deck" role="region" aria-label="Prezentare Scriptica">
 
-    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 3">
+    <section class="prez-slide is-active" data-slide="1" aria-label="Slide 1 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-1.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -28,7 +28,7 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 3">
+    <section class="prez-slide" data-slide="2" aria-label="Slide 2 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-2.png" alt="" class="prez-image">
         <div class="prez-fallback">
@@ -38,12 +38,539 @@
       </div>
     </section>
 
-    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 3">
+    <section class="prez-slide" data-slide="3" aria-label="Slide 3 din 7">
       <div class="prez-image-wrapper">
         <img src="assets/prezentare/slide-3.png" alt="" class="prez-image">
         <div class="prez-fallback">
           <span class="material-symbols-outlined" aria-hidden="true">image</span>
           <span class="prez-fallback-text">Imaginea slide-3.png lipsește din assets/prezentare/</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content prez-slide--reframed" data-slide="4" aria-label="Slide 4 din 7">
+      <div class="prez-reframe">
+        <div class="prez-content__head">
+          <span class="prez-num">04</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Un singur produs, configurat pentru fiecare tip de client</h2>
+            <p class="prez-subtitle">Scriptica pornește de la modelul de business al organizației, nu de la o listă generică de funcții.</p>
+          </div>
+        </div>
+
+        <div class="prez-types" aria-label="Exemple de tipuri de clienți">
+          <article class="prez-type va-mov">
+            <span class="prez-type__number">01</span>
+            <span class="material-symbols-outlined prez-type__icon" aria-hidden="true">calculate</span>
+            <div class="prez-type__label">Tip de client</div>
+            <h3>Contabilitate</h3>
+            <div class="prez-type__chain"><b>Situații contabile</b><span>Închidere lunară · Salarizare · Declarații</span></div>
+          </article>
+          <article class="prez-type va-albastru">
+            <span class="prez-type__number">02</span>
+            <span class="material-symbols-outlined prez-type__icon" aria-hidden="true">verified_user</span>
+            <div class="prez-type__label">Tip de client</div>
+            <h3>Audit public intern</h3>
+            <div class="prez-type__chain"><b>Misiuni de audit</b><span>Regularitate · Sistem · Performanță</span></div>
+          </article>
+          <article class="prez-type va-auriu">
+            <span class="prez-type__number">03</span>
+            <span class="material-symbols-outlined prez-type__icon" aria-hidden="true">construction</span>
+            <div class="prez-type__label">Tip de client</div>
+            <h3>Construcții</h3>
+            <div class="prez-type__chain"><b>Proiecte</b><span>Ofertare · Contractare · Execuție</span></div>
+          </article>
+        </div>
+
+        <div class="prez-thesis">
+          <span class="material-symbols-outlined" aria-hidden="true">hub</span>
+          <div><b>Motorul rămâne același.</b><span>Se schimbă vocabularul, verticalele și fluxurile primite de fiecare organizație.</span></div>
+        </div>
+      </div>
+      <div class="prez-content">
+        <div class="prez-content__head">
+          <span class="prez-num">04</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Ce poate fiecare utilizator</h2>
+            <p class="prez-subtitle">Patru tipuri de cont. Două axe separate: senioritate și permisiuni.</p>
+          </div>
+        </div>
+
+        <div class="prez-roles">
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Scriptica Super Admin</div>
+            <div class="prez-role-card__desc">Definește pachetul fiecărui tip de client. Administrează platforma.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Tipuri de clienți: verticale + șabloane implicite</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Registrul de fluxuri: verticale noi, navigabile instant</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Structura arhivei + regulile de sortare A.I.</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Dashboard-ul Acasă + coloanele tabelelor</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Conturi business: planuri, contracte, feature flags</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Monitorizare: uptime · downtime pe cauză · semnal upsell</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Business Admin <span class="prez-role-card__sub">(admin local)</span></div>
+            <div class="prez-role-card__desc">Constructorul principal de fluxuri.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Utilizatori interni / externi</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Funcție + nivel de senioritate</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Construiește anexe</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Adaptează fluxurile primite la înrolare (pas-cu-pas)</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Misiuni de audit</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Tip de cont: Administrator / Angajat + valabilitate acces</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Backup local</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Angajat</div>
+            <div class="prez-role-card__desc">Execută munca.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Lucrează situații contabile</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Time tracking</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Chat</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Documente cu sortare AI</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Misiuni de audit (lucru în echipă)</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+            </ul>
+          </article>
+
+          <article class="prez-role-card">
+            <div class="prez-role-card__name">Customer</div>
+            <div class="prez-role-card__desc">Parte externă.</div>
+            <ul class="prez-caps">
+              <li class="prez-cap"><span class="prez-cap__text">Încarcă / vede documentele proprii</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Vede stadiul situației / misiunii</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">Chat</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+              <li class="prez-cap"><span class="prez-cap__text">La audit = entitate auditată</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+            </ul>
+          </article>
+        </div>
+
+        <article class="prez-role-card prez-role-card--authority">
+          <div class="prez-role-card__name">Autoritate Decidentă <span class="prez-role-tag">utilizator intern · senioritate maximă</span></div>
+          <div class="prez-role-card__desc">Nivel intern de senioritate maximă — vede tot, inclusiv rapoartele de audit și aprobarea misiunilor.</div>
+          <ul class="prez-caps prez-caps--row">
+            <li class="prez-cap"><span class="prez-cap__text">Vede toate situațiile și misiunile</span><span class="prez-badge prez-badge--standard">Standard</span></li>
+            <li class="prez-cap"><span class="prez-cap__text">Acces la rapoartele de audit</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+            <li class="prez-cap"><span class="prez-cap__text">Aprobă / Cere modificări / Respinge misiunile</span><span class="prez-badge prez-badge--tier">Tier</span></li>
+          </ul>
+        </article>
+
+        <div class="prez-summary">
+          <span class="prez-summary__item"><b>Senioritate</b> = experiență (etichetă).</span>
+          <span class="prez-summary__item"><b>Permisiune</b> = ce ai voie (separat).</span>
+          <span class="prez-summary__item"><b>Tip de client</b> = pachetul primit la înrolare.</span>
+          <span class="prez-summary__item"><b>Gating comercial</b> = Super Admin alege ce primește fiecare client.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content prez-slide--dense prez-slide--reframed" data-slide="5" aria-label="Slide 5 din 7">
+      <div class="prez-reframe prez-reframe--dense">
+        <div class="prez-content__head">
+          <span class="prez-num">05</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Tipul de client este rădăcina configurației</h2>
+            <p class="prez-subtitle">Fiecare nivel răspunde la o întrebare diferită și pregătește nivelul următor.</p>
+          </div>
+        </div>
+
+        <div class="prez-hierarchy" role="list" aria-label="Ierarhia configurației">
+          <article class="prez-hierarchy__item is-root" role="listitem">
+            <span class="prez-hierarchy__num">1</span>
+            <span class="material-symbols-outlined" aria-hidden="true">category</span>
+            <div><small>Pentru cine configurăm?</small><h3>Tip de client</h3><p>Contabilitate · Audit · Construcții</p></div>
+          </article>
+          <span class="material-symbols-outlined prez-hierarchy__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-hierarchy__item" role="listitem">
+            <span class="prez-hierarchy__num">2</span>
+            <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+            <div><small>Ce fel de muncă face?</small><h3>Verticale</h3><p>Situații · Misiuni · Proiecte</p></div>
+          </article>
+          <span class="material-symbols-outlined prez-hierarchy__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-hierarchy__item" role="listitem">
+            <span class="prez-hierarchy__num">3</span>
+            <span class="material-symbols-outlined" aria-hidden="true">schema</span>
+            <div><small>Cum se execută munca?</small><h3>Fluxuri</h3><p>Pași · sarcini · termene · anexe</p></div>
+          </article>
+          <span class="material-symbols-outlined prez-hierarchy__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-hierarchy__item" role="listitem">
+            <span class="prez-hierarchy__num">4</span>
+            <span class="material-symbols-outlined" aria-hidden="true">apartment</span>
+            <div><small>Cine primește configurația?</small><h3>Client înscris</h3><p>Firma reală, gata de lucru</p></div>
+          </article>
+        </div>
+
+        <div class="prez-inherits">
+          <div class="prez-inherits__lead"><span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span><b>La înrolare, configurația devine produs:</b></div>
+          <span>Meniu</span><span>Acasă</span><span>Liste</span><span>Spațiu de lucru</span><span>Arhivă</span>
+        </div>
+      </div>
+      <div class="prez-content prez-content--dense">
+        <div class="prez-content__head">
+          <span class="prez-num">05</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Arhitectura: totul este un flux</h2>
+            <p class="prez-subtitle">Aceleași blocuri de construcție — de la configurarea din HQ până la fiecare document arhivat.</p>
+          </div>
+        </div>
+
+        <!-- A. Lanțul de configurare -->
+        <div class="prez-chain" role="list" aria-label="Lanțul de configurare">
+          <div class="prez-chain__item" role="listitem">
+            <span class="material-symbols-outlined prez-chain__icon" aria-hidden="true">category</span>
+            <div class="prez-chain__name">Tip de client</div>
+            <div class="prez-chain__desc">Categoria organizației</div>
+            <div class="prez-chain__ex">Cabinet contabilitate · Firmă de audit</div>
+          </div>
+          <span class="material-symbols-outlined prez-chain__arrow" aria-hidden="true">arrow_forward</span>
+          <div class="prez-chain__item" role="listitem">
+            <span class="material-symbols-outlined prez-chain__icon" aria-hidden="true">account_tree</span>
+            <div class="prez-chain__name">Verticală</div>
+            <div class="prez-chain__desc">Un domeniu de lucru activabil</div>
+            <div class="prez-chain__ex">Situații Contabile · Misiuni de Audit</div>
+          </div>
+          <span class="material-symbols-outlined prez-chain__arrow" aria-hidden="true">arrow_forward</span>
+          <div class="prez-chain__item" role="listitem">
+            <span class="material-symbols-outlined prez-chain__icon" aria-hidden="true">design_services</span>
+            <div class="prez-chain__name">Șablon de flux</div>
+            <div class="prez-chain__desc">Etape + termene (+N zile de la start)</div>
+            <div class="prez-chain__ex">Raport Lunar — 3 etape</div>
+          </div>
+          <span class="material-symbols-outlined prez-chain__arrow" aria-hidden="true">arrow_forward</span>
+          <div class="prez-chain__item" role="listitem">
+            <span class="material-symbols-outlined prez-chain__icon" aria-hidden="true">conversion_path</span>
+            <div class="prez-chain__name">Flux (instanță)</div>
+            <div class="prez-chain__desc">Un caz concret, cu documentele lui</div>
+            <div class="prez-chain__ex">Raport Lunar Martie 2026 — Canvas S.R.L.</div>
+          </div>
+          <span class="material-symbols-outlined prez-chain__arrow" aria-hidden="true">arrow_forward</span>
+          <div class="prez-chain__item" role="listitem">
+            <span class="material-symbols-outlined prez-chain__icon" aria-hidden="true">checklist</span>
+            <div class="prez-chain__name">Pas</div>
+            <div class="prez-chain__desc">Sarcini + anexe + termen</div>
+            <div class="prez-chain__ex">Gating: „Finalizează pasul”</div>
+          </div>
+        </div>
+
+        <!-- B. Expresiile fluxului în aplicație -->
+        <div class="prez-express" aria-label="Unde se reflectă fluxul">
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">menu</span>
+            <div class="prez-express__name">Meniu</div>
+            <div class="prez-express__desc">Fiecare verticală activă devine automat element de navigație.</div>
+          </article>
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">table_chart</span>
+            <div class="prez-express__name">Tabel</div>
+            <div class="prez-express__desc">Fiecare verticală își definește coloanele listei — configurate în HQ.</div>
+          </article>
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">dashboard</span>
+            <div class="prez-express__name">Dashboard</div>
+            <div class="prez-express__desc">Acasă = widgeturi per tip de client; widgetul verticalei se deschide spre lista ei.</div>
+          </article>
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">chat</span>
+            <div class="prez-express__name">Chat propriu</div>
+            <div class="prez-express__desc">Situațiile și misiunile au mesageria lor: echipă + evenimente + mesaje automate A.I.</div>
+          </article>
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">description</span>
+            <div class="prez-express__name">Anexe</div>
+            <div class="prez-express__desc">Pașii (situații &amp; misiuni) poartă anexe din Constructor; formulele leagă câmpuri între anexe.</div>
+          </article>
+          <article class="prez-express__card">
+            <span class="material-symbols-outlined prez-express__icon" aria-hidden="true">folder_open</span>
+            <div class="prez-express__name">Arhivă</div>
+            <div class="prez-express__desc">Categoriile arhivei = folderele tipului de client; documentele fac link înapoi la flux.</div>
+          </article>
+        </div>
+
+        <!-- C. Drumul unui document -->
+        <div class="prez-docflow" aria-label="Drumul unui document">
+          <div class="prez-docflow__title">
+            <span class="material-symbols-outlined" aria-hidden="true">smart_toy</span>
+            Drumul unui document
+          </div>
+          <div class="prez-docflow__steps">
+            <span class="prez-docflow__step"><b>1.</b> Intră printr-un flux <i>(e-mail · WhatsApp · upload)</i></span>
+            <span class="material-symbols-outlined prez-docflow__arrow" aria-hidden="true">arrow_forward</span>
+            <span class="prez-docflow__step"><b>2.</b> A.I.-ul local îl etichetează <i>(tip + încredere + observație)</i></span>
+            <span class="material-symbols-outlined prez-docflow__arrow" aria-hidden="true">arrow_forward</span>
+            <span class="prez-docflow__step"><b>3.</b> Aterizează în folderul care îi declară tipul <i>(nerecunoscut → „Necategorisit”)</i></span>
+            <span class="material-symbols-outlined prez-docflow__arrow" aria-hidden="true">arrow_forward</span>
+            <span class="prez-docflow__step"><b>4.</b> „Proveniență” = link înapoi la fluxul-sursă</span>
+          </div>
+        </div>
+
+        <div class="prez-summary">
+          <span class="prez-summary__item"><b>Un singur model</b> — Situații = Misiuni = Dosare, denumiri per audiență.</span>
+          <span class="prez-summary__item"><b>Verticală nouă</b> = zero pagini noi (motorul generic).</span>
+          <span class="prez-summary__item"><b>Clientul</b> primește pachetul tipului său, apoi adaptează fluxurile și anexele din Administrare.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content prez-slide--dense prez-slide--reframed" data-slide="6" aria-label="Slide 6 din 7">
+      <div class="prez-reframe">
+        <div class="prez-content__head">
+          <span class="prez-num">06</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Super Admin construiește în patru pași</h2>
+            <p class="prez-subtitle">Ordinea din interfață urmează ordinea firească a deciziilor de business.</p>
+          </div>
+        </div>
+
+        <div class="prez-setup-flow" role="list" aria-label="Patru pași de configurare">
+          <article class="prez-setup-step is-primary" role="listitem">
+            <div class="prez-setup-step__top"><span>1</span><span class="material-symbols-outlined" aria-hidden="true">category</span></div>
+            <small>Definește organizația</small>
+            <h3>Creează tipul de client</h3>
+            <p>Contabilitate, Audit sau Construcții — plus vocabularul folosit în relația cu partea externă.</p>
+            <b>Rezultat: un container de configurare</b>
+          </article>
+          <span class="material-symbols-outlined prez-setup-flow__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-setup-step" role="listitem">
+            <div class="prez-setup-step__top"><span>2</span><span class="material-symbols-outlined" aria-hidden="true">account_tree</span></div>
+            <small>Structurează activitatea</small>
+            <h3>Adaugă verticalele</h3>
+            <p>Verticalele sunt definite global ca domenii de lucru: Situații contabile, Misiuni de audit sau Proiecte.</p>
+            <b>Rezultat: catalogul de verticale</b>
+          </article>
+          <span class="material-symbols-outlined prez-setup-flow__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-setup-step" role="listitem">
+            <div class="prez-setup-step__top"><span>3</span><span class="material-symbols-outlined" aria-hidden="true">schema</span></div>
+            <small>Definește execuția</small>
+            <h3>Construiește fluxurile</h3>
+            <p>Configurează pașii, sarcinile, termenele, anexele și regulile de avansare pentru fiecare verticală.</p>
+            <b>Rezultat: trasee de lucru publicabile</b>
+          </article>
+          <span class="material-symbols-outlined prez-setup-flow__arrow" aria-hidden="true">arrow_forward</span>
+          <article class="prez-setup-step is-finish" role="listitem">
+            <div class="prez-setup-step__top"><span>4</span><span class="material-symbols-outlined" aria-hidden="true">apartment</span></div>
+            <small>Activează configurația</small>
+            <h3>Adaugă clientul</h3>
+            <p>Înrolează firma pe categoria potrivită și selectează verticalele contractate. Contul poate exista și fără verticale.</p>
+            <b>Rezultat: organizație gata de lucru</b>
+          </article>
+        </div>
+      </div>
+      <div class="prez-content prez-content--dense">
+        <div class="prez-content__head">
+          <span class="prez-num">06</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Fluxul în centru</h2>
+            <p class="prez-subtitle">Fiecare suprafață a aplicației se generează din informațiile fluxului.</p>
+          </div>
+        </div>
+
+        <div class="prez-map" role="img" aria-label="Hartă mentală: fluxul în centru, conectat la meniu, dashboard, tabel, chat, anexe, A.I.-ul local și arhivă">
+          <svg class="prez-map__lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <line x1="50" y1="50" x2="50" y2="10"></line>
+            <line x1="50" y1="50" x2="16" y2="18"></line>
+            <line x1="50" y1="50" x2="84" y2="18"></line>
+            <line x1="50" y1="50" x2="11" y2="58"></line>
+            <line x1="50" y1="50" x2="89" y2="58"></line>
+            <line x1="50" y1="50" x2="27" y2="90"></line>
+            <line x1="50" y1="50" x2="73" y2="90"></line>
+          </svg>
+
+          <div class="prez-map__center">
+            <span class="material-symbols-outlined" aria-hidden="true">conversion_path</span>
+            <div class="prez-map__center-name">Fluxul</div>
+            <div class="prez-map__center-desc">pași · sarcini · termene · documente</div>
+            <div class="prez-map__center-ex">ex. Raport Lunar Martie 2026 — Canvas S.R.L.</div>
+          </div>
+
+          <article class="prez-map__node prez-map__node--top">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">dashboard</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Dashboard</div>
+              <div class="prez-map__desc">Widgetul fluxului pe Acasă — se deschide spre lista lui.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--topleft">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">menu</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Meniu</div>
+              <div class="prez-map__desc">Verticala fluxului apare automat în navigație.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--topright">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">table_chart</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Tabel</div>
+              <div class="prez-map__desc">Coloanele listei — definite per verticală, în HQ.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--left">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">chat</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Chat propriu</div>
+              <div class="prez-map__desc">Mesageria fluxului: echipă, evenimente, mesaje automate A.I.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--right">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">description</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Anexe &amp; formule</div>
+              <div class="prez-map__desc">Anexe pe pașii fluxului; formulele leagă câmpuri între anexe.</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--bottomleft">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">smart_toy</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">A.I. local</div>
+              <div class="prez-map__desc">Etichetează documentele care intră prin flux (tip + încredere + observație).</div>
+            </div>
+          </article>
+
+          <article class="prez-map__node prez-map__node--bottomright">
+            <span class="material-symbols-outlined prez-map__icon" aria-hidden="true">folder_open</span>
+            <div class="prez-map__body">
+              <div class="prez-map__name">Arhivă</div>
+              <div class="prez-map__desc">Se generează din informațiile fluxului; documentele rămân legate de el („Proveniență”).</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="prez-slide prez-slide--content prez-slide--reframed" data-slide="7" aria-label="Slide 7 din 7">
+      <div class="prez-reframe">
+        <div class="prez-content__head">
+          <span class="prez-num">07</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Înrolezi firma, iar experiența este deja construită</h2>
+            <p class="prez-subtitle">Același model configurat în HQ se materializează imediat în aplicația clientului.</p>
+          </div>
+        </div>
+
+        <div class="prez-payoff">
+          <article class="prez-payoff__source">
+            <div class="prez-payoff__eyebrow">Configurație Super Admin</div>
+            <span class="material-symbols-outlined prez-payoff__source-icon" aria-hidden="true">calculate</span>
+            <h3>Firmă de contabilitate</h3>
+            <div class="prez-payoff__row"><span>Verticală</span><b>Situații contabile</b></div>
+            <div class="prez-payoff__row"><span>Fluxuri</span><b>Închidere lunară · Salarizare · Declarații</b></div>
+            <div class="prez-payoff__client"><span class="material-symbols-outlined" aria-hidden="true">apartment</span><div><small>Client înrolat</small><b>Expert Contab S.R.L.</b></div></div>
+          </article>
+
+          <span class="material-symbols-outlined prez-payoff__arrow" aria-hidden="true">arrow_forward</span>
+
+          <article class="prez-payoff__result">
+            <div class="prez-payoff__eyebrow">Experiență generată automat</div>
+            <div class="prez-payoff__surfaces">
+              <span><i class="material-symbols-outlined" aria-hidden="true">menu</i><b>Navigație</b></span>
+              <span><i class="material-symbols-outlined" aria-hidden="true">dashboard</i><b>Acasă</b></span>
+              <span><i class="material-symbols-outlined" aria-hidden="true">table_chart</i><b>Liste</b></span>
+              <span><i class="material-symbols-outlined" aria-hidden="true">conversion_path</i><b>Fluxuri</b></span>
+              <span><i class="material-symbols-outlined" aria-hidden="true">folder_open</i><b>Arhivă</b></span>
+              <span><i class="material-symbols-outlined" aria-hidden="true">smart_toy</i><b>Clasificare A.I.</b></span>
+            </div>
+            <div class="prez-payoff__message"><span class="material-symbols-outlined" aria-hidden="true">rocket_launch</span><b>Fără pagini noi. Fără configurare manuală per client.</b></div>
+          </article>
+        </div>
+
+        <div class="prez-demo-bridge">
+          <span class="material-symbols-outlined" aria-hidden="true">play_circle</span>
+          <div><b>Următorul pas: demonstrația live</b><span>Tip client → Verticală → Flux → Client</span></div>
+        </div>
+      </div>
+      <div class="prez-content">
+        <div class="prez-content__head">
+          <span class="prez-num">07</span>
+          <div class="prez-content__head-text">
+            <h2 class="prez-title">Cum lansezi un nou tip de business</h2>
+            <p class="prez-subtitle">Șapte pași în zona Super Admin — fără cod, fără pagini noi.</p>
+          </div>
+        </div>
+
+        <div class="prez-journey">
+          <div class="prez-journey__group">
+            <div class="prez-journey__page">
+              <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+              Fluxuri
+            </div>
+            <article class="prez-step">
+              <span class="prez-step__num">1</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Definește verticala</div>
+                <div class="prez-step__desc">„Verticală nouă”: denumire, element de lucru (ex. „Dosar”), etapele ciclului de viață. Devine navigabilă imediat.</div>
+              </div>
+            </article>
+            <article class="prez-step">
+              <span class="prez-step__num">2</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Adaugă șabloanele</div>
+                <div class="prez-step__desc">„Șablon nou”: frecvență + termene pe etape („+ N zile de la start”).</div>
+              </div>
+            </article>
+            <article class="prez-step">
+              <span class="prez-step__num">3</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Coloanele tabelului <span class="prez-step__opt">opțional</span></div>
+                <div class="prez-step__desc">„Coloanele tabelului”: builder în pagină simulată — altfel se aplică setul implicit.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="prez-journey__group">
+            <div class="prez-journey__page">
+              <span class="material-symbols-outlined" aria-hidden="true">category</span>
+              Tipuri de clienți
+            </div>
+            <article class="prez-step">
+              <span class="prez-step__num">4</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Creează tipul de client</div>
+                <div class="prez-step__desc">„Tip de client nou”: bifezi verticalele + șabloanele implicite; denumirea părții externe („Client” / „Instituție”).</div>
+              </div>
+            </article>
+            <article class="prez-step">
+              <span class="prez-step__num">5</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Structura arhivei</div>
+                <div class="prez-step__desc">„Editează structura”: foldere + tipurile de documente pe folder = regulile de sortare A.I. „Necategorisit” prinde restul.</div>
+              </div>
+            </article>
+            <article class="prez-step">
+              <span class="prez-step__num">6</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Ecranul Acasă</div>
+                <div class="prez-step__desc">„Configurează ecranul Acasă”: paletă de widgeturi (doar ce acoperă verticalele tipului) + previzualizare live.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="prez-journey__group">
+            <div class="prez-journey__page">
+              <span class="material-symbols-outlined" aria-hidden="true">apartment</span>
+              Clienți
+            </div>
+            <article class="prez-step">
+              <span class="prez-step__num">7</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Creează contul de business</div>
+                <div class="prez-step__desc">„Cont de business nou”: firmă + tip de client + plan. Preview: „Clientul va primi: …”.</div>
+              </div>
+            </article>
+            <article class="prez-step prez-step--payoff">
+              <span class="material-symbols-outlined prez-step__check" aria-hidden="true">rocket_launch</span>
+              <div class="prez-step__body">
+                <div class="prez-step__title">Instant, fără cod</div>
+                <div class="prez-step__desc">Meniu propriu, listă cu coloanele definite, detaliu cu etapele fluxului, dashboard și arhivă cu sortare A.I. — prin motorul generic. Fluxurile standard și anexele se adaptează apoi din Administrare.</div>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -54,7 +581,7 @@
       <button type="button" class="prez-nav-arrow prez-nav-arrow--disabled" data-prez-prev aria-label="Slide-ul anterior">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
       </button>
-      <span class="prez-nav-indicator" data-prez-indicator>1 / 3</span>
+      <span class="prez-nav-indicator" data-prez-indicator>1 / 7</span>
       <button type="button" class="prez-nav-arrow" data-prez-next aria-label="Slide-ul următor">
         <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
       </button>
@@ -62,6 +589,6 @@
 
   </div>
 
-  <script src="js/prezentare.js"></script>
+  <script src="js/prezentare.js?v=3"></script>
 </body>
 </html>

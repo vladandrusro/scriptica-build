@@ -46,7 +46,7 @@
     el.hidden = false;
 
     var link = el.querySelector('.timer-pill');
-    if (link) link.href = 'situatie-detaliu.html?id=' + encodeURIComponent(t.situationId);
+    if (link) link.href = t.detailUrl || ('situatie-detaliu.html?id=' + encodeURIComponent(t.situationId));
 
     var taskEl = el.querySelector('.timer-pill__task');
     if (taskEl) {
@@ -81,6 +81,7 @@
       typeLabel: data.typeLabel,
       taskIds: data.taskIds,
       taskLabels: data.taskLabels,
+      detailUrl: data.detailUrl || null,
       startedAt: new Date().toISOString()
     };
     write(timer);

@@ -17,6 +17,20 @@
     anulata:              'Anulată',
     intarziere:           'În Întârziere'
   };
+  function accountingTerminology() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_contabil') : null;
+    return vertical || { name: 'Situații Contabile', itemLabel: 'Situație', itemLabelPlural: 'Situații' };
+  }
+  function auditTerminology() {
+    var vertical = typeof window.scripticaEffectiveVertical === 'function'
+      ? window.scripticaEffectiveVertical('vert_audit') : null;
+    return vertical || { name: 'Misiuni Audit', itemLabel: 'Misiune', itemLabelPlural: 'Misiuni' };
+  }
+  function externalParty() {
+    return typeof window.scripticaEffectiveExternalParty === 'function'
+      ? window.scripticaEffectiveExternalParty() : { singular: 'Client', plural: 'Clienți' };
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK) {
@@ -24,6 +38,14 @@
       return;
     }
     if (routeClientHome()) return;
+    if (routeAuditHome()) {
+      /* Mesageria rămâne scopată prin getVisibleMessages (goală pentru audit,
+         mesajele dosarelor proprii pentru personas de instituție). */
+      renderMessaging();
+      initHeaderWelcome();
+      initMessagingBadge();
+      return;
+    }
     renderRegionNew();
     renderRegionAlerts();
     renderRegionClients();
@@ -33,6 +55,31 @@
     initMessagingBadge();
     initModal();
   });
+
+  /* Personas de audit (audit_stat/autoritate, scope ['audit']) NU văd dashboard-ul
+     contabil (situații/clienți/mesaje). Acasă rămâne accesibilă, dar cu un
+     ecran orientat pe audit. Previne scurgerea conținutului contabil. */
+  function routeAuditHome() {
+    var filename = (window.location.pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
+    if (filename === '' || filename === 'index') filename = 'acasa';
+    if (filename !== 'acasa') return false;
+    if (typeof window.viewInScope !== 'function') return false;
+    if (window.viewInScope('contabil')) return false; /* are acces contabil → dashboard normal */
+    if (!document.querySelector('.dashboard') && !document.getElementById('main')) return false;
+    var main = document.getElementById('main') || document.querySelector('main');
+    if (!main) return false;
+    main.innerHTML =
+      '<div class="scope-block">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">verified_user</span>' +
+        '<h1 class="scope-block__title">Acasă · Audit</h1>' +
+        '<p class="scope-block__text">Ai acces la aria de audit. Continuă către misiunile de audit sau arhiva ta.</p>' +
+        '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;justify-content:center;">' +
+          '<a class="btn btn--primary" href="misiuni-audit.html">' + esc(auditTerminology().name) + '</a>' +
+          '<a class="btn btn--ghost" href="arhiva.html">Arhivă</a>' +
+        '</div>' +
+      '</div>';
+    return true;
+  }
 
   /* Client-view home routing: 0 → zero-state; 1 → redirect to detail; 2+ → dashboard.
      Only runs on acasa.html — dashboard.js is loaded on other pages too. */
@@ -276,8 +323,11 @@
     var html = '';
     msgs.forEach(function (m) {
       var sitLabel = '';
+      var sitHref = '';
       var sit = MOCK.situations.find(function (s) { return s.id === m.situationId; });
-      if (sit) sitLabel = sit.typeLabel + '_' + sit.clientCompany;
+      if (sit) { sitLabel = sit.typeLabel + '_' + sit.clientCompany; sitHref = 'situatie-detaliu.html?id=' + m.situationId; }
+      var flowItem = !sit ? (MOCK.flowItems || []).find(function (f) { return f.id === m.situationId; }) : null;
+      if (flowItem) { sitLabel = flowItem.name; sitHref = 'situatie-detaliu.html?flowId=' + flowItem.id; }
 
       var attachHtml = '';
       if (m.attachments && m.attachments.length) {
@@ -328,7 +378,7 @@
         attachHtml +
         chipsHtml +
         aiHtml +
-        (sitLabel ? '<a class="message-link" href="situatie-detaliu.html?id=' + esc(m.situationId) + '">Mergi la ' + esc(sitLabel) + '</a>' : '') +
+        (sitLabel ? '<a class="message-link" href="' + esc(sitHref) + '">Mergi la ' + esc(sitLabel) + '</a>' : '') +
       '</article>';
     });
     html += '<a class="messaging__see-all" href="situatii.html">Vezi toate...</a>';
@@ -395,14 +445,18 @@
     var deadlinesList = modal.querySelector('[data-deadlines-list]');
 
     var lastTrigger = null;
+    var workTerms = accountingTerminology();
+    var partyTerms = externalParty();
 
     /* Populate selects */
     typeSelect.innerHTML =
       '<option value="">Selectează tipul...</option>' +
       MOCK.situationTypes.filter(function (t) {
-        /* Doar tipurile active și cu cel puțin un pas definit — tipurile
-           dezactivate din admin nu mai apar la crearea unei situații. */
-        return (t.status || 'activ') === 'activ' && t.steps && t.steps.length;
+        /* Doar tipurile contabile, active și cu cel puțin un pas definit —
+           misiunile de audit (domain 'audit') nu se creează din acest flux,
+           iar tipurile dezactivate din admin nu mai apar la creare. */
+        return (t.domain || 'contabil') === 'contabil' &&
+          (t.status || 'activ') === 'activ' && t.steps && t.steps.length;
       }).map(function (t) {
         return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>';
       }).join('');
@@ -458,7 +512,7 @@
 
     function renderComboList(items) {
       if (!items.length) {
-        comboList.innerHTML = '<div class="combo__empty">Niciun client găsit.</div>';
+        comboList.innerHTML = '<div class="combo__empty">Niciun rezultat pentru ' + esc(partyTerms.singular.toLowerCase()) + '.</div>';
         return;
       }
       comboList.innerHTML = items.map(function (c, i) {
@@ -572,20 +626,20 @@
       e.preventDefault();
       if (!validate()) return;
       closeModal();
-      showToast('success', 'Situația contabilă a fost creată cu succes.');
+      showToast('success', workTerms.itemLabel + ' a fost creată cu succes.');
     });
 
     function validate() {
       var ok = true;
       // Type
-      setError('tip', !typeSelect.value, 'Selectează tipul situației.');
+      setError('tip', !typeSelect.value, 'Selectează șablonul pentru ' + workTerms.itemLabel.toLowerCase() + '.');
       if (!typeSelect.value) ok = false;
 
       // Client
       var validClient = comboHidden.value && MOCK.clients.some(function (c) {
         return c.id === parseInt(comboHidden.value, 10) && c.companyName === comboInput.value;
       });
-      setError('client', !validClient, 'Selectează un client din listă.');
+      setError('client', !validClient, 'Selectează ' + partyTerms.singular.toLowerCase() + ' din listă.');
       if (!validClient) ok = false;
 
       // Responsible

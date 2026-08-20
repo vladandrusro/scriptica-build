@@ -10,9 +10,45 @@
    "Azi" este fixat la 2026-04-20 pentru date stabile de prototip.
    ============================================================ */
 
-/* View bootstrap — rulează la evaluarea scriptului, înainte de
-   DOMContentLoaded, ca shell.js să randeze contextul de admin. */
-try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore */ }
+/* View bootstrap — rulează la evaluarea scriptului, înainte de DOMContentLoaded,
+   ca shell.js să randeze contextul de admin. NU suprascrie persona 'complet'
+   (care are și ea acces la Administrare) — altfel ar bloca utilizatorul complet
+   în persona 'admin' după un click pe nav-ul Administrare. */
+try {
+  var _v = (typeof window.getCurrentView === 'function') ? window.getCurrentView() : null;
+  if (_v !== 'complet' && _v !== 'superadmin') localStorage.setItem('scriptica.view', 'admin');
+} catch (e) { /* ignore */ }
+
+/* Super Admin reutilizează registrul matur de anexe, fără a fi mutat în
+   persona administratorului local. Pagina păstrează doar suprafața relevantă
+   și navigația HQ; restul DOM-ului rămâne disponibil pentru codul comun. */
+var _isSuperAdminAnexe = (typeof window.getCurrentView === 'function') && window.getCurrentView() === 'superadmin';
+if (_isSuperAdminAnexe) {
+  var _superAdminNav = document.querySelector('.sidebar__nav');
+  var _superAdminAside = document.querySelector('.sidebar');
+  var _adminTitle = document.querySelector('.page-header__title');
+  var _adminTabs = document.getElementById('admin-tabs');
+  document.title = 'Anexe — Super Admin — Scriptica';
+  document.body.setAttribute('data-page', 'super-admin-anexe');
+  if (_superAdminAside) _superAdminAside.setAttribute('aria-label', 'Navigație Super Admin');
+  if (_adminTitle) _adminTitle.textContent = 'Anexe';
+  if (_adminTabs) {
+    _adminTabs.hidden = true;
+    _adminTabs.style.display = 'none';
+  }
+  if (_superAdminNav) {
+    _superAdminNav.innerHTML =
+      '<a class="nav-item" href="super-admin.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">monitoring</span><span class="nav-item__label">Dashboard</span></a>' +
+      '<a class="nav-item" href="super-admin-clienti.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">apartment</span><span class="nav-item__label">Clienți</span></a>' +
+      '<div class="sidebar__group-label" aria-hidden="true">Configurare</div>' +
+      '<a class="nav-item" href="super-admin-fluxuri-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">account_tree</span><span class="nav-item__label">Fluxuri</span></a>' +
+      '<a class="nav-item nav-item--active" data-nav="super-admin-anexe" href="administrare.html?view=superadmin#tipuri-anexe"><span class="material-symbols-outlined nav-item__icon filled" aria-hidden="true">description</span><span class="nav-item__label">Anexe</span></a>' +
+      '<a class="nav-item" href="super-admin-tipuri-clienti-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">category</span><span class="nav-item__label">Tipuri de clienți</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">dns</span><span class="nav-item__label">Infrastructură</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">receipt_long</span><span class="nav-item__label">Facturare</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">settings</span><span class="nav-item__label">Setări</span></a>';
+  }
+}
 
 (function () {
   'use strict';
@@ -21,15 +57,43 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   var TODAY_ISO = '2026-04-20';
   var ANEXE_KEY = 'scriptica.anexe';
   var TYPES_KEY = 'scriptica.situationTypes';
-  var DEFAULT_TAB = 'utilizatori-interni';
-  var ENABLED_TABS = ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-anexe', 'taguri'];
+  var IS_SUPERADMIN_CONTEXT = _isSuperAdminAnexe;
+  var DEFAULT_TAB = IS_SUPERADMIN_CONTEXT ? 'tipuri-anexe' : 'utilizatori-interni';
+  var ENABLED_TABS = IS_SUPERADMIN_CONTEXT ? ['tipuri-anexe'] : ['utilizatori-interni', 'utilizatori-externi', 'tipuri-situatii', 'tipuri-audit', 'tipuri-anexe', 'taguri'];
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   var FREQUENCY_LABELS = {
     lunar:        'Lunar',
     trimestrial:  'Trimestrial',
     semestrial:   'Semestrial',
-    anual:        'Anual'
+    anual:        'Anual',
+    /* Periodicități suplimentare pentru misiunile de audit. */
+    treime:       'Pe treimi',
+    la_cerere:    'La cerere (neperiodică)'
+  };
+
+  /* Etichete condiționate pe domeniu pentru modalul de tip (reutilizat). */
+  var DOMAIN_LABELS = {
+    contabil: {
+      modalTitle: 'Șablon de situație contabilă',
+      freqLabel: 'Frecvență*',
+      freqPlaceholder: 'Selectează frecvența...',
+      freqError: 'Selectează frecvența.',
+      saveToast: 'Șablonul de situație a fost salvat.'
+    },
+    audit: {
+      modalTitle: 'Șablon de misiune de audit',
+      freqLabel: 'Periodicitate planificare*',
+      freqPlaceholder: 'Selectează periodicitatea...',
+      freqError: 'Selectează periodicitatea.',
+      saveToast: 'Șablonul de misiune de audit a fost salvat.'
+    }
+  };
+
+  /* Opțiunile dropdown-ului de frecvență/periodicitate din modal, per domeniu. */
+  var FREQUENCY_OPTIONS = {
+    contabil: [['lunar', 'Lunar'], ['trimestrial', 'Trimestrial'], ['semestrial', 'Semestrial'], ['anual', 'Anual']],
+    audit: [['anual', 'Anual'], ['semestrial', 'Semestrial'], ['trimestrial', 'Trimestrial'], ['treime', 'Pe treimi'], ['lunar', 'Lunar'], ['la_cerere', 'La cerere (neperiodică)']]
   };
 
   var PERSON_TYPE_LABELS = {
@@ -51,19 +115,25 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     userSearch: '', userTip: '',
     clientSearch: '',
     typeSearch: '', typeStatus: '', typeFreq: '',
-    anexaSearch: '', anexaStatus: '',
+    auditSearch: '', auditStatus: '', auditFreq: '',
+    anexaSearch: '', anexaStatus: '', anexaVertical: '', anexaActivity: '',
     tagSearch: ''
   };
 
   /* Controllere de modal (create în init) */
-  var userModal, typeModal, anexaModal, tagModal, confirmModal;
+  var userModal, typeModal, anexaModal, anexaImpactModal, tagModal, confirmModal;
   var editingUserId = null;
   var editingTypeId = null;
+  var editingTypeDomain = 'contabil';
   var editingTagId = null;
   var confirmAction = null;
 
   /* Pașii în curs de editare în modalul de tip (step builder) */
   var draftSteps = [];
+  /* Formulele automate în curs de editare (legate la nivel de tip) */
+  var draftFormulas = [];
+  var editingFormulaIdx = -1;
+  var formulaModal = null;
 
   document.addEventListener('DOMContentLoaded', function () {
     if (!MOCK || !document.getElementById('admin-tabs')) {
@@ -78,10 +148,19 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     initUserModal();
     initTypeModal();
     initAnexaModal();
+    initAnexaLibrary();
     initTagModal();
     initConfirmModal();
     bindGlobalModalKeys();
     activateFromHash();
+    if (IS_SUPERADMIN_CONTEXT) {
+      var activeAnexeNav = document.querySelector('[data-nav="super-admin-anexe"]');
+      if (activeAnexeNav) {
+        activeAnexeNav.classList.add('nav-item--active');
+        var activeAnexeIcon = activeAnexeNav.querySelector('.material-symbols-outlined');
+        if (activeAnexeIcon) activeAnexeIcon.classList.add('filled');
+      }
+    }
     window.addEventListener('hashchange', activateFromHash);
     /* Întoarcerea din constructor (inclusiv bfcache) re-citește anexele. */
     window.addEventListener('pageshow', function (e) {
@@ -183,7 +262,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function renderActive(slug) {
     if (slug === 'utilizatori-interni')       renderUsers();
     else if (slug === 'utilizatori-externi')  renderClients();
-    else if (slug === 'tipuri-situatii')      renderTypes();
+    else if (slug === 'tipuri-situatii')      renderTypes('contabil');
+    else if (slug === 'tipuri-audit')         renderTypes('audit');
     else if (slug === 'tipuri-anexe')         renderAnexe();
     else if (slug === 'taguri')               renderTags();
   }
@@ -231,11 +311,21 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     bindInput('ui-search', 'input',  function (v) { filters.userSearch = v; renderUsers(); });
     bindInput('ui-tip',    'change', function (v) { filters.userTip = v; renderUsers(); });
     bindInput('ue-search', 'input',  function (v) { filters.clientSearch = v; renderClients(); });
-    bindInput('ts-search', 'input',  function (v) { filters.typeSearch = v; renderTypes(); });
-    bindInput('ts-status', 'change', function (v) { filters.typeStatus = v; renderTypes(); });
-    bindInput('ts-freq',   'change', function (v) { filters.typeFreq = v; renderTypes(); });
+    bindInput('ts-search', 'input',  function (v) { filters.typeSearch = v; renderTypes('contabil'); });
+    bindInput('ts-status', 'change', function (v) { filters.typeStatus = v; renderTypes('contabil'); });
+    bindInput('ts-freq',   'change', function (v) { filters.typeFreq = v; renderTypes('contabil'); });
+    bindInput('tma-search', 'input',  function (v) { filters.auditSearch = v; renderTypes('audit'); });
+    bindInput('tma-status', 'change', function (v) { filters.auditStatus = v; renderTypes('audit'); });
+    bindInput('tma-freq',   'change', function (v) { filters.auditFreq = v; renderTypes('audit'); });
     bindInput('ta-search', 'input',  function (v) { filters.anexaSearch = v; renderAnexe(); });
     bindInput('ta-status', 'change', function (v) { filters.anexaStatus = v; renderAnexe(); });
+    bindInput('ta-vertical', 'change', function (v) {
+      filters.anexaVertical = v;
+      filters.anexaActivity = '';
+      populateAnexaActivityOptions();
+      renderAnexe();
+    });
+    bindInput('ta-activity', 'change', function (v) { filters.anexaActivity = v; renderAnexe(); });
     bindInput('tg-search', 'input',  function (v) { filters.tagSearch = v; renderTags(); });
   }
 
@@ -262,14 +352,22 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       else if (action === 'delete') confirmDeleteType(type);
     });
 
+    bindAction('tma-tbody', function (action, id) {
+      var type = MOCK.situationTypes.find(function (t) { return t.id === id; });
+      if (!type) return;
+      if (action === 'edit') openTypeModal(type);
+      else if (action === 'delete') confirmDeleteType(type);
+    });
+
     bindAction('ta-tbody', function (action, id) {
       if (action === 'edit') {
-        window.location.href = 'constructor-anexe.html?id=' + encodeURIComponent(id);
+        window.location.href = 'constructor-anexe.html?id=' + encodeURIComponent(id) + (IS_SUPERADMIN_CONTEXT ? '&view=superadmin' : '');
         return;
       }
       var anexa = (MOCK.anexeTypes || []).find(function (a) { return a.id === id; });
       if (!anexa) return;
-      if (action === 'duplicate') duplicateAnexa(anexa);
+      if (action === 'impact') openAnexaImpact(anexa);
+      else if (action === 'duplicate') duplicateAnexa(anexa);
       else if (action === 'delete') confirmDeleteAnexa(anexa);
     });
 
@@ -476,17 +574,24 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return 'de zile';
   }
 
-  function renderTypes() {
-    var tbody = $('ts-tbody');
+  /* Reutilizat pentru ambele tab-uri de tipuri. domain ∈ 'contabil' | 'audit';
+     tipurile fără `domain` sunt tratate ca 'contabil' (zero migrare). */
+  function renderTypes(domain) {
+    domain = domain || 'contabil';
+    var cfg = domain === 'audit'
+      ? { prefix: 'tma', search: filters.auditSearch, status: filters.auditStatus, freq: filters.auditFreq }
+      : { prefix: 'ts',  search: filters.typeSearch,  status: filters.typeStatus,  freq: filters.typeFreq };
+    var tbody = $(cfg.prefix + '-tbody');
     if (!tbody) return;
-    var q = normalize(filters.typeSearch);
+    var q = normalize(cfg.search);
     var list = MOCK.situationTypes.filter(function (t) {
+      if ((t.domain || 'contabil') !== domain) return false;
       if (q && normalize(t.name).indexOf(q) === -1) return false;
-      if (filters.typeStatus && (t.status || 'activ') !== filters.typeStatus) return false;
-      if (filters.typeFreq && t.frequency !== filters.typeFreq) return false;
+      if (cfg.status && (t.status || 'activ') !== cfg.status) return false;
+      if (cfg.freq && t.frequency !== cfg.freq) return false;
       return true;
     });
-    toggleEmpty('ts', list.length);
+    toggleEmpty(cfg.prefix, list.length);
     tbody.innerHTML = list.map(function (t) {
       var steps = t.steps || [];
       var stepsCell;
@@ -520,10 +625,56 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return { name: '', offsetDays: '', tasks: [], anexeIds: [] };
   }
 
+  function normalizeDraftTask(task, index) {
+    var objectTask = task && typeof task === 'object';
+    var kind = objectTask && task.kind === 'document_upload' ? 'document_upload' : 'standard';
+    return {
+      id: objectTask && task.id ? task.id : ('task_draft_' + index + '_' + Date.now().toString(36)),
+      label: objectTask ? (task.label || task.name || '') : String(task || ''),
+      kind: kind,
+      required: objectTask ? task.required !== false : true,
+      documentTypeId: kind === 'document_upload' ? (task.documentTypeId || '') : '',
+      allowMultiple: kind === 'document_upload' ? task.allowMultiple !== false : false,
+      minimumFiles: kind === 'document_upload' ? Math.max(1, parseInt(task.minimumFiles, 10) || 1) : 1
+    };
+  }
+
+  function verticalForDomain(domain) {
+    return ((((MOCK || {}).superAdmin || {}).flowVerticals) || []).find(function (vertical) {
+      return vertical.domain === domain;
+    }) || null;
+  }
+
+  function documentTypesForDomain(domain) {
+    var out = [];
+    var vertical = verticalForDomain(domain);
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system) return;
+      (category.documentTypes || []).forEach(function (type) {
+        out.push({ id: type.id, name: type.name, categoryName: category.name });
+      });
+    });
+    return out;
+  }
+
+  function documentTypeOptionsForDomain(domain, selectedId) {
+    var vertical = verticalForDomain(domain);
+    var html = '<option value="">Selectează tipul de document...</option>';
+    ((vertical && vertical.documentCategories) || []).forEach(function (category) {
+      if (category.system || !(category.documentTypes || []).length) return;
+      html += '<optgroup label="' + esc(category.name) + '">' + category.documentTypes.map(function (type) {
+        return '<option value="' + esc(type.id) + '"' + (type.id === selectedId ? ' selected' : '') + '>' + esc(type.name) + '</option>';
+      }).join('') + '</optgroup>';
+    });
+    return html;
+  }
+
   function initTypeModal() {
     typeModal = createModal('modal-type');
     var addBtn = $('ts-add');
-    if (addBtn) addBtn.addEventListener('click', function () { openTypeModal(null); });
+    if (addBtn) addBtn.addEventListener('click', function () { openTypeModal(null, 'contabil'); });
+    var addAuditBtn = $('tma-add');
+    if (addAuditBtn) addAuditBtn.addEventListener('click', function () { openTypeModal(null, 'audit'); });
     var saveBtn = $('mt-save');
     if (saveBtn) saveBtn.addEventListener('click', saveType);
 
@@ -535,6 +686,30 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         focusLast('[data-step-name]');
       });
     }
+
+    /* Formule automate (sub-modal) */
+    formulaModal = createModal('modal-formula');
+    var addFormulaBtn = $('mt-add-formula');
+    if (addFormulaBtn) addFormulaBtn.addEventListener('click', function () { openFormulaModal(-1); });
+    var saveFormulaBtn = $('mf-save');
+    if (saveFormulaBtn) saveFormulaBtn.addEventListener('click', saveFormula);
+    var refsWrap = $('mf-refs');
+    if (refsWrap) refsWrap.addEventListener('click', function (e) {
+      var chip = e.target.closest('[data-ref-token]');
+      if (!chip) return;
+      var inp = $('mf-expr');
+      var tok = chip.getAttribute('data-ref-token');
+      inp.value = (inp.value && !/\s$/.test(inp.value) && !/[(\s]$/.test(inp.value)) ? inp.value + ' ' + tok : inp.value + tok;
+      inp.focus();
+    });
+    var formulasWrap = $('mt-formulas');
+    if (formulasWrap) formulasWrap.addEventListener('click', function (e) {
+      var btn = e.target.closest('button'); if (!btn) return;
+      var fi = parseInt(btn.getAttribute('data-formula-idx'), 10);
+      if (isNaN(fi)) return;
+      if (btn.hasAttribute('data-edit-formula')) openFormulaModal(fi);
+      else if (btn.hasAttribute('data-remove-formula')) { draftFormulas.splice(fi, 1); renderFormulas(); }
+    });
 
     var stepsWrap = $('mt-steps');
     if (!stepsWrap) return;
@@ -551,12 +726,35 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         draftSteps[i].offsetDays = el.value;
       } else if (el.hasAttribute('data-task-input')) {
         var j = parseInt(el.getAttribute('data-task'), 10);
-        if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) draftSteps[i].tasks[j] = el.value;
+        if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) draftSteps[i].tasks[j].label = el.value;
+      } else if (el.hasAttribute('data-task-kind')) {
+        var kindIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(kindIdx) && draftSteps[i].tasks[kindIdx]) {
+          var changedTask = draftSteps[i].tasks[kindIdx];
+          changedTask.kind = el.value === 'document_upload' ? 'document_upload' : 'standard';
+          if (changedTask.kind === 'document_upload') {
+            var availableTypes = documentTypesForDomain(editingTypeDomain);
+            if (!changedTask.documentTypeId && availableTypes[0]) changedTask.documentTypeId = availableTypes[0].id;
+            changedTask.allowMultiple = changedTask.allowMultiple !== false;
+            changedTask.minimumFiles = Math.max(1, parseInt(changedTask.minimumFiles, 10) || 1);
+          } else {
+            changedTask.documentTypeId = '';
+            changedTask.allowMultiple = false;
+            changedTask.minimumFiles = 1;
+          }
+          renderSteps();
+        }
+      } else if (el.hasAttribute('data-task-document-type')) {
+        var docIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(docIdx) && draftSteps[i].tasks[docIdx]) draftSteps[i].tasks[docIdx].documentTypeId = el.value;
+      } else if (el.hasAttribute('data-task-minimum-files')) {
+        var minIdx = parseInt(el.getAttribute('data-task'), 10);
+        if (!isNaN(minIdx) && draftSteps[i].tasks[minIdx]) draftSteps[i].tasks[minIdx].minimumFiles = Math.max(1, parseInt(el.value, 10) || 1);
       }
     });
 
     stepsWrap.addEventListener('click', function (e) {
-      var btn = e.target.closest('button');
+      var btn = e.target.closest('button, input[type="checkbox"]');
       if (!btn) return;
       var i = parseInt(btn.getAttribute('data-idx'), 10);
       if (isNaN(i) || !draftSteps[i]) return;
@@ -566,7 +764,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         draftSteps.splice(i, 1);
         renderSteps();
       } else if (btn.hasAttribute('data-add-task')) {
-        draftSteps[i].tasks.push('');
+        draftSteps[i].tasks.push(normalizeDraftTask('', draftSteps[i].tasks.length));
         renderSteps();
         var inputs = stepsWrap.querySelectorAll('[data-task-input][data-idx="' + i + '"]');
         if (inputs.length) inputs[inputs.length - 1].focus();
@@ -574,6 +772,19 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         var j = parseInt(btn.getAttribute('data-task'), 10);
         if (!isNaN(j) && j >= 0 && j < draftSteps[i].tasks.length) {
           draftSteps[i].tasks.splice(j, 1);
+          renderSteps();
+        }
+      } else if (btn.hasAttribute('data-task-required')) {
+        var reqIdx = parseInt(btn.getAttribute('data-task'), 10);
+        if (!isNaN(reqIdx) && draftSteps[i].tasks[reqIdx]) {
+          draftSteps[i].tasks[reqIdx].required = btn.checked;
+          renderSteps();
+        }
+      } else if (btn.hasAttribute('data-task-multiple')) {
+        var multiIdx = parseInt(btn.getAttribute('data-task'), 10);
+        if (!isNaN(multiIdx) && draftSteps[i].tasks[multiIdx]) {
+          draftSteps[i].tasks[multiIdx].allowMultiple = btn.checked;
+          if (!btn.checked) draftSteps[i].tasks[multiIdx].minimumFiles = 1;
           renderSteps();
         }
       } else if (btn.hasAttribute('data-attach-anexa')) {
@@ -605,6 +816,170 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return (MOCK.anexeTypes || []).find(function (a) { return a.id === id; });
   }
 
+  /* ============================================================
+     FORMULE AUTOMATE — builder la nivel de tip (Part B)
+     Filtru categorii pe picker + secțiunea de formule + validare/ciclu.
+     ============================================================ */
+
+  /* Anexa e potrivită domeniului curent? Fără categorii = disponibilă peste tot. */
+  function anexaInDomain(anexa, domain) {
+    var vertical = verticalForDomain(domain);
+    if (Array.isArray(anexa.verticalIds)) {
+      return !anexa.verticalIds.length || !!(vertical && anexa.verticalIds.indexOf(vertical.id) !== -1);
+    }
+    var cats = anexa.categories;
+    if (!cats || !cats.length) return true;
+    if (domain === 'audit') return cats.indexOf('audit') !== -1;
+    return cats.some(function (c) { return c !== 'audit'; });
+  }
+
+  /* Câmpurile numerice (cu ref) ale anexelor atașate pașilor — referențiabile. */
+  function attachedNumericRefs() {
+    var ids = {};
+    draftSteps.forEach(function (st) { (st.anexeIds || []).forEach(function (id) { ids[id] = true; }); });
+    var out = [];
+    Object.keys(ids).forEach(function (aid) {
+      var anexa = anexaById(aid); if (!anexa) return;
+      ((anexa.schema && anexa.schema.fields) || []).forEach(function (f) {
+        if (!f.ref) return;
+        if (['number', 'currency', 'percent'].indexOf(f.type) === -1) return;
+        out.push({ token: aid + '.' + f.ref, anexaId: aid, anexaName: anexa.name, ref: f.ref, label: f.label || f.ref, type: f.type });
+      });
+    });
+    return out;
+  }
+  function refByToken(token) {
+    return attachedNumericRefs().find(function (r) { return r.token === token; }) || null;
+  }
+
+  /* Tokenizer minimal (doar pentru extragerea ref-urilor + detecția ciclurilor). */
+  function fxTokens(expr) {
+    var s = String(expr == null ? '' : expr), out = [], i = 0;
+    while (i < s.length) {
+      var ch = s.charAt(i);
+      if (ch === ' ' || ch === '\t') { i++; continue; }
+      if ('+-*/()'.indexOf(ch) !== -1) { out.push({ t: 'op', v: ch }); i++; continue; }
+      if ((ch >= '0' && ch <= '9') || ch === '.') { var n = ''; while (i < s.length && ((s.charAt(i) >= '0' && s.charAt(i) <= '9') || s.charAt(i) === '.')) { n += s.charAt(i); i++; } out.push({ t: 'num', v: n }); continue; }
+      if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch === '_') { var id = ''; while (i < s.length) { var c = s.charAt(i); if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_' || c === '.') { id += c; i++; } else break; } out.push({ t: 'ref', v: id }); continue; }
+      return { error: 'Caracter neacceptat: ' + ch };
+    }
+    return { tokens: out };
+  }
+  function exprRefs(expr) {
+    var tk = fxTokens(expr);
+    if (tk.error) return [];
+    return tk.tokens.filter(function (t) { return t.t === 'ref'; }).map(function (t) { return t.v; });
+  }
+  /* Detecție cicluri pe lista de formule. Returnează string-ul ciclului sau null. */
+  function detectFormulaCycle(formulas) {
+    var deps = {};
+    formulas.forEach(function (f) { deps[f.resultRef] = (deps[f.resultRef] || []).concat(exprRefs(f.expr)); });
+    var color = {}, cyclePath = null;
+    function dfs(node, stack) {
+      color[node] = 1; stack.push(node);
+      var nbrs = deps[node] || [];
+      for (var i = 0; i < nbrs.length; i++) {
+        var n = nbrs[i];
+        if (!(n in deps)) continue;
+        if (color[n] === 1) { cyclePath = stack.slice(stack.indexOf(n)).concat(n); return true; }
+        if (color[n] !== 2 && dfs(n, stack)) return true;
+      }
+      stack.pop(); color[node] = 2; return false;
+    }
+    var keys = Object.keys(deps);
+    for (var i = 0; i < keys.length; i++) { if (color[keys[i]] !== 2) { if (dfs(keys[i], [])) return cyclePath.join(' → '); } }
+    return null;
+  }
+
+  function renderFormulas() {
+    var wrap = $('mt-formulas');
+    var section = $('mt-formule-field');
+    if (!wrap || !section) return;
+    var refs = attachedNumericRefs();
+    /* Secțiunea apare doar dacă există câmpuri numerice referențiabile. */
+    section.hidden = (refs.length === 0);
+    if (refs.length === 0) { wrap.innerHTML = ''; return; }
+    if (!draftFormulas.length) {
+      wrap.innerHTML = '<div class="admin-formulas__empty">Nicio formulă definită. Adaugă una pentru a calcula automat un câmp numeric din altele.</div>';
+      return;
+    }
+    wrap.innerHTML = draftFormulas.map(function (f, i) {
+      var resName = refByToken(f.resultRef);
+      var invalid = !resName || exprRefs(f.expr).some(function (r) { return !refByToken(r); });
+      var resLabel = resName ? (resName.anexaName + ' · ' + resName.label) : f.resultRef;
+      return '<div class="admin-formula-row' + (invalid ? ' is-invalid' : '') + '">' +
+        '<div class="admin-formula-row__main">' +
+          '<div class="admin-formula-row__result"><span class="material-symbols-outlined" aria-hidden="true">function</span>' + esc(resLabel) + '</div>' +
+          '<div class="admin-formula-row__expr"><code>' + esc(f.expr) + '</code></div>' +
+          (invalid ? '<div class="admin-formula-row__warn">Referință inexistentă — verifică anexele atașate.</div>' : '') +
+        '</div>' +
+        '<div class="admin-formula-row__actions">' +
+          '<button type="button" class="admin-action-btn" data-edit-formula data-formula-idx="' + i + '" aria-label="Editează formula" title="Editează"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>' +
+          '<button type="button" class="admin-action-btn admin-action-btn--delete" data-remove-formula data-formula-idx="' + i + '" aria-label="Șterge formula" title="Șterge"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openFormulaModal(idx) {
+    editingFormulaIdx = idx;
+    var refs = attachedNumericRefs();
+    var existing = (idx >= 0) ? draftFormulas[idx] : null;
+    clearErrors(formulaModal.el);
+    $('mf-title').textContent = existing ? 'Editează formula' : 'Formulă automată';
+    var resSel = $('mf-result');
+    resSel.innerHTML = '<option value="">Selectează câmpul-rezultat...</option>' +
+      refs.map(function (r) {
+        return '<option value="' + esc(r.token) + '"' + (existing && existing.resultRef === r.token ? ' selected' : '') + '>' +
+          esc(r.anexaName + ' · ' + r.label + ' (' + r.ref + ')') + '</option>';
+      }).join('');
+    $('mf-expr').value = existing ? existing.expr : '';
+    $('mf-refs').innerHTML = refs.map(function (r) {
+      return '<button type="button" class="admin-formula-ref" data-ref-token="' + esc(r.token) + '" title="' + esc(r.anexaName + ' · ' + r.label) + '">' +
+        '<code>' + esc(r.token) + '</code><span>' + esc(r.label) + '</span></button>';
+    }).join('');
+    formulaModal.open();
+  }
+
+  function saveFormula() {
+    var modal = formulaModal.el;
+    var resultRef = $('mf-result').value;
+    var expr = $('mf-expr').value.trim();
+    clearErrors(modal);
+    var ok = true;
+    setErr(modal, 'mf-result', !resultRef, 'Alege câmpul-rezultat.');
+    if (!resultRef) ok = false;
+    setErr(modal, 'mf-expr', !expr, 'Introdu expresia de calcul.');
+    if (!expr) ok = false;
+    if (!ok) return;
+
+    /* Toate ref-urile din expresie există și sunt numerice. */
+    var tk = fxTokens(expr);
+    if (tk.error) { setErr(modal, 'mf-expr', true, tk.error); return; }
+    var refsInExpr = exprRefs(expr);
+    if (!refsInExpr.length) { setErr(modal, 'mf-expr', true, 'Expresia trebuie să folosească cel puțin un câmp.'); return; }
+    var unknown = refsInExpr.filter(function (r) { return !refByToken(r); });
+    if (unknown.length) { setErr(modal, 'mf-expr', true, 'Referință necunoscută: ' + unknown[0]); return; }
+    if (refsInExpr.indexOf(resultRef) !== -1) { setErr(modal, 'mf-expr', true, 'Câmpul-rezultat nu se poate referi pe sine.'); return; }
+
+    var resultType = (refByToken(resultRef) || {}).type === 'number' ? 'decimal' : 'decimal';
+    var entry = { resultRef: resultRef, expr: expr, resultType: resultType, allowManualOverride: true };
+
+    /* Verifică ciclurile pe setul rezultat. */
+    var candidate = draftFormulas.slice();
+    if (editingFormulaIdx >= 0) candidate[editingFormulaIdx] = entry; else candidate.push(entry);
+    var cycle = detectFormulaCycle(candidate);
+    if (cycle) { setErr(modal, 'mf-expr', true, 'Formula creează un ciclu: ' + cycle); return; }
+    /* Un singur rezultat per câmp. */
+    var dup = candidate.filter(function (f, k) { return f.resultRef === resultRef && k !== (editingFormulaIdx >= 0 ? editingFormulaIdx : candidate.length - 1); });
+    if (dup.length) { setErr(modal, 'mf-result', true, 'Există deja o formulă pentru acest câmp-rezultat.'); return; }
+
+    draftFormulas = candidate;
+    formulaModal.close();
+    renderFormulas();
+    toast('success', 'Formula a fost salvată.');
+  }
+
   function renderSteps() {
     var wrap = $('mt-steps');
     if (!wrap) return;
@@ -622,19 +997,30 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         if (sel.options[k].value === want) { sel.value = want; break; }
       }
     });
+    /* Anexele atașate s-au putut schimba → re-randează secțiunea de formule. */
+    renderFormulas();
   }
 
   function stepCardHtml(st, i) {
     var canRemove = draftSteps.length > 1;
 
     var tasksHtml = st.tasks.map(function (t, j) {
-      return '<div class="admin-task-row">' +
-        '<input type="text" class="input" value="' + esc(t) + '" placeholder="Descrie task-ul..."' +
+      var isUpload = t.kind === 'document_upload';
+      var uploadConfig = isUpload
+        ? '<div class="admin-task-row__upload"><div class="form-field" data-field="task-document-type-' + i + '-' + j + '"><label><span>Tip document</span><select class="select" data-task-document-type data-idx="' + i + '" data-task="' + j + '">' + documentTypeOptionsForDomain(editingTypeDomain, t.documentTypeId) + '</select></label><span class="form-error" role="alert"></span></div>' +
+            '<label class="admin-task-row__check"><input type="checkbox" data-task-multiple data-idx="' + i + '" data-task="' + j + '"' + (t.allowMultiple !== false ? ' checked' : '') + '> Permite mai multe fișiere</label>' +
+            '<label class="admin-task-row__minimum"><span>Minimum</span><input type="number" class="input" min="1" value="' + esc(t.minimumFiles || 1) + '" data-task-minimum-files data-idx="' + i + '" data-task="' + j + '"' + (t.allowMultiple === false ? ' disabled' : '') + '><span>fișiere</span></label></div>'
+        : '';
+      return '<div class="admin-task-row' + (isUpload ? ' is-upload' : '') + '">' +
+        '<span class="material-symbols-outlined admin-task-row__icon" aria-hidden="true">' + (isUpload ? 'upload_file' : 'check_box_outline_blank') + '</span>' +
+        '<input type="text" class="input" value="' + esc(t.label) + '" placeholder="Descrie task-ul..."' +
           ' data-task-input data-idx="' + i + '" data-task="' + j + '" aria-label="Task ' + (j + 1) + '" autocomplete="off">' +
+        '<select class="select admin-task-row__kind" data-task-kind data-idx="' + i + '" data-task="' + j + '" aria-label="Tip task"><option value="standard"' + (!isUpload ? ' selected' : '') + '>Task normal</option><option value="document_upload"' + (isUpload ? ' selected' : '') + '>Încărcare document</option></select>' +
+        '<label class="admin-task-row__check"><input type="checkbox" data-task-required data-idx="' + i + '" data-task="' + j + '"' + (t.required !== false ? ' checked' : '') + '> Obligatoriu</label>' +
         '<button type="button" class="admin-action-btn admin-action-btn--delete" data-remove-task data-idx="' + i + '" data-task="' + j + '"' +
           ' aria-label="Șterge task-ul" title="Șterge task-ul">' +
           '<span class="material-symbols-outlined" aria-hidden="true">delete</span>' +
-        '</button>' +
+        '</button>' + uploadConfig +
       '</div>';
     }).join('');
 
@@ -650,7 +1036,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     }).join('');
 
     var available = (MOCK.anexeTypes || []).filter(function (a) {
-      return (a.status || 'activ') === 'activ' && st.anexeIds.indexOf(a.id) === -1;
+      return (a.status || 'activ') === 'activ' && st.anexeIds.indexOf(a.id) === -1 && anexaInDomain(a, editingTypeDomain);
     });
     var selectHtml = '<select class="select" data-anexa-select data-idx="' + i + '" aria-label="Alege anexa"' +
       (available.length ? '' : ' disabled') + '>' +
@@ -704,12 +1090,35 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     '</div>';
   }
 
-  function openTypeModal(type) {
+  /* Opțiunile dropdown-ului de periodicitate, populate per domeniu. */
+  function populateFreqOptions(domain) {
+    var sel = $('mt-frecventa');
+    if (!sel) return;
+    var dl = DOMAIN_LABELS[domain] || DOMAIN_LABELS.contabil;
+    var opts = FREQUENCY_OPTIONS[domain] || FREQUENCY_OPTIONS.contabil;
+    sel.innerHTML = '<option value="">' + esc(dl.freqPlaceholder) + '</option>' +
+      opts.map(function (o) {
+        return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>';
+      }).join('');
+  }
+
+  function openTypeModal(type, domain) {
     editingTypeId = type ? type.id : null;
+    editingTypeDomain = type ? (type.domain || 'contabil') : (domain || 'contabil');
+    var dl = DOMAIN_LABELS[editingTypeDomain] || DOMAIN_LABELS.contabil;
     clearErrors(typeModal.el);
+
+    /* Același modal, etichete condiționate pe domeniu (titlu + câmp periodicitate). */
+    var titleEl = $('mt-title');
+    if (titleEl) titleEl.textContent = dl.modalTitle;
+    var freqLabelEl = $('mt-frecventa-label');
+    if (freqLabelEl) freqLabelEl.textContent = dl.freqLabel;
+    populateFreqOptions(editingTypeDomain);
+
     $('mt-nume').value = type ? type.name : '';
     $('mt-descriere').value = type ? (type.description || '') : '';
-    $('mt-frecventa').value = type ? type.frequency : '';
+    /* Tip nou de audit → „Anual" implicit; tip contabil nou rămâne gol (placeholder). */
+    $('mt-frecventa').value = type ? type.frequency : (editingTypeDomain === 'audit' ? 'anual' : '');
     $('mt-status').value = type ? (type.status || 'activ') : 'activ';
 
     if (type && type.steps && type.steps.length) {
@@ -718,7 +1127,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         return {
           name: st.name || '',
           offsetDays: (st.offsetDays === undefined || st.offsetDays === null) ? '' : st.offsetDays,
-          tasks: (st.tasks || []).slice(),
+          tasks: (st.tasks || []).map(function (task, taskIndex) { return normalizeDraftTask(task, taskIndex); }),
           /* Anexele șterse între timp nu se mai afișează și nu se re-salvează. */
           anexeIds: (st.anexeIds || []).filter(function (id) {
             if (anexaById(id)) return true;
@@ -736,6 +1145,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     } else {
       draftSteps = [emptyStep()];
     }
+    draftFormulas = (type && Array.isArray(type.formulas)) ? JSON.parse(JSON.stringify(type.formulas)) : [];
     renderSteps();
     typeModal.open();
   }
@@ -745,10 +1155,11 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var nume = $('mt-nume').value.trim();
     var freq = $('mt-frecventa').value;
 
+    var dl = DOMAIN_LABELS[editingTypeDomain] || DOMAIN_LABELS.contabil;
     var ok = true;
     setErr(modal, 'nume', !nume, 'Introdu numele tipului.');
     if (!nume) ok = false;
-    setErr(modal, 'frecventa', !freq, 'Selectează frecvența.');
+    setErr(modal, 'frecventa', !freq, dl.freqError);
     if (!freq) ok = false;
 
     if (!draftSteps.length) {
@@ -775,6 +1186,12 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       setErr(modal, 'step-days-' + i, !!daysErr, daysErr);
       if (daysErr) ok = false;
       if (Number.isInteger(days) && days > 0) prevDays = days;
+
+      (st.tasks || []).forEach(function (task, taskIndex) {
+        var missingDocumentType = task.kind === 'document_upload' && !documentTypesForDomain(editingTypeDomain).some(function (type) { return type.id === task.documentTypeId; });
+        setErr(modal, 'task-document-type-' + i + '-' + taskIndex, missingDocumentType, 'Selectează tipul documentului solicitat.');
+        if (missingDocumentType) ok = false;
+      });
     });
 
     if (!ok) {
@@ -786,6 +1203,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var record = {
       id: editingTypeId || uniqueTypeId(nume),
       name: nume,
+      domain: editingTypeDomain,
       description: $('mt-descriere').value.trim(),
       frequency: freq,
       status: $('mt-status').value,
@@ -793,11 +1211,22 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         return {
           name: String(st.name).trim(),
           offsetDays: parseInt(st.offsetDays, 10),
-          tasks: st.tasks.map(function (t) { return String(t).trim(); }).filter(function (t) { return !!t; }),
+          tasks: st.tasks.map(function (task, taskIndex) {
+            var normalized = normalizeDraftTask(task, taskIndex);
+            normalized.label = String(normalized.label || '').trim();
+            return normalized;
+          }).filter(function (task) { return !!task.label; }),
           anexeIds: st.anexeIds.slice()
         };
       })
     };
+
+    /* Formulele automate — păstrate doar cele valide (ref-uri încă atașate). */
+    var validFormulas = draftFormulas.filter(function (f) {
+      if (!refByToken(f.resultRef)) return false;
+      return exprRefs(f.expr).every(function (r) { return !!refByToken(r); });
+    });
+    if (validFormulas.length) record.formulas = validFormulas;
 
     var idx = MOCK.situationTypes.findIndex(function (t) { return t.id === record.id; });
     if (idx !== -1) MOCK.situationTypes[idx] = record;
@@ -805,8 +1234,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     writeMapEntry(TYPES_KEY, record.id, record);
 
     typeModal.close();
-    renderTypes();
-    toast('success', 'Tipul de situație a fost salvat.');
+    renderTypes(editingTypeDomain);
+    toast('success', dl.saveToast);
   }
 
   function uniqueTypeId(name) {
@@ -823,19 +1252,19 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function confirmDeleteType(type) {
     var used = (MOCK.situations || []).some(function (s) { return s.typeId === type.id; });
     if (used) {
-      toast('error', 'Tipul este folosit de situații existente și nu poate fi șters.');
+      toast('error', 'Șablonul este folosit de situații existente și nu poate fi șters.');
       return;
     }
     openConfirm({
-      title: 'Ștergere tip de situație',
-      body: '„' + type.name + '” va fi eliminat din lista de tipuri disponibile la crearea unei situații noi.',
+      title: 'Ștergere șablon',
+      body: '„' + type.name + '” va fi eliminat din lista de șabloane disponibile la crearea unei situații noi.',
       confirmLabel: 'Șterge',
       onConfirm: function () {
         var idx = MOCK.situationTypes.indexOf(type);
         if (idx !== -1) MOCK.situationTypes.splice(idx, 1);
         writeMapEntry(TYPES_KEY, type.id, { id: type.id, deleted: true });
-        renderTypes();
-        toast('success', 'Tipul de situație a fost șters.');
+        renderTypes(type.domain || 'contabil');
+        toast('success', 'Șablonul a fost șters.');
       }
     });
   }
@@ -845,16 +1274,152 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
      în harta localStorage 'scriptica.anexe', citite din MOCK)
      ============================================================= */
 
-  /* Numele tipurilor de situații care au anexa atașată pe vreun pas. */
-  function anexaUsedBy(anexaId) {
-    var names = [];
-    (MOCK.situationTypes || []).forEach(function (t) {
-      var used = (t.steps || []).some(function (st) {
-        return (st.anexeIds || []).indexOf(anexaId) !== -1;
-      });
-      if (used) names.push(t.name);
+  function flowVerticals() {
+    return ((((MOCK || {}).superAdmin || {}).flowVerticals) || []);
+  }
+
+  function flowTemplates() {
+    return ((((MOCK || {}).superAdmin || {}).flowTemplates) || []);
+  }
+
+  function verticalById(id) {
+    return flowVerticals().find(function (vertical) { return vertical.id === id; }) || null;
+  }
+
+  function verticalIdForType(type) {
+    if (type && type.verticalId) return type.verticalId;
+    var domain = (type && type.domain) || 'contabil';
+    var vertical = flowVerticals().find(function (item) { return item.domain === domain; });
+    return vertical ? vertical.id : '';
+  }
+
+  function annexVerticalIds(anexa) {
+    return Array.isArray(anexa && anexa.verticalIds) ? anexa.verticalIds.slice() : [];
+  }
+
+  function activityCatalog() {
+    var out = [];
+    flowTemplates().forEach(function (template) {
+      out.push({ key: 'hq:' + template.id, id: template.id, name: template.name, verticalId: template.verticalId, source: 'Registru HQ' });
     });
-    return names;
+    (MOCK.situationTypes || []).forEach(function (type) {
+      out.push({ key: 'client:' + type.id, id: type.id, name: type.name, verticalId: verticalIdForType(type), source: 'Configurare client' });
+    });
+    return out.sort(function (a, b) { return a.name.localeCompare(b.name, 'ro'); });
+  }
+
+  function anexaUsage(anexaId) {
+    var usage = [];
+    flowTemplates().forEach(function (template) {
+      var vertical = verticalById(template.verticalId);
+      (template.steps || []).forEach(function (step, index) {
+        if ((step.anexeIds || []).indexOf(anexaId) === -1) return;
+        usage.push({
+          activityKey: 'hq:' + template.id,
+          activityId: template.id,
+          activityName: template.name,
+          verticalId: template.verticalId,
+          verticalName: vertical ? vertical.name : 'Verticală necunoscută',
+          stepName: step.name || ('Pasul ' + (index + 1)),
+          source: 'Registru HQ'
+        });
+      });
+    });
+    (MOCK.situationTypes || []).forEach(function (type) {
+      var verticalId = verticalIdForType(type);
+      var vertical = verticalById(verticalId);
+      (type.steps || []).forEach(function (step, index) {
+        if ((step.anexeIds || []).indexOf(anexaId) === -1) return;
+        usage.push({
+          activityKey: 'client:' + type.id,
+          activityId: type.id,
+          activityName: type.name,
+          verticalId: verticalId,
+          verticalName: vertical ? vertical.name : 'Configurare locală',
+          stepName: step.name || ('Pasul ' + (index + 1)),
+          source: 'Configurare client'
+        });
+      });
+    });
+    return usage;
+  }
+
+  function uniqueUsageActivities(usage) {
+    var seen = {};
+    return (usage || []).filter(function (item) {
+      if (seen[item.activityKey]) return false;
+      seen[item.activityKey] = true;
+      return true;
+    });
+  }
+
+  function containsAnnexId(value, annexId) {
+    var escaped = String(annexId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(^|[^a-zA-Z0-9_])' + escaped + '(?=\\.|[^a-zA-Z0-9_]|$)').test(JSON.stringify(value || ''));
+  }
+
+  function anexaRelations(anexaId) {
+    var related = {};
+    var ids = (MOCK.anexeTypes || []).map(function (anexa) { return anexa.id; });
+    function connect(value) {
+      if (!containsAnnexId(value, anexaId)) return;
+      ids.forEach(function (id) {
+        if (id !== anexaId && containsAnnexId(value, id)) related[id] = true;
+      });
+    }
+    (MOCK.situationTypes || []).forEach(function (type) { (type.formulas || []).forEach(connect); });
+    flowTemplates().forEach(function (template) { (template.formulas || []).forEach(connect); });
+    /* Două anexe folosite în același pas formează o relație operațională,
+       chiar dacă nu există încă o formulă care le leagă explicit. */
+    flowTemplates().concat(MOCK.situationTypes || []).forEach(function (activity) {
+      (activity.steps || []).forEach(function (step) {
+        var stepIds = step.anexeIds || [];
+        if (stepIds.indexOf(anexaId) === -1) return;
+        stepIds.forEach(function (id) { if (id !== anexaId) related[id] = true; });
+      });
+    });
+    (MOCK.anexeTypes || []).forEach(function (anexa) {
+      var schema = (anexa && anexa.schema) || {};
+      if (anexa.id === anexaId) {
+        ids.forEach(function (id) { if (id !== anexaId && containsAnnexId(schema, id)) related[id] = true; });
+      } else if (containsAnnexId(schema, anexaId)) {
+        related[anexa.id] = true;
+      }
+    });
+    return Object.keys(related).map(function (id) {
+      return (MOCK.anexeTypes || []).find(function (anexa) { return anexa.id === id; });
+    }).filter(Boolean).sort(function (a, b) { return a.name.localeCompare(b.name, 'ro'); });
+  }
+
+  function initAnexaLibrary() {
+    anexaImpactModal = createModal('modal-anexa-impact');
+    var verticalSelect = $('ta-vertical');
+    if (verticalSelect) {
+      verticalSelect.innerHTML = '<option value="">Toate verticalele</option><option value="__shared__">Partajate între verticale</option>' +
+        flowVerticals().map(function (vertical) { return '<option value="' + esc(vertical.id) + '">' + esc(vertical.name) + '</option>'; }).join('');
+    }
+    populateAnexaActivityOptions();
+  }
+
+  function populateAnexaActivityOptions() {
+    var select = $('ta-activity');
+    if (!select) return;
+    var items = activityCatalog().filter(function (activity) {
+      return !filters.anexaVertical || filters.anexaVertical === '__shared__' || activity.verticalId === filters.anexaVertical;
+    });
+    select.innerHTML = '<option value="">Toate tipurile de activitate</option>' + items.map(function (activity) {
+      return '<option value="' + esc(activity.key) + '">' + esc(activity.name) + ' · ' + esc(activity.source) + '</option>';
+    }).join('');
+    select.value = filters.anexaActivity;
+  }
+
+  function verticalChipsHtml(anexa) {
+    var ids = annexVerticalIds(anexa);
+    if (!ids.length) return '<span class="pill pill--neutral admin-anexa-vertical">Partajată</span>';
+    return ids.map(function (id) {
+      var vertical = verticalById(id);
+      return '<span class="pill pill--neutral admin-anexa-vertical">' + esc(vertical ? vertical.name : id) + '</span>';
+    }).join('');
   }
 
   function renderAnexe() {
@@ -863,8 +1428,13 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var all = MOCK.anexeTypes || [];
     var q = normalize(filters.anexaSearch);
     var list = all.filter(function (a) {
+      var usage = anexaUsage(a.id);
+      var verticalIds = annexVerticalIds(a);
       if (q && normalize(a.name).indexOf(q) === -1) return false;
       if (filters.anexaStatus && (a.status || 'activ') !== filters.anexaStatus) return false;
+      if (filters.anexaVertical === '__shared__' && verticalIds.length) return false;
+      if (filters.anexaVertical && filters.anexaVertical !== '__shared__' && verticalIds.indexOf(filters.anexaVertical) === -1) return false;
+      if (filters.anexaActivity && !usage.some(function (item) { return item.activityKey === filters.anexaActivity; })) return false;
       return true;
     });
 
@@ -878,20 +1448,55 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     toggleEmpty('ta', list.length);
     tbody.innerHTML = list.map(function (a) {
       var fieldsCount = (a.schema && a.schema.fields) ? a.schema.fields.length : 0;
-      var usedIn = anexaUsedBy(a.id);
+      var usage = anexaUsage(a.id);
+      var activities = uniqueUsageActivities(usage);
+      var relations = anexaRelations(a.id);
+      var usedLabel = activities.slice(0, 2).map(function (item) { return item.activityName; }).join(', ');
+      if (activities.length > 2) usedLabel += ' +' + (activities.length - 2);
       return '<tr>' +
-        '<td class="admin-table__name">' + esc(a.name) + '</td>' +
+        '<td class="admin-table__name">' + esc(a.name) + '<small class="admin-anexa-updated">Modificată ' + esc(formatDateFull(a.updatedAt)) + '</small></td>' +
+        '<td><div class="admin-anexa-verticals">' + verticalChipsHtml(a) + '</div></td>' +
+        '<td>' + (activities.length ? '<span title="' + esc(activities.map(function (item) { return item.activityName; }).join(', ')) + '">' + esc(usedLabel) + '</span><small class="admin-anexa-usage">' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + '</small>' : '<span class="admin-table__muted">Neutilizată</span>') + '</td>' +
+        '<td>' + (relations.length ? '<button type="button" class="admin-anexa-relation" data-action="impact" data-id="' + esc(a.id) + '"><span class="material-symbols-outlined" aria-hidden="true">hub</span>' + relations.length + '</button>' : '<span class="admin-table__muted">—</span>') + '</td>' +
         '<td class="admin-table__muted">' + fieldsCount + '</td>' +
-        '<td>' + (usedIn.length ? esc(usedIn.join(', ')) : '<span class="admin-table__muted">—</span>') + '</td>' +
-        '<td>' + formatDateFull(a.updatedAt) + '</td>' +
         '<td>' + statusPillHtml(a.status) + '</td>' +
         '<td><div class="admin-actions">' +
+          actionBtnHtml('impact', a.id, 'account_tree', 'Vezi utilizările și relațiile', false) +
           actionBtnHtml('edit', a.id, 'edit', 'Editează în constructor', false) +
           actionBtnHtml('duplicate', a.id, 'content_copy', 'Duplică anexa', false) +
-          actionBtnHtml('delete', a.id, 'delete', 'Șterge anexa', true) +
+          actionBtnHtml('delete', a.id, 'delete', 'Retrage sau șterge anexa', true) +
         '</div></td>' +
       '</tr>';
     }).join('');
+  }
+
+  function openAnexaImpact(anexa, warning) {
+    if (!anexaImpactModal || !anexa) return;
+    var usage = anexaUsage(anexa.id);
+    var activities = uniqueUsageActivities(usage);
+    var relations = anexaRelations(anexa.id);
+    var title = $('mai-title');
+    var subtitle = $('mai-subtitle');
+    var body = $('mai-body');
+    if (title) title.textContent = 'Impact — ' + anexa.name;
+    if (subtitle) subtitle.textContent = activities.length + (activities.length === 1 ? ' tip de activitate' : ' tipuri de activitate') + ' · ' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + ' · ' + relations.length + (relations.length === 1 ? ' anexă conectată' : ' anexe conectate');
+    if (body) {
+      body.innerHTML =
+        (warning ? '<div class="admin-anexa-impact__warning"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>' + esc(warning) + '</span></div>' : '') +
+        '<div class="admin-anexa-impact__summary"><div><b>' + activities.length + '</b><span>Tipuri de activitate</span></div><div><b>' + usage.length + '</b><span>Pași conectați</span></div><div><b>' + relations.length + '</b><span>Anexe conectate</span></div></div>' +
+        '<section class="admin-anexa-impact__section"><h3>Disponibilă în verticale</h3><div class="admin-anexa-verticals">' + verticalChipsHtml(anexa) + '</div><p>O anexă poate fi disponibilă în mai multe verticale fără să fie duplicată.</p></section>' +
+        '<section class="admin-anexa-impact__section"><h3>Utilizări în fluxuri și pași</h3>' +
+          (usage.length ? '<div class="admin-anexa-impact__list">' + usage.map(function (item) {
+            return '<div><span class="material-symbols-outlined" aria-hidden="true">account_tree</span><span><b>' + esc(item.activityName) + '</b><small>' + esc(item.verticalName + ' · ' + item.stepName + ' · ' + item.source) + '</small></span></div>';
+          }).join('') + '</div>' : '<div class="admin-anexa-impact__empty">Anexa nu este încă atașată niciunui flux.</div>') +
+        '</section>' +
+        '<section class="admin-anexa-impact__section"><h3>Conexiuni cu alte anexe</h3>' +
+          (relations.length ? '<div class="admin-anexa-impact__list">' + relations.map(function (related) {
+            return '<div><span class="material-symbols-outlined" aria-hidden="true">hub</span><span><b>' + esc(related.name) + '</b><small>Relație detectată prin folosire în același pas, formulă sau referință stabilă.</small></span></div>';
+          }).join('') + '</div>' : '<div class="admin-anexa-impact__empty">Nu există conexiuni detectate cu alte anexe.</div>') +
+        '</section>';
+    }
+    anexaImpactModal.open();
   }
 
   function duplicateAnexa(anexa) {
@@ -910,14 +1515,31 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   }
 
   function confirmDeleteAnexa(anexa) {
-    if (anexaUsedBy(anexa.id).length) {
-      toast('error', 'Anexa este folosită de tipuri de situații și nu poate fi ștearsă.');
+    var usage = anexaUsage(anexa.id);
+    var relations = anexaRelations(anexa.id);
+    if (usage.length || relations.length) {
+      if ((anexa.status || 'activ') === 'inactiv') {
+        openAnexaImpact(anexa, 'Anexa este deja retrasă și nu poate fi ștearsă definitiv deoarece păstrează utilizări sau conexiuni istorice.');
+        return;
+      }
+      openConfirm({
+        title: 'Retragere anexă utilizată',
+        body: '„' + anexa.name + '” este folosită în ' + usage.length + (usage.length === 1 ? ' pas' : ' pași') + ' și are ' + relations.length + (relations.length === 1 ? ' conexiune' : ' conexiuni') + '. Va fi retrasă din configurările noi, dar definiția, formulele și istoricul rămân intacte.',
+        confirmLabel: 'Retrage anexa',
+        onConfirm: function () {
+          anexa.status = 'inactiv';
+          anexa.updatedAt = TODAY_ISO;
+          writeMapEntry(ANEXE_KEY, anexa.id, anexa);
+          renderAnexe();
+          toast('success', 'Anexa a fost retrasă. Istoricul și conexiunile au rămas intacte.');
+        }
+      });
       return;
     }
     openConfirm({
-      title: 'Ștergere anexă',
-      body: '„' + anexa.name + '” nu va mai putea fi atașată pașilor tipurilor de situații. Formularele deja completate rămân în arhivă.',
-      confirmLabel: 'Șterge',
+      title: 'Ștergere definitivă anexă',
+      body: '„' + anexa.name + '” nu va mai putea fi atașată pașilor tipurilor de situații. Anexele deja completate rămân în arhivă.',
+      confirmLabel: 'Șterge definitiv',
       onConfirm: function () {
         var idx = MOCK.anexeTypes.indexOf(anexa);
         if (idx !== -1) MOCK.anexeTypes.splice(idx, 1);
@@ -947,7 +1569,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var nume = $('ma-nume').value.trim();
     setErr(modal, 'nume', !nume, 'Introdu numele anexei.');
     if (!nume) return;
-    window.location.href = 'constructor-anexe.html?new=1&name=' + encodeURIComponent(nume);
+    window.location.href = 'constructor-anexe.html?new=1&name=' + encodeURIComponent(nume) + (IS_SUPERADMIN_CONTEXT ? '&view=superadmin' : '');
   }
 
   /* =============================================================

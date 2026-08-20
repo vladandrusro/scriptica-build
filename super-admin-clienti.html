@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clienți — Super Admin — Scriptica</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/tokens.css?v=16">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=20">
+  <link rel="stylesheet" href="css/administrare.css?v=20">
+  <link rel="stylesheet" href="css/super-admin.css?v=24">
+  <link rel="stylesheet" href="css/dashboard-widgets.css?v=2">
+</head>
+<body data-page="super-admin-clienti">
+  <div class="shell shell--messaging-closed">
+
+    <header class="header" role="banner">
+      <div class="header__left">
+        <a href="acasa.html" class="header__logo-link" aria-label="Scriptica, pagina principală">
+          <img src="assets/logo-scriptica.png" alt="Scriptica" class="header__logo">
+        </a>
+      </div>
+      <div class="header__center">
+        <div class="header__search" role="search">
+          <label for="header-search" class="sr-only">Caută în aplicație</label>
+          <input id="header-search" class="header__search-input" type="search" placeholder="Caută în aplicație" autocomplete="off">
+          <span class="material-symbols-outlined header__search-icon" aria-hidden="true">search</span>
+        </div>
+      </div>
+      <div class="header__right">
+        <span class="header__welcome">Bine ai venit, <strong data-welcome-name>Scriptica HQ</strong></span>
+        <button class="header__icon-btn header__user" type="button" aria-label="Meniu utilizator">
+          <span class="material-symbols-outlined" aria-hidden="true">person</span>
+        </button>
+        <button class="header__icon-btn header__notification" type="button" aria-label="Notificări">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="header__badge" aria-hidden="true">3</span>
+        </button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Navigație Super Admin">
+      <button class="sidebar__burger" type="button" aria-label="Extinde/restrânge meniul">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+      <nav class="sidebar__nav" aria-label="Secțiuni">
+        <a class="nav-item" href="super-admin.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">monitoring</span>
+          <span class="nav-item__label">Dashboard</span>
+        </a>
+        <a class="nav-item" href="super-admin-clienti.html">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">apartment</span>
+          <span class="nav-item__label">Clienți</span>
+        </a>
+        <div class="sidebar__group-label" aria-hidden="true">Configurare</div>
+        <a class="nav-item" href="super-admin-fluxuri-v2.html?view=superadmin">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">account_tree</span>
+          <span class="nav-item__label">Verticale și fluxuri</span>
+        </a>
+        <a class="nav-item" href="administrare.html?view=superadmin#tipuri-anexe">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">description</span>
+          <span class="nav-item__label">Anexe</span>
+        </a>
+        <a class="nav-item" href="super-admin-tipuri-clienti-v2.html?view=superadmin">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">category</span>
+          <span class="nav-item__label">Tipuri de clienți</span>
+        </a>
+        <a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">dns</span>
+          <span class="nav-item__label">Infrastructură</span>
+        </a>
+        <a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">receipt_long</span>
+          <span class="nav-item__label">Facturare</span>
+        </a>
+        <a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1">
+          <span class="material-symbols-outlined nav-item__icon" aria-hidden="true">settings</span>
+          <span class="nav-item__label">Setări</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main" id="main" role="main">
+      <div id="sa-root"></div>
+    </main>
+
+  </div>
+
+  <!-- Toast stack -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/shell.js?v=35"></script>
+  <script src="js/mock-data.js?v=55"></script>
+  <script src="js/timer.js?v=30"></script>
+  <script src="js/dashboard.js?v=34"></script>
+  <script src="js/dashboard-widgets.js?v=12"></script>
+  <script src="js/super-admin.js?v=26"></script>
+</body>
+</html>

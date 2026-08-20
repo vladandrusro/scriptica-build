@@ -355,11 +355,85 @@
 .admin-task-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
 }
 
-.admin-task-row .input {
+.admin-task-row.is-upload {
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.admin-task-row > .input {
   flex: 1;
+  min-width: calc(var(--space-8) * 2);
+}
+
+.admin-task-row__icon {
+  flex: none;
+  color: var(--color-default);
+  font-size: var(--font-size-subtitle);
+}
+
+.admin-task-row__kind {
+  width: calc(var(--space-8) * 2.5);
+  flex: none;
+}
+
+.admin-task-row__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+.admin-task-row__check input {
+  width: var(--space-4);
+  height: var(--space-4);
+  accent-color: var(--color-default-highlight);
+}
+
+.admin-task-row__upload {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-left: calc(var(--space-5) + var(--space-2));
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-white);
+}
+
+.admin-task-row__upload .form-field { margin: 0; }
+
+.admin-task-row__upload label:not(.admin-task-row__check) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-task-row__minimum {
+  display: grid !important;
+  grid-template-columns: auto var(--space-7) auto;
+  align-items: center;
+}
+
+.admin-task-row__minimum > span:first-child { grid-column: 1 / -1; }
+.admin-task-row__minimum .input { width: var(--space-7); }
+
+@media (max-width: 960px) {
+  .admin-task-row__kind { width: auto; flex: 1; }
+  .admin-task-row__upload { grid-template-columns: minmax(0, 1fr); margin-left: 0; }
 }
 
 /* Picker de anexe + chip-uri detașabile */
@@ -390,8 +464,8 @@
 }
 
 .admin-anexa-chip__remove {
-  width: 18px;
-  height: 18px;
+  width: var(--font-size-subtitle);
+  height: var(--font-size-subtitle);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -407,10 +481,281 @@
 }
 
 .admin-anexa-chip__remove .material-symbols-outlined {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 .admin-confirm-text {
   color: var(--color-text-secondary);
   line-height: var(--line-height-normal);
+}
+
+/* ------------------------------------------------------------
+   Biblioteca de anexe — clasificare multi-verticală și impact
+   ------------------------------------------------------------ */
+.admin-anexa-filter { width: calc(var(--space-8) * 2.5); }
+#ta-activity { width: calc(var(--space-8) * 3.25); }
+
+.admin-anexa-updated,
+.admin-anexa-usage {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+}
+
+.admin-anexa-verticals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.admin-anexa-vertical {
+  height: auto;
+  min-height: var(--space-4);
+  padding: var(--space-1) var(--space-2);
+  white-space: normal;
+}
+
+.admin-anexa-relation {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-default-highlight);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.admin-anexa-relation:hover { border-color: var(--color-default-highlight); }
+.admin-anexa-relation .material-symbols-outlined { font-size: var(--font-size-body); }
+
+.admin-anexa-impact__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-pending);
+  border-radius: var(--radius-md);
+  background: var(--color-pending-surface);
+  color: var(--color-text-primary);
+}
+
+.admin-anexa-impact__warning .material-symbols-outlined { color: var(--color-pending); }
+
+.admin-anexa-impact__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.admin-anexa-impact__summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.admin-anexa-impact__summary b {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-headline-2);
+}
+
+.admin-anexa-impact__summary span,
+.admin-anexa-impact__section p,
+.admin-anexa-impact__list small {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.admin-anexa-impact__section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-anexa-impact__section h3 {
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-subtitle);
+}
+
+.admin-anexa-impact__section p { margin: var(--space-2) 0 0; }
+
+.admin-anexa-impact__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-anexa-impact__list > div {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+}
+
+.admin-anexa-impact__list .material-symbols-outlined {
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-subtitle);
+}
+
+.admin-anexa-impact__list b,
+.admin-anexa-impact__list small { display: block; }
+
+.admin-anexa-impact__empty {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+@media (max-width: 1100px) {
+  .admin-anexa-filter,
+  #ta-activity { width: calc(50% - var(--space-2)); }
+  .admin-anexa-impact__summary { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   Formule automate — secțiunea din editorul de tip de misiune
+   ============================================================ */
+.admin-formulas { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-2); }
+.admin-formulas__empty {
+  font-size: var(--font-size-small); color: var(--color-text-muted);
+  padding: var(--space-3); background: var(--color-surface-1); border-radius: var(--radius-sm);
+}
+.admin-formula-row {
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  background: var(--color-surface-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); padding: var(--space-3);
+}
+.admin-formula-row.is-invalid { border-color: var(--color-critical); }
+.admin-formula-row__main { flex: 1; min-width: 0; }
+.admin-formula-row__result {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-weight: var(--font-weight-bold); font-size: var(--font-size-body);
+}
+.admin-formula-row__result .material-symbols-outlined { font-size: 18px; color: var(--color-default-highlight); }
+.admin-formula-row__expr { margin-top: var(--space-1); }
+.admin-formula-row__expr code {
+  font-family: monospace; font-size: var(--font-size-small); color: var(--color-text-secondary);
+  background: var(--color-surface-1); padding: 2px 6px; border-radius: var(--radius-sm);
+}
+.admin-formula-row__warn { margin-top: var(--space-1); font-size: var(--font-size-small); color: var(--color-critical); font-weight: var(--font-weight-bold); }
+.admin-formula-row__actions { display: flex; gap: var(--space-1); flex: none; }
+
+.admin-formula-refs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.admin-formula-ref {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  border: 1px solid var(--color-border); background: var(--color-surface-white);
+  border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); cursor: pointer;
+  font-family: var(--font-family-base); text-align: left;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.admin-formula-ref:hover { background: var(--color-surface-1); border-color: var(--color-border-strong); }
+.admin-formula-ref code { font-family: monospace; font-size: var(--font-size-tiny); color: var(--color-default-highlight); font-weight: var(--font-weight-bold); }
+.admin-formula-ref span { font-size: var(--font-size-tiny); color: var(--color-text-muted); }
+
+/* ============================================================
+   Tooltip pe etichetă (info „i") — explicații în formulare
+   ============================================================ */
+.field-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: var(--space-1);
+  color: var(--color-text-muted);
+  cursor: help;
+}
+.field-info:hover, .field-info:focus-visible { color: var(--color-default-highlight); outline: none; }
+.field-info > .material-symbols-outlined { font-size: 16px; }
+.field-info__tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  max-width: 70vw;
+  background: var(--color-text-primary);
+  color: var(--color-surface-white);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  text-transform: none;
+  letter-spacing: normal;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+.field-info__tip strong { color: var(--color-important-highlight); font-weight: var(--font-weight-bold); }
+.field-info__tip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-text-primary);
+}
+.field-info:hover .field-info__tip,
+.field-info:focus-visible .field-info__tip,
+.field-info:focus-within .field-info__tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Feedback #2 — același profil din formularul intern și preview-ul extern */
+.co-profile-schema {
+  margin-top: var(--space-5); padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+.co-profile-schema__head {
+  display: flex; align-items: flex-start; gap: var(--space-2); margin-bottom: var(--space-4);
+}
+.co-profile-schema__head h4, .co-profile-schema__head p { margin: 0; }
+.co-profile-schema__head p { margin-top: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-small); }
+.co-sensitive-head { margin-left: var(--space-1); color: var(--color-pending); font-size: var(--font-size-headline-3); vertical-align: middle; }
+.bpf-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.bpf-section-title {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2);
+  padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border);
+}
+.bpf-section-title h4 { margin: 0; font-size: var(--font-size-headline-3); }
+.bpf-field:has(textarea), .bpf-field:has(.bpf-address), .bpf-field:has(.bpf-repeater), .bpf-field:has(.bpf-upload) { grid-column: 1 / -1; }
+.bpf-address { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: var(--space-2); }
+.bpf-address label { display: grid; gap: var(--space-1); color: var(--color-text-muted); font-size: var(--font-size-small); }
+.bpf-upload {
+  display: flex; align-items: center; gap: var(--space-3); min-height: calc(var(--space-8) + var(--space-2));
+  padding: var(--space-3); border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface-2); cursor: pointer;
+}
+.bpf-upload input { position: absolute; width: var(--space-1); height: var(--space-1); opacity: 0; }
+.bpf-upload span, .bpf-upload b, .bpf-upload small { display: block; }
+.bpf-upload small { margin-top: var(--space-1); color: var(--color-text-muted); }
+.bpf-repeater { display: grid; gap: var(--space-2); }
+.bpf-repeater__row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); }
+.bpf-repeater__empty, .bpf-empty {
+  padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-2);
+  color: var(--color-text-muted); text-align: center;
+}
+.bpf-empty .material-symbols-outlined { display: block; margin-bottom: var(--space-2); }
+
+@media (max-width: 1100px) {
+  .bpf-address { grid-template-columns: 1fr 1fr; }
 }

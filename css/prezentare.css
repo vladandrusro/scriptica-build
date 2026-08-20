@@ -152,7 +152,556 @@ body.prez-body {
   user-select: none;
 }
 
-/* ----- Slide-3 "press again" hint --------------------------- */
+/* ============================================================
+   Slide 4 — "Ce poate fiecare utilizator" (HTML content, not image)
+   ============================================================ */
+.prez-slide--content {
+  /* Conținut, nu imagine: aliniere sus + scroll dacă depășește ecranul. */
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.prez-content {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  text-align: left;
+}
+
+.prez-content__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.prez-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 56px;
+  height: 56px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+  font-weight: var(--font-weight-black);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.prez-title {
+  margin: 0;
+  font-weight: var(--font-weight-black);
+  font-size: 30px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-default-highlight);
+  line-height: 1.1;
+}
+
+.prez-subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-subtitle);
+  color: var(--color-text-secondary);
+}
+
+.prez-roles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.prez-role-card {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-role-card__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-headline-3);
+  color: var(--color-default-highlight);
+}
+
+.prez-role-card__sub {
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.prez-role-card__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin: 2px 0 var(--space-3);
+}
+
+.prez-caps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.prez-caps--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.prez-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.prez-caps--row .prez-cap {
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.prez-cap__text { flex: 1; }
+.prez-caps--row .prez-cap__text { flex: 0 0 auto; }
+
+.prez-badge {
+  flex-shrink: 0;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.prez-badge--tier {
+  background: var(--color-important);
+  color: var(--color-default-highlight);
+}
+.prez-badge--standard {
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.prez-role-card--authority {
+  grid-column: 1 / -1;
+  background: var(--color-chat-right);
+  border-color: var(--color-default-highlight);
+  border-left-width: 4px;
+}
+
+.prez-role-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-default-highlight);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.prez-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+}
+.prez-summary__item b { color: var(--color-default-highlight); }
+
+/* ============================================================
+   Slide 5 — "Arhitectura: totul este un flux"
+   ============================================================ */
+
+/* Variantă densă: slide-ul 5 are 4 secțiuni — încape fără scroll la 720p */
+.prez-slide--dense { padding-top: var(--space-5); }
+.prez-content--dense { gap: var(--space-4); }
+.prez-content--dense .prez-summary { padding: var(--space-3) var(--space-4); }
+
+/* A. Lanțul de configurare (Tip de client → ... → Pas) */
+.prez-chain {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.prez-chain__item {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prez-chain__icon {
+  font-size: 20px;
+  color: var(--color-default-highlight);
+}
+
+.prez-chain__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-chain__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+
+.prez-chain__ex {
+  margin-top: auto;
+  padding-top: var(--space-1);
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-tight);
+}
+
+.prez-chain__arrow {
+  align-self: center;
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-default);
+}
+
+/* B. Expresiile fluxului — grilă 3×2 */
+.prez-express {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.prez-express__card {
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-3);
+  align-items: center;
+}
+
+.prez-express__icon {
+  grid-row: 1 / span 2;
+  font-size: 22px;
+  color: var(--color-default-highlight);
+}
+
+.prez-express__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-express__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+
+/* C. Drumul unui document — titlu + pași pe un singur rând (wrap la nevoie) */
+.prez-docflow {
+  background: var(--color-chat-right);
+  border: 1px solid var(--color-default-highlight);
+  border-left-width: 4px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.prez-docflow__title {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-docflow__title .material-symbols-outlined { font-size: 20px; }
+
+.prez-docflow__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.prez-docflow__step {
+  font-size: var(--font-size-small);
+  color: var(--color-text-primary);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+}
+
+.prez-docflow__step b { color: var(--color-default-highlight); }
+.prez-docflow__step i { color: var(--color-text-muted); font-style: normal; }
+
+.prez-docflow__arrow {
+  font-size: 16px;
+  color: var(--color-default);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Slide 6 — "Cum lansezi un nou tip de business"
+   ============================================================ */
+.prez-journey {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.prez-journey__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.prez-journey__page {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-headline-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-default-highlight);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--color-default-highlight);
+}
+
+.prez-journey__page .material-symbols-outlined { font-size: 20px; }
+
+.prez-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+}
+
+.prez-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prez-step__title {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-step__opt {
+  display: inline-block;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+}
+
+.prez-step__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.prez-step--payoff {
+  background: var(--color-chat-right);
+  border-color: var(--color-default-highlight);
+  border-left-width: 4px;
+}
+
+.prez-step__check {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: var(--color-default-highlight);
+}
+
+/* Ecrane mai mici: lanțul + grilele trec pe o coloană utilă */
+@media (max-width: 1024px) {
+  .prez-chain { flex-direction: column; }
+  .prez-chain__arrow { transform: rotate(90deg); align-self: flex-start; margin-left: var(--space-4); }
+  .prez-express { grid-template-columns: repeat(2, 1fr); }
+  .prez-journey { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Slide 6 — Harta mentală „Fluxul în centru"
+   ============================================================ */
+.prez-map {
+  position: relative;
+  height: 560px;
+}
+
+.prez-map__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.prez-map__lines line {
+  stroke: var(--color-border-strong);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.prez-map__center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  background: var(--color-chat-right);
+  border: 2px solid var(--color-default-highlight);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-4) var(--space-5);
+  text-align: center;
+}
+
+.prez-map__center .material-symbols-outlined {
+  font-size: 28px;
+  color: var(--color-default-highlight);
+}
+
+.prez-map__center-name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-headline-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-default-highlight);
+}
+
+.prez-map__center-desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.prez-map__center-ex {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+.prez-map__node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.prez-map__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--color-default-highlight);
+  margin-top: 2px;
+}
+
+.prez-map__name {
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-body);
+  color: var(--color-default-highlight);
+}
+
+.prez-map__desc {
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-tight);
+}
+
+/* Pozițiile satelitelor — aceleași puncte ca liniile din SVG (procente). */
+.prez-map__node--top         { left: 50%; top: 10%; }
+.prez-map__node--topleft     { left: 16%; top: 18%; }
+.prez-map__node--topright    { left: 84%; top: 18%; }
+.prez-map__node--left        { left: 11%; top: 58%; }
+.prez-map__node--right       { left: 89%; top: 58%; }
+.prez-map__node--bottomleft  { left: 27%; top: 90%; }
+.prez-map__node--bottomright { left: 73%; top: 90%; }
+
+/* Ecrane înguste: harta devine listă verticală (fără linii). */
+@media (max-width: 1024px) {
+  .prez-map { height: auto; display: flex; flex-direction: column; gap: var(--space-3); }
+  .prez-map__lines { display: none; }
+  .prez-map__center,
+  .prez-map__node {
+    position: static;
+    transform: none;
+    width: auto;
+    order: 1;
+  }
+  .prez-map__center { order: 0; }
+}
+
+/* ----- Slide-4 "press again" hint --------------------------- */
 .prez-hint {
   position: absolute;
   bottom: calc(var(--space-6) + 64px);
@@ -180,4 +729,427 @@ body.prez-body {
 
 @supports not ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
   .prez-hint { background: rgba(255, 255, 255, 0.92); }
+}
+
+/* ============================================================
+   Reconfigurare narativă — Tip client → Verticale → Fluxuri → Client
+   Conținutul istoric rămâne în document doar ca reper de fază,
+   dar este scos din randare pe slide-urile reîncadrate.
+   ============================================================ */
+.prez-slide--reframed > .prez-content { display: none; }
+.prez-slide--reframed[data-slide="4"],
+.prez-slide--reframed[data-slide="5"],
+.prez-slide--reframed[data-slide="6"] { align-items: center; }
+
+.prez-reframe {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 0;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  text-align: left;
+}
+
+.prez-reframe--dense { gap: var(--space-4); }
+
+.prez-types {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.prez-type.va-mov { --va: var(--vertical-mov); --va-surface: var(--vertical-mov-surface); }
+.prez-type.va-albastru { --va: var(--vertical-albastru); --va-surface: var(--vertical-albastru-surface); }
+.prez-type.va-auriu { --va: var(--vertical-auriu); --va-surface: var(--vertical-auriu-surface); }
+
+.prez-type {
+  position: relative;
+  min-height: calc(var(--space-8) * 4);
+  padding: var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-top: var(--space-1) solid var(--va, var(--color-default-highlight));
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-type__number {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-black);
+}
+
+.prez-type__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--va-surface, var(--color-surface-1));
+  color: var(--va, var(--color-default-highlight));
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-type__label,
+.prez-payoff__eyebrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.prez-type h3 {
+  margin: var(--space-1) 0 var(--space-5);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-headline-1);
+  line-height: var(--line-height-tight);
+}
+
+.prez-type__chain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.prez-type__chain b {
+  color: var(--va, var(--color-default-highlight));
+  font-size: var(--font-size-subtitle);
+}
+
+.prez-type__chain span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+.prez-thesis,
+.prez-demo-bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-chat-right);
+  color: var(--color-default-highlight);
+}
+
+.prez-thesis > .material-symbols-outlined,
+.prez-demo-bridge > .material-symbols-outlined {
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-thesis > div,
+.prez-demo-bridge > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.prez-thesis b,
+.prez-demo-bridge b { font-size: var(--font-size-subtitle); }
+.prez-thesis span,
+.prez-demo-bridge span { color: var(--color-text-secondary); font-size: var(--font-size-body); }
+
+.prez-hierarchy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.prez-hierarchy__item {
+  position: relative;
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-hierarchy__item.is-root {
+  border-color: var(--color-default-highlight);
+  background: var(--color-chat-right);
+}
+
+.prez-hierarchy__item > .material-symbols-outlined {
+  margin-bottom: var(--space-5);
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-hierarchy__num {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-black);
+}
+
+.prez-hierarchy__item small {
+  display: block;
+  min-height: var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-tight);
+}
+
+.prez-hierarchy__item h3 {
+  margin: var(--space-2) 0;
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-headline-2);
+  line-height: var(--line-height-tight);
+}
+
+.prez-hierarchy__item p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+.prez-hierarchy__arrow,
+.prez-setup-flow__arrow,
+.prez-payoff__arrow {
+  align-self: center;
+  color: var(--color-default);
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-inherits {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-1);
+}
+
+.prez-inherits__lead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-default-highlight);
+}
+
+.prez-inherits > span {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-white);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+.prez-setup-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.prez-setup-step {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-setup-step.is-primary {
+  border-color: var(--color-default-highlight);
+  background: var(--color-chat-right);
+}
+
+.prez-setup-step.is-finish {
+  border-color: var(--color-success);
+}
+
+.prez-setup-step__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.prez-setup-step__top > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--color-default-highlight);
+  color: var(--color-surface-white);
+  font-weight: var(--font-weight-black);
+}
+
+.prez-setup-step__top .material-symbols-outlined {
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-setup-step > small {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.prez-setup-step h3 {
+  margin: var(--space-2) 0 var(--space-3);
+  color: var(--color-default-highlight);
+  font-size: var(--font-size-headline-2);
+  line-height: var(--line-height-tight);
+}
+
+.prez-setup-step p {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+.prez-setup-step > b {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-small);
+}
+
+.prez-payoff {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) auto minmax(0, 1.1fr);
+  align-items: stretch;
+  gap: var(--space-5);
+}
+
+.prez-payoff__source,
+.prez-payoff__result {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.prez-payoff__source {
+  border-top: var(--space-1) solid var(--color-default-highlight);
+}
+
+.prez-payoff__source-icon {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--color-default-highlight);
+  font-size: calc(var(--space-8) + var(--space-2));
+}
+
+.prez-payoff__source h3 {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-headline-1);
+}
+
+.prez-payoff__row {
+  display: grid;
+  grid-template-columns: calc(var(--space-8) * 2) 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-body);
+}
+
+.prez-payoff__row span { color: var(--color-text-muted); }
+.prez-payoff__row b { color: var(--color-default-highlight); }
+
+.prez-payoff__client {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+}
+
+.prez-payoff__client > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.prez-payoff__client small { color: var(--color-text-muted); }
+
+.prez-payoff__surfaces {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+}
+
+.prez-payoff__surfaces > span {
+  min-height: calc(var(--space-8) + var(--space-6));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+  text-align: center;
+}
+
+.prez-payoff__surfaces i { font-size: var(--font-size-headline-2); }
+.prez-payoff__surfaces b { font-size: var(--font-size-body); }
+
+.prez-payoff__message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--color-success);
+  font-size: var(--font-size-body);
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .prez-slide--reframed[data-slide="4"],
+  .prez-slide--reframed[data-slide="5"],
+  .prez-slide--reframed[data-slide="6"] { align-items: flex-start; }
+  .prez-types { grid-template-columns: 1fr; }
+  .prez-hierarchy,
+  .prez-setup-flow { grid-template-columns: 1fr; }
+  .prez-hierarchy__arrow,
+  .prez-setup-flow__arrow,
+  .prez-payoff__arrow { transform: rotate(90deg); justify-self: center; }
+  .prez-payoff { grid-template-columns: 1fr; }
 }

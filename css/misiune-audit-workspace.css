@@ -1,0 +1,249 @@
+/* ============================================================
+   Scriptica — Spațiul de lucru Misiune de Audit (Brief #4)
+   Page-scoped: DOAR clasele noi față de components.css/anexe.css.
+   Restul (step-card, anexa-card, task-detail-row, docs-table,
+   doc-row, doc-tab, message-card, composer, avatare) sunt
+   reutilizate verbatim din CSS-ul real. Valori din prototipul
+   aprobat (misiune-audit-workspace_2.html), tokens only.
+   ============================================================ */
+
+/* --- Titlu pagină (back + text) --- */
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.detail-title__back {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-title__back:hover {
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+}
+.detail-title__text {
+  font-size: var(--font-size-headline-2);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+/* --- Etichetă mică pe time-tracking (lipsea explicit în components.css) --- */
+.task-time__label {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+/* --- Card „Obiectivele Misiunii" — anexă specială, expandabilă inline --- */
+.anexa-card--obiective {
+  grid-column: 1 / -1;
+  min-height: auto;
+  cursor: default;
+  border-color: var(--color-default-highlight);
+}
+.obj-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  background: var(--color-surface-2);
+}
+.obj-head:hover { background: var(--color-surface-1); }
+.obj-head__left {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.obj-head__icon { color: var(--color-default-highlight); font-size: 20px; }
+.obj-head__title {
+  font-size: var(--font-size-headline-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.obj-head__count { font-size: var(--font-size-small); color: var(--color-text-secondary); }
+.obj-head__chevron { color: var(--color-text-secondary); transition: transform var(--transition-base); }
+.anexa-card--obiective.is-open .obj-head__chevron { transform: rotate(180deg); }
+.obj-body { display: none; padding: var(--space-5); }
+.anexa-card--obiective.is-open .obj-body { display: block; }
+.obj-block { padding-bottom: var(--space-4); }
+.obj-block + .obj-block { border-top: 1px solid var(--color-border); padding-top: var(--space-4); }
+.obj-block__title {
+  font-size: var(--font-size-subtitle);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-default-highlight);
+  margin-bottom: var(--space-3);
+}
+.obj-field { margin-bottom: var(--space-3); }
+.obj-field__label {
+  display: block;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+.obj-field__value {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  line-height: var(--line-height-normal);
+}
+.obj-field__value--empty { color: var(--color-text-muted); font-style: italic; }
+.obj-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--color-default-highlight);
+  background: transparent;
+  border: 1px dashed var(--color-default-highlight);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+}
+.obj-add:hover { background: var(--color-surface-1); }
+
+/* --- Documente: contor titlu + dot status + rândul fixat Dosar Permanent --- */
+.docs-section__title-count { color: var(--color-critical); }
+.doc-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  flex-shrink: 0;
+}
+.doc-row--pinned { background: var(--color-surface-2); }
+.doc-row--pinned:hover { background: var(--color-surface-1); }
+.doc-pin {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-default-highlight);
+  font-size: 16px;
+  margin-right: var(--space-1);
+}
+.doc-name__set-meta {
+  font-size: var(--font-size-tiny);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: var(--space-1);
+}
+
+/* --- Mesaj smart: proiecție termen / verifică Dosar (subtip system nou) --- */
+.message-card--deadline-projection {
+  background: var(--color-pending-surface);
+  border: 1px solid #F3D2A8;
+  border-left: 4px solid var(--color-pending);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  gap: 0;
+}
+.message-card--deadline-projection:hover { border-color: #F3D2A8; box-shadow: none; }
+.proj__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.proj__icon { color: var(--color-pending); font-size: 20px; }
+.proj__title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+.proj__summary {
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+  margin-bottom: var(--space-2);
+}
+.proj__meta {
+  font-size: var(--font-size-small);
+  color: var(--color-default-highlight);
+  font-weight: var(--font-weight-bold);
+}
+.proj__action { margin-top: var(--space-2); }
+.proj__action .btn { height: 34px; }
+
+/* --- Bara de decizie a Autorității Decidente (fixată jos) --- */
+.ws-decision-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width-collapsed);
+  right: var(--messaging-panel-width);
+  background: var(--color-surface-white);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 12px rgba(39, 35, 67, 0.08);
+  padding: var(--space-3) var(--space-5);
+  z-index: var(--z-sticky);
+}
+.shell--sidebar-expanded .ws-decision-bar { left: var(--sidebar-width-expanded); }
+.ws-decision-bar .step-actions { padding-top: 0; margin-top: 0; border-top: none; }
+.ws-decision-note { margin-bottom: var(--space-3); }
+.ws-decision-note__row {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.ws-decision-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-success);
+  font-weight: var(--font-weight-bold);
+}
+/* Spațiu jos ca bara fixă să nu acopere conținutul (doar la autoritate). */
+body--autoritate .main { padding-bottom: var(--space-8); }
+
+/* --- Etapa IV — tabelul de recomandări + sumar --- */
+.rec-panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-headline-3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+.rec-panel__head .material-symbols-outlined { color: var(--color-default-highlight); }
+.rec-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.rec-table { margin-top: 0; }
+.rec-table td { vertical-align: top; }
+.rec-text { color: var(--color-text-primary); line-height: var(--line-height-normal); }
+.rec-obiectiv {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.rec-status-select {
+  width: 100%;
+  font-weight: var(--font-weight-bold);
+}
+.rec-status--implementata { color: var(--color-success); }
+.rec-status--partial { color: var(--color-pending); }
+.rec-status--neimplementata { color: var(--color-critical); }
+.rec-status--neinsusita { color: var(--color-text-muted); }

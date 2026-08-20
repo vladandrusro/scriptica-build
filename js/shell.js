@@ -12,18 +12,61 @@
   var MSG_COLLAPSED_KEY = 'scriptica.messagingPanelCollapsed';
   var VIEW_KEY = 'scriptica.view';
 
-  /* --- View flag (Phase 7) --- */
+  /* --- View flag (personas pe arie de acces) ---
+     Personas: complet · contabilitate · audit_stat · client · admin ·
+     autoritate · superadmin · pmb_intern (Utilizator Intern PMB — angajat
+     al Primăriei Municipiului București, vede doar contul PMB).
+     'accountant' = alias legacy = acces complet. */
+  var VALID_VIEWS = ['accountant', 'complet', 'contabilitate', 'audit_stat', 'client', 'admin', 'autoritate', 'superadmin', 'pmb_intern'];
   window.getCurrentView = function () {
     var params = new URLSearchParams(window.location.search);
     var p = params.get('view');
-    if (p === 'client') return 'client';
-    if (p === 'accountant') return 'accountant';
-    if (p === 'admin') return 'admin';
-    try { return localStorage.getItem(VIEW_KEY) || 'accountant'; }
-    catch (e) { return 'accountant'; }
+    if (p && VALID_VIEWS.indexOf(p) !== -1) return p === 'accountant' ? 'complet' : p;
+    try {
+      var stored = localStorage.getItem(VIEW_KEY);
+      return stored === 'accountant' ? 'complet' : (stored || 'complet'); /* migrare alias legacy */
+    } catch (e) { return 'complet'; }
   };
   window.setCurrentView = function (view) {
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+  };
+
+  /* Scope de domenii vizibile pentru persona curentă. Un singur sistem de
+     domeniu (contabil/audit), reutilizat din designul de formule/categorii. */
+  window.getViewScope = function () {
+    var v = getCurrentView();
+    var scope;
+    if (v === 'contabilitate') scope = ['contabil'];
+    else if (v === 'audit_stat' || v === 'autoritate') scope = ['audit'];
+    else if (v === 'client') scope = ['contabil'];
+    /* pmb_intern: niciun domeniu al firmei — doar verticalele contractate de
+       contul PMB (intersecția de mai jos le păstrează exclusiv pe acelea). */
+    else if (v === 'pmb_intern') scope = [];
+    /* complet, accountant, admin, superadmin: toate domeniile, inclusiv
+       verticalele custom din registrul de fluxuri (definite de HQ). */
+    else scope = ['contabil', 'audit'];
+    if ((v === 'complet' || v === 'admin' || v === 'superadmin' || v === 'pmb_intern') &&
+        typeof window.scripticaCustomVerticals === 'function') {
+      window.scripticaCustomVerticals().forEach(function (cv) {
+        if (scope.indexOf(cv.domain) === -1) scope.push(cv.domain);
+      });
+    }
+    /* Persona spune ce are voie rolul să vadă; modulele active spun ce a
+       contractat contul curent. Intersecția celor două evită ca o verticală
+       dezactivată să rămână accesibilă prin URL sau navigație. */
+    if (v !== 'superadmin' && typeof window.scripticaTenantActiveVerticalIds === 'function' &&
+        typeof window.scripticaVerticalById === 'function') {
+      var moduleDomains = window.scripticaTenantActiveVerticalIds().map(function (verticalId) {
+        var vertical = window.scripticaVerticalById(verticalId);
+        return vertical ? vertical.domain : null;
+      }).filter(Boolean);
+      scope = scope.filter(function (domain) { return moduleDomains.indexOf(domain) !== -1; });
+    }
+    return scope;
+  };
+  window.viewInScope = function (domain) {
+    if (!domain) return true;
+    return getViewScope().indexOf(domain) !== -1;
   };
 
   /* --- Shared avatar helpers (used by header dropdown + anywhere else) --- */
@@ -73,6 +116,13 @@
   window.scripticaCurrentUser = function () {
     var MOCK = window.SCRIPTICA_MOCK;
     if (!MOCK) return null;
+    if (getCurrentView() === 'superadmin') {
+      return (MOCK.superAdmin && MOCK.superAdmin.hq) || { id: 9001, name: 'Scriptica HQ', role: 'Super Admin' };
+    }
+    if (getCurrentView() === 'autoritate') {
+      var auths = MOCK.auditAuthorities || [];
+      if (auths.length) return auths[0];
+    }
     if (getCurrentView() === 'admin') {
       var admins = MOCK.admins || [];
       if (admins.length) return admins[0];
@@ -90,17 +140,171 @@
   document.addEventListener('DOMContentLoaded', function () {
     applyViewBodyClass();
     initSidebar();
+    applyTenantTerminologyToNav();
+    injectOrganigramaNav();
+    injectAuditNav();
+    injectPlanificareNav();
+    injectCustomVerticalNav();
     injectAdminNav();
+    gateNavByScope();
     initActiveNav();
     initMessagingToggle();
+    injectAssistantButton();
     buildUserMenu();
     initNonFunctionalStubs();
   });
 
+  /* „Asistentul AI Scriptica" — buton în antetul panoului Mesagerie, doar când
+     contul are activă o verticală-asistent (ex. PMB). Deschide o cerere de
+     lămuriri nouă (un flux cu un singur pas) în workspace-ul dedicat. */
+  function injectAssistantButton() {
+    var header = document.querySelector('.messaging__header');
+    if (!header || header.querySelector('[data-ai-open]')) return;
+    if (typeof window.scripticaAssistantVertical !== 'function') return;
+    var vertical = window.scripticaAssistantVertical();
+    if (!vertical) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'messaging__ai-btn';
+    btn.setAttribute('data-ai-open', vertical.id);
+    btn.setAttribute('title', vertical.name + ' — deschide o ' + (vertical.itemLabel || 'cerere').toLowerCase());
+    btn.setAttribute('aria-label', vertical.name);
+    btn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">' + (vertical.icon || 'auto_awesome') + '</span>' +
+      '<span class="messaging__ai-btn-label">Asistent AI</span>';
+    var toggle = header.querySelector('.messaging__toggle');
+    if (toggle) header.insertBefore(btn, toggle); else header.appendChild(btn);
+    btn.addEventListener('click', function () {
+      if (typeof window.scripticaCreateAiRequest !== 'function') return;
+      var record = window.scripticaCreateAiRequest('');
+      if (record) window.location.href = 'situatie-detaliu.html?flowId=' + encodeURIComponent(record.id) + '#asistent';
+    });
+  }
+
+  function effectiveVertical(verticalId) {
+    if (typeof window.scripticaEffectiveVertical === 'function') {
+      return window.scripticaEffectiveVertical(verticalId);
+    }
+    return typeof window.scripticaVerticalById === 'function' ? window.scripticaVerticalById(verticalId) : null;
+  }
+
+  function applyTenantTerminologyToNav() {
+    if (getCurrentView() === 'superadmin') return;
+    var accounting = effectiveVertical('vert_contabil');
+    var item = document.querySelector('.sidebar__nav [href="situatii.html"]');
+    var label = item && item.querySelector('.nav-item__label');
+    if (label && accounting) label.textContent = accounting.name;
+  }
+
+  /* „Organigramă" — sinteza instituției pentru conturile cu arhivă după
+     nomenclator (instituții publice, ex. PMB): organigrama dictează
+     nomenclatorul, iar fiecare structură își expune dosarele, fluxurile și
+     notificările. Injectat imediat după Acasă. */
+  function injectOrganigramaNav() {
+    var view = getCurrentView();
+    if (view === 'superadmin' || view === 'client') return;
+    if (typeof window.scripticaClientTypeById !== 'function' || typeof window.scripticaTenantClientTypeId !== 'function') return;
+    var clientType = window.scripticaClientTypeById(window.scripticaTenantClientTypeId());
+    if (!clientType || clientType.archiveRouting !== 'nomenclator') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="organigrama"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'organigrama.html';
+    a.setAttribute('data-nav', 'organigrama');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">lan</span>' +
+      '<span class="nav-item__label">Organigramă</span>';
+    var anchor = nav.querySelector('[href="acasa.html"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else nav.appendChild(a);
+  }
+
+  /* „Misiuni Audit" — item de navigație injectat dinamic lângă „Situații
+     Contabile", ca paginile existente să nu necesite fiecare o editare de
+     sidebar (același pattern ca injectAdminNav). Ascuns în vederea client. */
+  function injectAuditNav() {
+    /* Doar personas cu „audit" în scope (exclude contabilitate/client);
+       superadmin are propriul sidebar. */
+    if (!viewInScope('audit') || getCurrentView() === 'superadmin') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="misiuni-audit"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'misiuni-audit.html';
+    a.setAttribute('data-nav', 'misiuni-audit');
+    a.setAttribute('data-domain', 'audit');
+    var audit = effectiveVertical('vert_audit');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">verified_user</span>' +
+      '<span class="nav-item__label">' + escapeAttr(audit ? audit.name : 'Misiuni Audit') + '</span>';
+    var anchor = nav.querySelector('[href="situatii.html"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else if (anchor) nav.appendChild(a);
+    else nav.appendChild(a);
+  }
+
+  /* „Planificare Audit" — planificarea multianuală/anuală. Vizibilă doar
+     pentru admin local + autoritate decidentă (read-only la aceasta din urmă).
+     Injectat lângă „Misiuni Audit". */
+  function injectPlanificareNav() {
+    var view = getCurrentView();
+    if (view !== 'admin' && view !== 'autoritate') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav || nav.querySelector('[data-nav="planificare-audit"]')) return;
+    var a = document.createElement('a');
+    a.className = 'nav-item';
+    a.href = 'planificare-audit.html' + (view === 'autoritate' ? '?view=autoritate' : '?view=admin');
+    a.setAttribute('data-nav', 'planificare-audit');
+    a.setAttribute('data-domain', 'audit');
+    a.innerHTML =
+      '<span class="material-symbols-outlined nav-item__icon" aria-hidden="true">event_note</span>' +
+      '<span class="nav-item__label">Planificare Audit</span>';
+    var anchor = nav.querySelector('[data-nav="misiuni-audit"]');
+    if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+    else nav.appendChild(a);
+  }
+
+  /* Verticalele custom din registrul de fluxuri (definite de Super Admin) —
+     un item de nav per modul activ, servit de motorul generic flux.html.
+     Rolul limitează domeniul, iar contul tenant limitează verticala exactă. */
+  function injectCustomVerticalNav() {
+    var view = getCurrentView();
+    if (view === 'superadmin' || view === 'client') return;
+    if (typeof window.scripticaCustomVerticals !== 'function') return;
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav) return;
+    var anchor = nav.querySelector('[data-nav="misiuni-audit"]') || nav.querySelector('[href="situatii.html"]');
+    var activeVerticalIds = typeof window.scripticaTenantActiveVerticalIds === 'function'
+      ? window.scripticaTenantActiveVerticalIds() : null;
+    window.scripticaCustomVerticals().forEach(function (v) {
+      if (activeVerticalIds && activeVerticalIds.indexOf(v.id) === -1) return;
+      if (nav.querySelector('[data-nav="flux-' + v.id + '"]')) return;
+      var effective = effectiveVertical(v.id) || v;
+      var a = document.createElement('a');
+      a.className = 'nav-item';
+      a.href = 'flux.html?vertical=' + encodeURIComponent(v.id);
+      a.setAttribute('data-nav', 'flux-' + v.id);
+      a.setAttribute('data-domain', v.domain);
+      var icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined nav-item__icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = v.icon || 'account_tree';
+      var label = document.createElement('span');
+      label.className = 'nav-item__label';
+      label.textContent = effective.name;
+      a.appendChild(icon);
+      a.appendChild(label);
+      if (anchor && anchor.nextSibling) nav.insertBefore(a, anchor.nextSibling);
+      else nav.appendChild(a);
+      anchor = a;
+    });
+  }
+
   /* Admin view gets an extra rail item (Phase 9). Injected dynamically so
      existing pages don't each need a sidebar edit. */
   function injectAdminNav() {
-    if (getCurrentView() !== 'admin') return;
+    /* Administrare: persona „admin" + „complet" (acces complet). */
+    if (getCurrentView() !== 'admin' && getCurrentView() !== 'complet') return;
     var nav = document.querySelector('.sidebar__nav');
     if (!nav || nav.querySelector('[data-nav="administrare"]')) return;
     var a = document.createElement('a');
@@ -113,10 +317,36 @@
     nav.appendChild(a);
   }
 
+  /* Gating de navigație pe arie de acces — ascunde itemii de domeniu care nu
+     sunt în scope-ul persoanei (ex. „Situații Contabile" la audit-stat,
+     „Misiuni Audit" la contabilitate). Itemii fără domeniu rămân vizibili. */
+  function gateNavByScope() {
+    var nav = document.querySelector('.sidebar__nav');
+    if (!nav) return;
+    var sit = nav.querySelector('[href="situatii.html"]');
+    if (sit && !sit.getAttribute('data-domain')) sit.setAttribute('data-domain', 'contabil');
+    nav.querySelectorAll('.nav-item[data-domain]').forEach(function (it) {
+      var dom = it.getAttribute('data-domain');
+      it.style.display = viewInScope(dom) ? '' : 'none';
+    });
+    /* Time Tracking este o funcție a firmei de contabilitate — utilizatorul
+       intern al instituției nu o vede (ar afișa sesiunile contabililor). */
+    if (getCurrentView() === 'pmb_intern') {
+      var tt = nav.querySelector('[href="time-tracking.html"]');
+      if (tt) tt.style.display = 'none';
+    }
+  }
+
   function applyViewBodyClass() {
     var view = getCurrentView();
     document.body.classList.toggle('body--client', view === 'client');
     document.body.classList.toggle('body--admin', view === 'admin');
+    document.body.classList.toggle('body--autoritate', view === 'autoritate');
+    document.body.classList.toggle('body--superadmin', view === 'superadmin');
+    document.body.classList.toggle('body--complet', view === 'complet');
+    document.body.classList.toggle('body--contabilitate', view === 'contabilitate');
+    document.body.classList.toggle('body--audit-stat', view === 'audit_stat');
+    document.body.classList.toggle('body--pmb-intern', view === 'pmb_intern');
   }
 
   /* --- Sidebar expand/collapse --- */
@@ -154,15 +384,17 @@
     if (!items.length) return;
 
     var pathname = window.location.pathname;
-    var filename = pathname.split('/').pop() || 'index.html';
-    if (filename === '' || filename === 'index.html') filename = 'acasa.html';
+    /* URL-uri „curate” pe Cloudflare Pages (/acasa) sau cu extensie (local) — comparăm fără .html */
+    var filename = (pathname.split('/').pop() || 'index.html').replace(/\.html$/, '');
+    if (filename === '' || filename === 'index') filename = 'acasa';
 
     items.forEach(function (item) {
       var href = item.getAttribute('href') || '';
-      var hrefFile = href.split('/').pop();
-      var slug = (hrefFile || '').replace(/\.html$/, '');
+      var hrefRaw = href.split('/').pop() || '';
+      var slug = hrefRaw.split('?')[0].replace(/\.html$/, '');
       if (slug && !item.getAttribute('data-nav')) item.setAttribute('data-nav', slug);
-      if (hrefFile && hrefFile === filename) {
+      /* itemii cu query (flux.html?vertical=…) sunt marcați activi de pagina lor, nu aici */
+      if (slug && hrefRaw.indexOf('?') === -1 && slug === filename) {
         item.classList.add('nav-item--active');
         var icon = item.querySelector('.material-symbols-outlined');
         if (icon) icon.classList.add('filled');
@@ -297,11 +529,18 @@
 
   /* The two views OTHER than the current one, as menu items (Phase 9: 3-way). */
   function viewSwitchItemsHtml() {
-    var view = getCurrentView();
-    var items = [];
-    if (view !== 'accountant') items.push({ view: 'accountant', label: 'Vezi ca și contabil', href: 'acasa.html' });
-    if (view !== 'client') items.push({ view: 'client', label: 'Vezi ca și client', href: 'acasa.html?view=client' });
-    if (view !== 'admin') items.push({ view: 'admin', label: 'Vezi ca administrator', href: 'administrare.html?view=admin' });
+    var cur = getCurrentView();
+    if (cur === 'accountant') cur = 'complet'; /* legacy alias */
+    var items = [
+      { view: 'complet',       label: 'Vezi ca utilizator complet',     href: 'acasa.html?view=complet' },
+      { view: 'contabilitate', label: 'Vezi ca și contabilitate',       href: 'acasa.html?view=contabilitate' },
+      { view: 'audit_stat',    label: 'Vezi ca audit (stat)',           href: 'misiuni-audit.html?view=audit_stat' },
+      { view: 'client',        label: 'Vezi ca și client',              href: 'acasa.html?view=client' },
+      { view: 'admin',         label: 'Vezi ca administrator',          href: 'administrare.html?view=admin' },
+      { view: 'autoritate',    label: 'Vezi ca autoritate decidentă',   href: 'misiuni-audit.html?view=autoritate' },
+      { view: 'superadmin',    label: 'Vezi ca Super Admin',            href: 'super-admin.html?view=superadmin' },
+      { view: 'pmb_intern',    label: 'Vezi ca utilizator intern PMB',  href: 'acasa.html?view=pmb_intern' }
+    ].filter(function (it) { return it.view !== cur; });
     return items.map(function (it) {
       return '<button type="button" class="header__user-menu-item header__user-menu-item--primary" data-view-target="' + it.view + '" data-view-href="' + it.href + '">' +
         '<span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span>' +
@@ -313,12 +552,28 @@
   function updateUserDisplay() {
     var user = scripticaCurrentUser();
     if (!user) return;
-    var isClient = getCurrentView() === 'client';
+    var view = getCurrentView();
+    var isClient = view === 'client';
     var fullName = user.fullName || user.name || user.contactName || '';
     var firstName = fullName.split(/\s+/)[0] || fullName;
-    var role = isClient
-      ? ('Client · ' + (user.companyName || ''))
-      : ((user.role || 'Contabil') + ' · Scriptica');
+    var role;
+    if (isClient) {
+      role = 'Client · ' + (user.companyName || '');
+    } else if (view === 'autoritate') {
+      role = (user.role || 'Autoritate decidentă') + ' · ' + (user.seniority || 'Scriptica');
+    } else if (view === 'superadmin') {
+      role = (user.role || 'Super Admin') + ' · Scriptica HQ';
+    } else if (view === 'complet') {
+      role = 'Acces complet · Scriptica';
+    } else if (view === 'contabilitate') {
+      role = 'Contabilitate · Scriptica';
+    } else if (view === 'audit_stat') {
+      role = 'Audit (stat) · Scriptica';
+    } else if (view === 'pmb_intern') {
+      role = 'Utilizator intern · Primăria Municipiului București';
+    } else {
+      role = (user.role || 'Contabil') + ' · Scriptica';
+    }
 
     document.querySelectorAll('[data-user-name]').forEach(function (el) {
       if (el.tagName === 'B') el.textContent = firstName;

@@ -1,0 +1,695 @@
+/* ============================================================
+   Scriptica — Organigramă (instituții publice, ex. PMB)
+   Sinteza instituției: organigrama dictează nomenclatorul, iar
+   fiecare structură „vie" își expune dosarele (folder), fluxurile
+   (forum) și notificările (clopoțel). Canvas panoramabil + zoom,
+   sertar lateral cu detaliile structurii selectate.
+   Prefix: .org-
+   ============================================================ */
+
+.org-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  /* umple tot spațiul vizibil sub antet (padding-ul lui .main sus/jos),
+     ca organigrama să folosească întreaga înălțime a ecranului */
+  min-height: calc(100vh - var(--header-height) - 3 * var(--space-5));
+}
+
+.org-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.org-page-header h1 {
+  font-size: var(--font-size-headline-1);
+  line-height: var(--line-height-tight);
+}
+
+.org-page-header__sub {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  margin-top: var(--space-1);
+}
+
+.org-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.org-search {
+  position: relative;
+  width: 320px;
+  max-width: 100%;
+}
+
+.org-search .material-symbols-outlined {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.org-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-white);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+}
+
+.org-search input:focus {
+  outline: none;
+  border-color: var(--color-default-highlight);
+  box-shadow: 0 0 0 2px rgba(71, 56, 106, 0.18);
+}
+
+.org-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+}
+
+.org-zoom__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-default-highlight);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.org-zoom__btn:hover {
+  background: var(--color-surface-1);
+}
+
+.org-zoom__btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.org-zoom__level {
+  min-width: 48px;
+  text-align: center;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.org-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.org-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.org-legend__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-white);
+}
+
+.org-legend__swatch--live {
+  border-color: var(--color-default-highlight);
+  background: var(--color-surface-1);
+}
+
+/* ---------- Canvas panoramabil ---------- */
+
+.org-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  /* caroiaj discret, ca o planșă de proiectare */
+  background-image: radial-gradient(rgba(71, 56, 106, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.org-canvas.is-panning {
+  cursor: grabbing;
+}
+
+.org-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  padding: var(--space-6) var(--space-7);
+  width: max-content;
+}
+
+/* ---------- Benzi și conectori ---------- */
+
+.org-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-5);
+  width: max-content;
+  margin: 0 auto;
+}
+
+/* șina orizontală a unei benzi + picioarele către fiecare card */
+.org-row--railed {
+  padding-top: 18px;
+}
+
+.org-row--railed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--org-rail-inset, 100px);
+  right: var(--org-rail-inset, 100px);
+  height: 2px;
+  background: var(--color-border-strong);
+  border-radius: 2px;
+}
+
+.org-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.org-row--railed > .org-cell::before {
+  content: '';
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 18px;
+  background: var(--color-border-strong);
+}
+
+/* fiecare bandă poartă racordul vertical continuu către banda anterioară:
+   linia pleacă de la marginea de jos a benzii precedente și atinge exact
+   șina (sau chenarul panoului) benzii curente — fără segmente rupte */
+.org-band {
+  position: relative;
+  margin-top: 56px;
+}
+
+.org-band::before {
+  content: '';
+  position: absolute;
+  top: -56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 56px;
+  background: var(--color-border-strong);
+}
+
+.org-band-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+/* eticheta plutește în stânga, în golul dintre benzi, fără să rupă linia */
+.org-band--labeled .org-band-label {
+  position: absolute;
+  top: -42px;
+  left: 0;
+}
+
+.org-band-label .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* ---------- Carduri structuri ---------- */
+
+.org-card {
+  position: relative;
+  width: 200px;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.org-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.org-card__name {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.org-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.org-card__posts {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+.org-card__code {
+  font-size: var(--font-size-tiny);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-default-highlight);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
+/* structură „vie" — are evidențe în Scriptica; întregul card se poate deschide */
+.org-card--live {
+  border: 2px solid var(--color-default-highlight);
+}
+
+.org-card[data-org-code] {
+  cursor: pointer;
+}
+
+.org-card[data-org-code]:focus-visible {
+  outline: 2px solid var(--color-default-highlight);
+  outline-offset: 2px;
+}
+
+.org-card--muted .org-card__name {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+/* demnitari / conducere */
+.org-card--primar {
+  width: 240px;
+  border-color: var(--color-default-highlight);
+  border-width: 2px;
+  background: linear-gradient(180deg, var(--color-surface-2) 0%, var(--color-surface-white) 70%);
+}
+
+.org-card--primar .org-card__name {
+  font-size: var(--font-size-headline-3);
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* rândul de acțiuni al structurilor vii */
+.org-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
+  margin-top: auto;
+}
+
+.org-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.org-action:hover {
+  background: var(--color-default-highlight);
+  color: #fff;
+}
+
+.org-action .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.org-action__badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--color-default-highlight);
+  color: #fff;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  line-height: 16px;
+  text-align: center;
+}
+
+.org-action__badge--critical {
+  background: var(--color-critical);
+}
+
+.org-action__badge--zero {
+  background: var(--color-border-strong);
+}
+
+/* copiii unei direcții generale — coloană sub cardul-părinte */
+.org-children {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding-left: 14px;
+}
+
+.org-children::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: 12px;
+  left: 5px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.org-children .org-cell {
+  position: relative;
+  align-items: stretch;
+}
+
+.org-children .org-cell::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -9px;
+  width: 9px;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.org-children .org-card {
+  width: 186px;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* banda „subordonare directă" — panou-grup cu grilă care umple lățimea
+   organigramei (mai multe coloane → banda mai scundă → zoom de încadrare
+   mai mare pe ecranele late) */
+.org-direct-panel {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  background: var(--color-surface-2);
+}
+
+.org-direct-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 200px);
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* căutare: evidențiere + estompare */
+.org-card.is-dim {
+  opacity: 0.25;
+}
+
+.org-card.is-hit {
+  border-color: var(--color-important);
+  box-shadow: 0 0 0 3px rgba(255, 191, 20, 0.35);
+}
+
+/* ---------- Sertarul structurii ---------- */
+
+.org-drawer {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 92vw;
+  background: var(--color-surface-white);
+  border-left: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform var(--transition-slow);
+  z-index: var(--z-dropdown);
+}
+
+.org-drawer.is-open {
+  transform: translateX(0);
+}
+
+.org-drawer__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.org-drawer__title {
+  flex: 1;
+}
+
+.org-drawer__title h2 {
+  font-size: var(--font-size-headline-3);
+  line-height: var(--line-height-tight);
+}
+
+.org-drawer__title .org-card__meta {
+  margin-top: var(--space-2);
+}
+
+.org-drawer__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.org-drawer__close:hover {
+  background: var(--color-surface-1);
+}
+
+.org-drawer__tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.org-tab {
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.org-tab .org-tab__count {
+  font-size: var(--font-size-tiny);
+  background: var(--color-surface-1);
+  border-radius: var(--radius-pill);
+  padding: 1px 7px;
+}
+
+.org-tab.is-active {
+  color: var(--color-default-highlight);
+  border-bottom-color: var(--color-default-highlight);
+}
+
+.org-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.org-drawer__group {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+}
+
+.org-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+a.org-item:hover {
+  border-color: var(--color-default-highlight);
+  box-shadow: var(--shadow-sm);
+}
+
+.org-item__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  color: var(--color-default-highlight);
+}
+
+.org-item__icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.org-item__icon--critical {
+  background: var(--color-critical-surface);
+  color: var(--color-critical);
+}
+
+.org-item__icon--pending {
+  background: #fdf0e3;
+  color: var(--color-pending);
+}
+
+.org-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.org-item__title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  overflow-wrap: anywhere;
+}
+
+.org-item__meta {
+  margin-top: 3px;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.org-item__open {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.org-item__open .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.org-drawer__empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  padding: var(--space-6) var(--space-4);
+}
+
+.org-drawer__empty .material-symbols-outlined {
+  display: block;
+  font-size: 40px;
+  margin: 0 auto var(--space-2);
+}
+
+/* mesaj de gardă (persona fără organigramă) */
+.org-guard {
+  margin: var(--space-7) auto;
+  max-width: 520px;
+  text-align: center;
+  background: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  color: var(--color-text-secondary);
+}
+
+.org-guard .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 960px) {
+  .org-drawer {
+    width: 360px;
+  }
+}

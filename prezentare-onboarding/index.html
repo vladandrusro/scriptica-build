@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ro" class="ob-html">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scriptica — Cum activăm un client nou</title>
+  <link rel="stylesheet" href="../css/tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="animations.js" defer></script>
+  <script src="presentation.js" defer></script>
+</head>
+<body class="ob-body">
+  <svg class="ob-sprite" aria-hidden="true">
+    <symbol id="ob-i-flow" viewBox="0 0 24 24">
+      <path d="M5 5h6v5H5zM13 14h6v5h-6zM11 7.5h3a3 3 0 0 1 3 3V14M8 10v4a3 3 0 0 0 3 3h2"></path>
+    </symbol>
+    <symbol id="ob-i-chat" viewBox="0 0 24 24">
+      <path d="M5 5h14v10H9l-4 4z"></path><path d="M8 9h8M8 12h5"></path>
+    </symbol>
+    <symbol id="ob-i-doc" viewBox="0 0 24 24">
+      <path d="M7 3h7l4 4v14H7zM14 3v5h5M10 12h5M10 16h5"></path>
+    </symbol>
+    <symbol id="ob-i-bell" viewBox="0 0 24 24">
+      <path d="M6 17h12l-2-3V9a4 4 0 0 0-8 0v5zM10 20h4"></path>
+    </symbol>
+    <symbol id="ob-i-archive" viewBox="0 0 24 24">
+      <path d="M4 7h16v13H4zM3 4h18v4H3zM9 11h6"></path>
+    </symbol>
+    <symbol id="ob-i-dashboard" viewBox="0 0 24 24">
+      <path d="M4 4h7v6H4zM13 4h7v10h-7zM4 12h7v8H4zM13 16h7v4h-7z"></path>
+    </symbol>
+    <symbol id="ob-i-person" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="3"></circle><path d="M5 20a7 7 0 0 1 14 0"></path>
+    </symbol>
+    <symbol id="ob-i-team" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="3"></circle><circle cx="17" cy="10" r="2"></circle><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"></path>
+    </symbol>
+    <symbol id="ob-i-check" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
+    </symbol>
+    <symbol id="ob-i-approval" viewBox="0 0 24 24">
+      <path d="M12 3 4 7v5c0 5 3 8 8 9 5-1 8-4 8-9V7z"></path><path d="m8 12 3 3 5-6"></path>
+    </symbol>
+    <symbol id="ob-i-search" viewBox="0 0 24 24">
+      <circle cx="10" cy="10" r="6"></circle><path d="m15 15 5 5"></path>
+    </symbol>
+    <symbol id="ob-i-mail" viewBox="0 0 24 24">
+      <path d="M3 5h18v14H3zM3 7l9 7 9-7"></path>
+    </symbol>
+    <symbol id="ob-i-phone" viewBox="0 0 24 24">
+      <path d="M8 3h8v18H8zM11 18h2"></path>
+    </symbol>
+    <symbol id="ob-i-upload" viewBox="0 0 24 24">
+      <path d="M12 16V4M7 9l5-5 5 5M5 16v4h14v-4"></path>
+    </symbol>
+    <symbol id="ob-i-api" viewBox="0 0 24 24">
+      <path d="M8 5 3 12l5 7M16 5l5 7-5 7M14 3l-4 18"></path>
+    </symbol>
+    <symbol id="ob-i-scan" viewBox="0 0 24 24">
+      <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M7 12h10"></path>
+    </symbol>
+    <symbol id="ob-i-form" viewBox="0 0 24 24">
+      <path d="M6 3h12v18H6zM9 8h6M9 12h2M13 12h2M9 16h2M13 16h2"></path>
+    </symbol>
+    <symbol id="ob-i-task" viewBox="0 0 24 24">
+      <path d="M8 5h12M8 12h12M8 19h12M3 5l1 1 2-2M3 12l1 1 2-2M3 19l1 1 2-2"></path>
+    </symbol>
+    <symbol id="ob-i-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle><path d="M12 7v6l4 2"></path>
+    </symbol>
+    <symbol id="ob-i-folder" viewBox="0 0 24 24">
+      <path d="M3 6h7l2 2h9v12H3z"></path>
+    </symbol>
+    <symbol id="ob-i-eye" viewBox="0 0 24 24">
+      <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z"></path><circle cx="12" cy="12" r="2"></circle>
+    </symbol>
+    <symbol id="ob-i-grid" viewBox="0 0 24 24">
+      <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"></path>
+    </symbol>
+    <symbol id="ob-i-arrow" viewBox="0 0 24 24">
+      <path d="M5 12h14M14 7l5 5-5 5"></path>
+    </symbol>
+  </svg>
+
+  <main class="ob-deck" aria-label="Prezentare interactivă despre activarea unui client nou în Scriptica">
+    <div class="ob-ambient" aria-hidden="true">
+      <span class="ob-ambient__orb ob-ambient__orb--one"></span>
+      <span class="ob-ambient__orb ob-ambient__orb--two"></span>
+      <span class="ob-ambient__grid"></span>
+    </div>
+
+    <header class="ob-topbar">
+      <a class="ob-brand" href="#slide-1" data-action="start" aria-label="Reia prezentarea de la început">
+        <span class="ob-brand__mark" aria-hidden="true">S</span>
+        <span class="ob-brand__word">SCRIPTICA</span>
+      </a>
+      <div class="ob-topbar__meta">
+        <span class="ob-topbar__chapter" data-chapter>Fundamentul</span>
+        <span class="ob-topbar__dot" aria-hidden="true"></span>
+        <span>Activarea unui client</span>
+      </div>
+    </header>
+
+    <div class="ob-slides" data-slides>
+      <section class="ob-slide is-active" id="slide-1" data-slide="1" data-chapter="Fundamentul" data-scene="orbit" aria-label="Slide 1 din 15">
+        <div class="ob-slide__inner ob-slide__inner--hero">
+          <div class="ob-hero-copy">
+            <p class="ob-kicker">SCRIPTICA</p>
+            <h1 class="ob-display">Totul începe<br>cu un <span>Flux</span>.</h1>
+            <p class="ob-lead">Un nou client nu primește doar un cont. Primește un mod clar de a lucra.</p>
+            <div class="ob-thesis fragment" data-fragment="2" data-animate="rise">
+              <svg class="ob-icon"><use href="#ob-i-flow"></use></svg>
+              <span>Orice acțiune capătă context pentru că aparține unui flux.</span>
+            </div>
+          </div>
+
+          <div class="ob-orbit" aria-label="Fluxul conectat cu funcțiile principale Scriptica">
+            <div class="ob-orbit__rings" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="ob-flow-core ob-flow-core--hero">
+              <svg class="ob-icon ob-icon--xl"><use href="#ob-i-flow"></use></svg>
+              <strong>FLUX</strong>
+              <small>contextul complet</small>
+            </div>
+            <div class="ob-orbit__nodes fragment" data-fragment="1">
+              <div class="ob-orbit-node ob-orbit-node--1" style="--i:0"><svg class="ob-icon"><use href="#ob-i-chat"></use></svg><span>Conversații</span></div>
+              <div class="ob-orbit-node ob-orbit-node--2" style="--i:1"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>Documente</span></div>
+              <div class="ob-orbit-node ob-orbit-node--3" style="--i:2"><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><span>Notificări</span></div>
+              <div class="ob-orbit-node ob-orbit-node--4" style="--i:3"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg><span>Arhivă</span></div>
+              <div class="ob-orbit-node ob-orbit-node--5" style="--i:4"><svg class="ob-icon"><use href="#ob-i-dashboard"></use></svg><span>Dashboard</span></div>
+              <div class="ob-orbit-node ob-orbit-node--6" style="--i:5"><svg class="ob-icon"><use href="#ob-i-person"></use></svg><span>Client</span></div>
+              <div class="ob-orbit-node ob-orbit-node--7" style="--i:6"><svg class="ob-icon"><use href="#ob-i-team"></use></svg><span>Echipă</span></div>
+              <div class="ob-orbit-node ob-orbit-node--8" style="--i:7"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><span>Aprobări</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-2" data-slide="2" data-chapter="Înțelegere" data-scene="discovery" aria-label="Slide 2 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">01 · DESCOPERIRE</p>
+            <h2>Înțelegem cum lucrează clientul astăzi.</h2>
+            <p>Înainte de orice configurare, urmărim munca reală — de la primul document până la ultima aprobare.</p>
+          </div>
+
+          <div class="ob-discovery-grid">
+            <div class="ob-interviews" aria-label="Discuții de descoperire">
+              <article class="ob-interview-card" style="--i:0">
+                <div class="ob-avatar">AM</div><div><strong>„Aprob eu toate excepțiile.”</strong><span>Administrator</span></div>
+              </article>
+              <article class="ob-interview-card" style="--i:1">
+                <div class="ob-avatar ob-avatar--yellow">DR</div><div><strong>„Documentele vin pe trei canale.”</strong><span>Responsabil operațional</span></div>
+              </article>
+              <article class="ob-interview-card" style="--i:2">
+                <div class="ob-avatar ob-avatar--green">CP</div><div><strong>„Nu știu niciodată ce urmează.”</strong><span>Client final</span></div>
+              </article>
+            </div>
+
+            <div class="ob-process-map fragment" data-fragment="1" data-animate="stagger">
+              <div class="ob-process-node" style="--i:0"><svg class="ob-icon"><use href="#ob-i-team"></use></svg><span>Oameni</span></div>
+              <svg class="ob-icon ob-process-arrow"><use href="#ob-i-arrow"></use></svg>
+              <div class="ob-process-node" style="--i:1"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>Documente</span></div>
+              <svg class="ob-icon ob-process-arrow"><use href="#ob-i-arrow"></use></svg>
+              <div class="ob-process-node" style="--i:2"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><span>Aprobări</span></div>
+              <svg class="ob-icon ob-process-arrow"><use href="#ob-i-arrow"></use></svg>
+              <div class="ob-process-node ob-process-node--problem" style="--i:3"><span class="ob-process-node__bang">!</span><span>Blocaje</span></div>
+              <svg class="ob-icon ob-process-arrow"><use href="#ob-i-arrow"></use></svg>
+              <div class="ob-process-node ob-process-node--current" style="--i:4"><svg class="ob-icon"><use href="#ob-i-search"></use></svg><span>Procesul de astăzi</span></div>
+            </div>
+          </div>
+
+          <div class="ob-note-wall fragment" data-fragment="2" data-animate="stagger">
+            <span class="ob-sticky ob-sticky--one">Cine decide?</span>
+            <span class="ob-sticky ob-sticky--two">Ce lipsește?</span>
+            <span class="ob-sticky ob-sticky--three">Unde se așteaptă?</span>
+            <span class="ob-sticky ob-sticky--four">Ce se repetă?</span>
+            <div class="ob-callout"><strong>Încă nu configurăm nimic.</strong><span>Descoperirea separă realitatea de presupuneri.</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-3" data-slide="3" data-chapter="Reproiectare" data-scene="reengineer" aria-label="Slide 3 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">02 · REPROIECTARE</p>
+            <h2>Transformăm obiceiurile într-un Flux optimizat.</h2>
+            <p>Păstrăm ce funcționează. Eliminăm buclele, pașii neclari și dependența de memorie.</p>
+          </div>
+
+          <div class="ob-reengineer">
+            <div class="ob-reengineer__label ob-reengineer__label--before"><span>ÎNAINTE</span><strong>Proces fragmentat</strong></div>
+            <svg class="ob-reengineer__canvas" viewBox="0 0 1200 360" role="img" aria-label="Proces dezordonat care devine un traseu clar">
+              <path class="ob-path ob-path--messy" d="M70 170 C150 40 220 310 315 150 S480 40 510 210 S680 320 710 120 S870 45 915 215 S1070 320 1130 165"></path>
+              <g class="ob-messy-dots">
+                <circle cx="70" cy="170" r="10"></circle><circle cx="315" cy="150" r="10"></circle><circle cx="510" cy="210" r="10"></circle><circle cx="710" cy="120" r="10"></circle><circle cx="915" cy="215" r="10"></circle><circle cx="1130" cy="165" r="10"></circle>
+              </g>
+              <g class="fragment ob-clean-route" data-fragment="1">
+                <path class="ob-path ob-path--clean" data-draw d="M70 180 C210 180 235 180 340 180 S520 180 610 180 S800 180 875 180 S1040 180 1130 180"></path>
+                <g class="ob-clean-nodes">
+                  <g transform="translate(70 180)"><circle r="34"></circle><text y="6">START</text></g>
+                  <g transform="translate(340 180)"><circle r="34"></circle><text y="6">POARTĂ</text></g>
+                  <g transform="translate(610 180)"><circle r="34"></circle><text y="6">APROBĂ</text></g>
+                  <g transform="translate(875 180)"><circle r="34"></circle><text y="6">ANUNȚĂ</text></g>
+                  <g transform="translate(1130 180)"><circle r="34"></circle><text y="6">FINAL</text></g>
+                </g>
+              </g>
+            </svg>
+            <div class="ob-reengineer__label ob-reengineer__label--after fragment" data-fragment="1"><span>DUPĂ</span><strong>Flux controlat</strong></div>
+          </div>
+
+          <div class="ob-control-row fragment" data-fragment="1" data-animate="stagger">
+            <article style="--i:0"><svg class="ob-icon"><use href="#ob-i-check"></use></svg><strong>Porți obligatorii</strong><span>Pasul nu avansează dacă lipsește ceva.</span></article>
+            <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><strong>Aprobări clare</strong><span>Decizia ajunge la persoana potrivită.</span></article>
+            <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-person"></use></svg><strong>Responsabilități</strong><span>Fiecare știe ce are de făcut.</span></article>
+            <article style="--i:3"><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><strong>Notificări</strong><span>Următorul pas nu depinde de memorie.</span></article>
+          </div>
+
+          <div class="ob-principle fragment" data-fragment="2" data-animate="spotlight">
+            <span class="ob-principle__line"></span>
+            <p>Scriptica păstrează disciplina procesului, astfel încât oamenii să se poată concentra pe muncă.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-4" data-slide="4" data-chapter="Recunoaștere" data-scene="documents" aria-label="Slide 4 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">03 · DOCUMENTE</p>
+            <h2>Învățăm Scriptica să recunoască documentele clientului.</h2>
+            <p>Folosim exemple reale, măsurăm siguranța recunoașterii și păstrăm necunoscutele într-un loc sigur.</p>
+          </div>
+
+          <div class="ob-recognition">
+            <div class="ob-training">
+              <div class="ob-panel-label"><svg class="ob-icon"><use href="#ob-i-search"></use></svg> Exemple pe care le arătăm</div>
+              <div class="ob-doc-stack">
+                <article class="ob-paper ob-paper--one"><span class="ob-paper__fold"></span><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><strong>Factură furnizor</strong><small>exemplul 01</small></article>
+                <article class="ob-paper ob-paper--two"><span class="ob-paper__fold"></span><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><strong>Contract</strong><small>exemplul 02</small></article>
+                <article class="ob-paper ob-paper--three"><span class="ob-paper__fold"></span><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><strong>Extras bancar</strong><small>exemplul 03</small></article>
+              </div>
+              <p>„Așa arată fiecare tip de document.”</p>
+            </div>
+
+            <div class="ob-recognition__bridge fragment" data-fragment="1">
+              <span class="ob-scan-beam" aria-hidden="true"></span>
+              <svg class="ob-icon"><use href="#ob-i-arrow"></use></svg>
+            </div>
+
+            <div class="ob-classifier fragment" data-fragment="1" data-animate="rise">
+              <div class="ob-panel-label"><svg class="ob-icon"><use href="#ob-i-check"></use></svg> Rezultat explicabil</div>
+              <div class="ob-confidence-list">
+                <div><span>Factură</span><strong>97%</strong><i><b class="ob-confidence ob-confidence--97"></b></i></div>
+                <div><span>Contract</span><strong>91%</strong><i><b class="ob-confidence ob-confidence--91"></b></i></div>
+                <div class="ob-confidence-row--unknown"><span>Necunoscut</span><strong>42%</strong><i><b class="ob-confidence ob-confidence--42"></b></i></div>
+              </div>
+            </div>
+
+            <div class="ob-archive-sort fragment" data-fragment="2" data-animate="sort">
+              <div class="ob-panel-label"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg> Destinația este cunoscută</div>
+              <div class="ob-folder-list">
+                <div><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Facturi</span><b>12</b></div>
+                <div><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Contracte</span><b>8</b></div>
+                <div class="ob-folder-list__safe"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Necategorisit</span><b>1</b></div>
+              </div>
+              <p>Nimic nu dispare. Când siguranța este mică, un om verifică.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-5" data-slide="5" data-chapter="Model de lucru" data-scene="model" aria-label="Slide 5 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">04 · MODELUL DE LUCRU</p>
+            <h2>Construim Fluxul din blocuri ușor de înțeles.</h2>
+            <p>De la domeniul de lucru până la Anexa completată de utilizator.</p>
+          </div>
+
+          <div class="ob-model-chain" role="list" aria-label="Structura modelului de lucru">
+            <article class="ob-model-node ob-model-node--primary" role="listitem">
+              <span>01</span><svg class="ob-icon"><use href="#ob-i-grid"></use></svg><strong>Verticală</strong><small>Domeniul de lucru</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node ob-model-node--primary" role="listitem">
+              <span>02</span><svg class="ob-icon"><use href="#ob-i-flow"></use></svg><strong>Fluxuri</strong><small>Cazurile concrete</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node ob-model-node--primary" role="listitem">
+              <span>03</span><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><strong>Pași</strong><small>Ordinea muncii</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow fragment" data-fragment="1"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node fragment" data-fragment="1" role="listitem">
+              <span>04</span><svg class="ob-icon"><use href="#ob-i-task"></use></svg><strong>Sarcini</strong><small>Ce trebuie făcut</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow fragment" data-fragment="1"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node fragment" data-fragment="1" role="listitem">
+              <span>05</span><svg class="ob-icon"><use href="#ob-i-check"></use></svg><strong>Condiții</strong><small>Ce trebuie să fie gata</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow fragment" data-fragment="2"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node fragment" data-fragment="2" role="listitem">
+              <span>06</span><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><strong>Aprobări</strong><small>Cine validează</small>
+            </article>
+            <svg class="ob-icon ob-model-arrow fragment" data-fragment="2"><use href="#ob-i-arrow"></use></svg>
+            <article class="ob-model-node fragment" data-fragment="2" role="listitem">
+              <span>07</span><svg class="ob-icon"><use href="#ob-i-form"></use></svg><strong>Anexe</strong><small>Anexe digitale ghidate</small>
+            </article>
+          </div>
+
+          <div class="ob-model-explain fragment" data-fragment="2" data-animate="rise">
+            <div><svg class="ob-icon"><use href="#ob-i-form"></use></svg></div>
+            <p><strong>Anexele</strong> sunt structurate digital și îi ghidează pe utilizatori prin proces — câmp cu câmp, fără foi pierdute.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-6" data-slide="6" data-chapter="Experiență" data-scene="workspace" aria-label="Slide 6 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">05 · EXPERIENȚA CLIENTULUI</p>
+            <h2>Fluxul devine un spațiu de lucru complet.</h2>
+            <p>Scriptica compune automat suprafețele potrivite, apoi le arată diferit fiecărui rol.</p>
+          </div>
+
+          <div class="ob-workspace-scene">
+            <div class="ob-app-window" aria-label="Dashboard Scriptica simplificat după interfața reală">
+              <div class="ob-real-shell">
+                <aside class="ob-real-rail">
+                  <div class="ob-app-logo">S</div>
+                  <div class="is-active"><svg class="ob-icon"><use href="#ob-i-dashboard"></use></svg></div>
+                  <div><svg class="ob-icon"><use href="#ob-i-task"></use></svg></div>
+                  <div><svg class="ob-icon"><use href="#ob-i-approval"></use></svg></div>
+                  <div><svg class="ob-icon"><use href="#ob-i-archive"></use></svg></div>
+                </aside>
+
+                <div class="ob-real-workspace">
+                  <header class="ob-real-header">
+                    <div class="ob-real-search"><span>Caută în aplicație</span><svg class="ob-icon"><use href="#ob-i-search"></use></svg></div>
+                    <div class="ob-real-user"><span>Bună, Anca</span><b>AP</b><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><i>7</i></div>
+                  </header>
+
+                  <div class="ob-real-dashboard fragment" data-fragment="1" data-animate="stagger">
+                    <div class="ob-home-grid">
+                      <article class="ob-home-card" style="--i:0">
+                        <h3><svg class="ob-icon"><use href="#ob-i-doc"></use></svg>Situații Contabile Noi <em>(3)</em></h3>
+                        <div class="ob-home-row"><span><strong>Canvas S.R.L.</strong><small>Raport Lunar Martie 2026</small></span><b class="ob-count-pill">1/3</b></div>
+                        <div class="ob-home-row"><span><strong>Ionuț Profan PFA</strong><small>Jurnal TVA Martie 2026</small></span><b class="ob-count-pill ob-count-pill--soft">0/2</b></div>
+                        <footer><b>Situație Nouă</b><span>Toate situațiile contabile</span></footer>
+                      </article>
+
+                      <article class="ob-home-card" style="--i:1">
+                        <h3><svg class="ob-icon"><use href="#ob-i-bell"></use></svg>Alerte <em>(3)</em></h3>
+                        <div class="ob-home-row"><span><strong>Style S.R.L.</strong><small>Raport Lunar Februarie 2026</small></span><b class="ob-late-pill">3 zile întârziere</b></div>
+                        <div class="ob-home-row"><span><strong>Simba Comercial</strong><small>Jurnal TVA Februarie 2026</small></span><b class="ob-late-pill">2 zile întârziere</b></div>
+                        <footer><span>Toate alertele</span></footer>
+                      </article>
+
+                      <article class="ob-home-card" style="--i:2">
+                        <h3><svg class="ob-icon"><use href="#ob-i-approval"></use></svg>Misiuni de Audit <em>(5)</em></h3>
+                        <div class="ob-home-row"><span><strong>Audit de regularitate</strong><small>Primăria Sectorului 1</small></span><b class="ob-status-dot">În lucru</b></div>
+                        <div class="ob-home-row"><span><strong>Execuție bugetară 2024</strong><small>Spitalul Clinic Județean</small></span><b>Spre aprobare</b></div>
+                        <footer><span>Vezi toate</span></footer>
+                      </article>
+
+                      <article class="ob-home-card" style="--i:3">
+                        <h3><svg class="ob-icon"><use href="#ob-i-clock"></use></svg>Termene apropiate <em>(20)</em></h3>
+                        <div class="ob-home-row"><span><strong>Raport Lunar Februarie</strong><small>Style S.R.L.</small></span><b class="ob-late-pill">3 zile întârziere</b></div>
+                        <div class="ob-home-row"><span><strong>Jurnal TVA Februarie</strong><small>Simba Comercial</small></span><b class="ob-late-pill">2 zile întârziere</b></div>
+                      </article>
+                    </div>
+
+                    <aside class="ob-real-messages">
+                      <h3>Mesagerie <em>(4)</em></h3>
+                      <article><div><strong>Canvas S.R.L.</strong><small>18.04.2026</small></div><p>Vă trimit atașat situația contabilă pe Martie 2026.</p><span>2× Intrare · 1× Ieșire</span></article>
+                      <article><div><strong>Ionuț Profan PFA</strong><small>17.04.2026</small></div><p>Am atașat documentele pentru jurnalul de TVA.</p><span>1× Intrare · Salarizare</span></article>
+                    </aside>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ob-role-switch fragment" data-fragment="2" data-animate="stagger">
+              <article class="is-selected" style="--i:0"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><strong>Administrator</strong><span>Configurează și aprobă</span></article>
+              <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-team"></use></svg><strong>Angajat</strong><span>Execută munca</span></article>
+              <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-person"></use></svg><strong>Client</strong><span>Vede și răspunde</span></article>
+              <div class="ob-role-switch__message"><strong>Același Flux.</strong><span>O experiență potrivită fiecărui rol.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-7" data-slide="7" data-chapter="Comercial" data-scene="commercial" aria-label="Slide 7 din 15">
+        <div class="ob-slide__inner ob-slide__inner--centered">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">06 · ACORDUL COMERCIAL</p>
+            <h2>Configurăm pachetul potrivit clientului.</h2>
+            <p>Clar, vizibil și fără surprize.</p>
+          </div>
+
+          <div class="ob-commercial-grid fragment" data-fragment="1" data-animate="stagger">
+            <article style="--i:0"><svg class="ob-icon"><use href="#ob-i-grid"></use></svg><span>01</span><strong>Plan</strong><small>Nivelul de bază</small></article>
+            <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-check"></use></svg><span>02</span><strong>Funcții</strong><small>Ce este inclus</small></article>
+            <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><span>03</span><strong>Limite</strong><small>Volumul disponibil</small></article>
+            <article style="--i:3"><svg class="ob-icon"><use href="#ob-i-flow"></use></svg><span>04</span><strong>Opțiuni</strong><small>Capabilități suplimentare</small></article>
+            <article style="--i:4"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>05</span><strong>Facturare</strong><small>Când și cum se facturează</small></article>
+            <article class="ob-commercial-grid__price" style="--i:5"><svg class="ob-icon"><use href="#ob-i-check"></use></svg><span>06</span><strong>Preț</strong><small>Valoarea agreată</small></article>
+          </div>
+
+          <div class="ob-commercial-summary fragment" data-fragment="2" data-animate="rise"><span>Pachet comercial</span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg><strong>Accesul clientului</strong><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg><span>Pregătit pentru validare</span></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-8" data-slide="8" data-chapter="Validare" data-scene="checklist" aria-label="Slide 8 din 15">
+        <div class="ob-slide__inner ob-slide__inner--centered">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">07 · VALIDARE</p>
+            <h2>Înainte de lansare, verificăm întregul sistem.</h2>
+            <p>Nicio piesă importantă nu rămâne presupusă.</p>
+          </div>
+
+          <div class="ob-checklist fragment" data-fragment="1" data-animate="checklist">
+            <div style="--i:0"><span><svg class="ob-icon"><use href="#ob-i-flow"></use></svg>Flux</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validat</b></div>
+            <div style="--i:1"><span><svg class="ob-icon"><use href="#ob-i-form"></use></svg>Anexe</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validate</b></div>
+            <div style="--i:2"><span><svg class="ob-icon"><use href="#ob-i-search"></use></svg>Recunoaștere documente</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validată</b></div>
+            <div style="--i:3"><span><svg class="ob-icon"><use href="#ob-i-archive"></use></svg>Arhivă</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validată</b></div>
+            <div style="--i:4"><span><svg class="ob-icon"><use href="#ob-i-dashboard"></use></svg>Dashboard</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validat</b></div>
+            <div style="--i:5"><span><svg class="ob-icon"><use href="#ob-i-eye"></use></svg>Permisiuni</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validate</b></div>
+            <div style="--i:6"><span><svg class="ob-icon"><use href="#ob-i-doc"></use></svg>Plan comercial</span><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg>Validat</b></div>
+          </div>
+
+          <div class="ob-ready fragment" data-fragment="2" data-animate="pulse"><span class="ob-ready__pulse"></span><svg class="ob-icon"><use href="#ob-i-check"></use></svg><strong>Totul este pregătit pentru activare.</strong></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-9" data-slide="9" data-chapter="Activare" data-scene="activation" aria-label="Slide 9 din 15">
+        <div class="ob-slide__inner ob-slide__inner--centered">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">08 · ACTIVARE</p>
+            <h2>Clientul intră în Scriptica.</h2>
+            <p>O succesiune simplă transformă configurația într-un spațiu viu.</p>
+          </div>
+
+          <div class="ob-activation fragment" data-fragment="1" data-animate="timeline">
+            <svg class="ob-activation__line" viewBox="0 0 1000 80" preserveAspectRatio="none" aria-hidden="true"><path data-draw d="M40 40 H960"></path></svg>
+            <article style="--i:0"><div><svg class="ob-icon"><use href="#ob-i-grid"></use></svg></div><span>01</span><strong>Spațiul este creat</strong><small>Structura devine disponibilă</small></article>
+            <article style="--i:1"><div><svg class="ob-icon"><use href="#ob-i-approval"></use></svg></div><span>02</span><strong>Administratorul este invitat</strong><small>Primește controlul local</small></article>
+            <article style="--i:2"><div><svg class="ob-icon"><use href="#ob-i-team"></use></svg></div><span>03</span><strong>Echipa se alătură</strong><small>Responsabilitățile sunt clare</small></article>
+            <article style="--i:3"><div><svg class="ob-icon"><use href="#ob-i-person"></use></svg></div><span>04</span><strong>Clientul se conectează</strong><small>Vede doar ce îl privește</small></article>
+          </div>
+
+          <div class="ob-live-status fragment" data-fragment="2" data-animate="pulse"><span></span><strong>SPAȚIU ACTIV</strong><small>Primul Flux poate începe.</small></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-10" data-slide="10" data-chapter="Problema eliminată" data-scene="friction" aria-label="Slide 10 din 15">
+        <div class="ob-slide__inner ob-slide__inner--centered">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">DE CE CONTEAZĂ</p>
+            <h2>Un Flux bine construit elimină munca invizibilă.</h2>
+            <p>Problemele nu dispar pentru că oamenii muncesc mai repede, ci pentru că procesul devine clar.</p>
+          </div>
+
+          <div class="ob-friction-stage">
+            <section class="ob-friction-panel ob-friction-panel--before" aria-label="Probleme înainte de Scriptica">
+              <header><span>ÎNAINTE</span><strong>Munca este fragmentată</strong></header>
+              <article style="--i:0"><b>!</b><div><strong>Pașii avansează fără verificări</strong><span>Lipsurile sunt descoperite prea târziu.</span></div></article>
+              <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><div><strong>Documentele sunt împrăștiate</strong><span>În e-mail, WhatsApp și foldere locale.</span></div></article>
+              <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><div><strong>Timp pierdut cu sortarea manuală</strong><span>Fișierele sunt mutate și redenumite de mână.</span></div></article>
+              <article style="--i:3"><svg class="ob-icon"><use href="#ob-i-chat"></use></svg><div><strong>Aprobările se caută prin mesaje</strong><span>Nu este clar cine trebuie să decidă.</span></div></article>
+            </section>
+
+            <div class="ob-friction-shift" aria-hidden="true"><span></span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg></div>
+
+            <section class="ob-friction-panel ob-friction-panel--after" aria-label="Rezultate cu un Flux Scriptica">
+              <header><span>CU UN FLUX SCRIPTICA</span><strong>Totul are context</strong></header>
+              <article style="--i:0"><svg class="ob-icon"><use href="#ob-i-check"></use></svg><div><strong>Condiții clare înainte de avansare</strong><span>Pasul se închide doar când este complet.</span></div></article>
+              <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg><div><strong>Documente recunoscute și direcționate</strong><span>Fiecare fișier știe unde aparține.</span></div></article>
+              <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-team"></use></svg><div><strong>Timp păstrat pentru munca de valoare</strong><span>Sortarea repetitivă este redusă.</span></div></article>
+              <article style="--i:3"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><div><strong>Responsabil și aprobare vizibile</strong><span>Următorul pas nu mai trebuie ghicit.</span></div></article>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-11" data-slide="11" data-chapter="Inima Scriptica" data-scene="heart" aria-label="Slide 11 din 15">
+        <div class="ob-slide__inner ob-slide__inner--heart">
+          <div class="ob-heading ob-heading--center ob-heading--compact">
+            <p class="ob-kicker">IDEA ESENȚIALĂ</p>
+            <h2>Fluxul este inima Scriptica.</h2>
+            <p>În Flux rămâne munca. E-mailul, WhatsApp și încărcările sunt doar căile prin care sosesc documentele.</p>
+          </div>
+
+          <div class="ob-heart-map" aria-label="Fluxul conectat la conversație, sarcini, anexe, aprobări, cronologie, documente, arhivă și notificări">
+            <svg class="ob-heart-map__lines" viewBox="0 0 1200 540" preserveAspectRatio="none" aria-hidden="true">
+              <path data-draw d="M600 270 L300 70"></path>
+              <path data-draw d="M600 270 L600 50"></path>
+              <path data-draw d="M600 270 L900 70"></path>
+              <path data-draw d="M600 270 L1050 270"></path>
+              <path data-draw d="M600 270 L900 470"></path>
+              <path data-draw d="M600 270 L600 490"></path>
+              <path data-draw d="M600 270 L300 470"></path>
+              <path data-draw d="M600 270 L150 270"></path>
+            </svg>
+
+            <div class="ob-flow-core ob-flow-core--heart"><span class="ob-flow-core__pulse"></span><svg class="ob-icon ob-icon--xl"><use href="#ob-i-flow"></use></svg><strong>FLUX</strong><small>un singur context</small></div>
+
+            <div class="ob-heart-node ob-heart-node--n1" style="--i:0"><svg class="ob-icon"><use href="#ob-i-task"></use></svg><span>Sarcini</span></div>
+            <div class="ob-heart-node ob-heart-node--n2" style="--i:1"><svg class="ob-icon"><use href="#ob-i-form"></use></svg><span>Anexe</span></div>
+            <div class="ob-heart-node ob-heart-node--n3" style="--i:2"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>Documente</span></div>
+            <div class="ob-heart-node ob-heart-node--n4" style="--i:3"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg><span>Arhivă</span></div>
+            <div class="ob-heart-node ob-heart-node--n5" style="--i:4"><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><span>Notificări</span></div>
+            <div class="ob-heart-node ob-heart-node--n6" style="--i:5"><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><span>Cronologie</span></div>
+            <div class="ob-heart-node ob-heart-node--n7" style="--i:6"><svg class="ob-icon"><use href="#ob-i-approval"></use></svg><span>Aprobări</span></div>
+            <div class="ob-heart-node ob-heart-node--n8" style="--i:7"><svg class="ob-icon"><use href="#ob-i-chat"></use></svg><span>Conversația cu clientul</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-12" data-slide="12" data-chapter="Intrări" data-scene="intake" aria-label="Slide 12 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading ob-heading--center">
+            <p class="ob-kicker">09 · INFORMAȚIA INTRĂ ÎN FLUX</p>
+            <h2>Canalele diferite ajung în același loc.</h2>
+            <p>Acestea nu sunt module separate. Sunt căile prin care documentele ajung în Flux.</p>
+          </div>
+
+          <div class="ob-intake-map">
+            <svg class="ob-intake-map__lines fragment" data-fragment="1" viewBox="0 0 1200 560" preserveAspectRatio="none" aria-hidden="true">
+              <path data-draw d="M155 115 C330 115 360 280 560 280"></path><path data-draw d="M155 280 H560"></path><path data-draw d="M155 445 C330 445 360 280 560 280"></path>
+              <path data-draw d="M1045 115 C870 115 840 280 640 280"></path><path data-draw d="M1045 280 H640"></path><path data-draw d="M1045 445 C870 445 840 280 640 280"></path>
+            </svg>
+            <div class="ob-source ob-source--mail fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-mail"></use></svg><strong>E-mail</strong></div>
+            <div class="ob-source ob-source--whatsapp fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-phone"></use></svg><strong>WhatsApp</strong></div>
+            <div class="ob-source ob-source--portal fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-person"></use></svg><strong>Portalul clientului</strong></div>
+            <div class="ob-source ob-source--upload fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-upload"></use></svg><strong>Încărcare în Scriptica</strong></div>
+            <div class="ob-source ob-source--api fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-api"></use></svg><strong>Conectare automată</strong><small>cu alte sisteme</small></div>
+            <div class="ob-source ob-source--scanner fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-scan"></use></svg><strong>Scanner</strong></div>
+            <div class="ob-intake-core"><span class="ob-flow-core__pulse"></span><svg class="ob-icon ob-icon--xl"><use href="#ob-i-flow"></use></svg><strong>FLUX</strong><small>primește documentele</small></div>
+          </div>
+
+          <div class="ob-auto-categorize fragment" data-fragment="2" data-animate="rise"><svg class="ob-icon"><use href="#ob-i-search"></use></svg><span>Scriptica recunoaște</span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg><span>leagă de client și Flux</span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg><strong>trimite unde trebuie</strong></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-13" data-slide="13" data-chapter="Arhivă" data-scene="archive" aria-label="Slide 13 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">10 · ARHIVA SE GENEREAZĂ</p>
+            <h2>Fluxul își primește traseul în arhiva clientului.</h2>
+            <p>Structura este deja definită. Documentele știu unde ajung, fără configurare manuală pentru fiecare caz.</p>
+          </div>
+
+          <div class="ob-archive-magic">
+            <div class="ob-customer-card">
+              <div class="ob-customer-card__brand">C</div><div><small>CLIENT ACTIV</small><strong>Canvas S.R.L.</strong><span>Cabinet contabil</span></div>
+              <div class="ob-customer-card__flow fragment" data-fragment="1"><svg class="ob-icon"><use href="#ob-i-flow"></use></svg><div><small>FLUX ATAȘAT</small><strong>Raport lunar</strong></div><b><svg class="ob-icon"><use href="#ob-i-check"></use></svg></b></div>
+            </div>
+
+            <div class="ob-archive-beam fragment" data-fragment="1" aria-hidden="true"><span></span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg></div>
+
+            <div class="ob-generated-archive fragment" data-fragment="2" data-animate="archive">
+              <div class="ob-generated-archive__title"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg><div><small>ARHIVA CLIENTULUI</small><strong>Organizată automat</strong></div><span>Gata</span></div>
+              <div class="ob-tree">
+                <div class="ob-tree__root"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><strong>Canvas S.R.L.</strong></div>
+                <div style="--i:0"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>2026</span></div>
+                <div style="--i:1"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Aprilie</span></div>
+                <div style="--i:2"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Facturi</span><b>12</b></div>
+                <div style="--i:3"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Extrase bancare</span><b>4</b></div>
+                <div style="--i:4"><svg class="ob-icon"><use href="#ob-i-folder"></use></svg><span>Contracte</span><b>2</b></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ob-magic-caption fragment" data-fragment="3" data-animate="spotlight"><span>0 pași manuali</span><strong>Fluxul și arhiva sunt conectate din prima zi.</strong></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-14" data-slide="14" data-chapter="Dashboard" data-scene="dashboard" aria-label="Slide 14 din 15">
+        <div class="ob-slide__inner">
+          <div class="ob-heading">
+            <p class="ob-kicker">11 · DASHBOARD CONFIGURABIL</p>
+            <h2>Alegem Fluxurile și semnalele care contează.</h2>
+            <p>Widgeturile sunt carduri de informație. Le așezăm astfel încât fiecare rol să vadă imediat ce cere atenție.</p>
+          </div>
+
+          <div class="ob-dashboard-builder">
+            <aside class="ob-widget-palette fragment" data-fragment="1" data-animate="stagger">
+              <div class="ob-panel-label">WIDGETURI DISPONIBILE</div>
+              <article style="--i:0"><svg class="ob-icon"><use href="#ob-i-archive"></use></svg><span>Arhivă</span><b>⋮⋮</b></article>
+              <article style="--i:1"><svg class="ob-icon"><use href="#ob-i-task"></use></svg><span>Sarcini</span><b>⋮⋮</b></article>
+              <article style="--i:2"><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><span>Notificări</span><b>⋮⋮</b></article>
+              <article style="--i:3"><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>Documente recente</span><b>⋮⋮</b></article>
+              <article style="--i:4"><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><span>Progres</span><b>⋮⋮</b></article>
+              <article style="--i:5"><svg class="ob-icon"><use href="#ob-i-dashboard"></use></svg><span>Indicatori</span><b>⋮⋮</b></article>
+            </aside>
+
+            <div class="ob-dashboard-canvas">
+              <div class="ob-dashboard-canvas__head"><div><small>PREVIZUALIZARE</small><strong>Acasă · Canvas S.R.L.</strong></div><span><i></i>Salvat automat</span></div>
+              <div class="ob-dashboard-grid fragment" data-fragment="2" data-animate="snap">
+                <article class="ob-dw ob-dw--wide" style="--i:0"><div><svg class="ob-icon"><use href="#ob-i-flow"></use></svg><span>Fluxuri în desfășurare</span></div><strong>12</strong><small>3 au nevoie de atenție</small><i class="ob-mini-chart"><b></b><b></b><b></b><b></b><b></b></i></article>
+                <article class="ob-dw" style="--i:1"><div><svg class="ob-icon"><use href="#ob-i-task"></use></svg><span>Sarcini</span></div><strong>8</strong><small>pentru astăzi</small></article>
+                <article class="ob-dw" style="--i:2"><div><svg class="ob-icon"><use href="#ob-i-bell"></use></svg><span>Notificări</span></div><strong>3</strong><small>necitite</small></article>
+                <article class="ob-dw ob-dw--wide" style="--i:3"><div><svg class="ob-icon"><use href="#ob-i-doc"></use></svg><span>Documente recente</span></div><ul><li>factura_128.pdf <em>acum 4 min.</em></li><li>extras_aprilie.pdf <em>astăzi</em></li></ul></article>
+                <article class="ob-dw ob-dw--progress" style="--i:4"><div><svg class="ob-icon"><use href="#ob-i-clock"></use></svg><span>Progres</span></div><strong>74%</strong><i><b></b></i></article>
+              </div>
+              <div class="ob-drop-hint fragment" data-fragment="1">Trage widgeturile aici</div>
+            </div>
+          </div>
+
+          <div class="ob-dashboard-result fragment" data-fragment="3" data-animate="rise"><svg class="ob-icon"><use href="#ob-i-eye"></use></svg><span>Mai puțin timp căutând.</span><strong>Mai mult timp acționând.</strong></div>
+        </div>
+      </section>
+
+      <section class="ob-slide" id="slide-15" data-slide="15" data-chapter="Concluzie" data-scene="finale" aria-label="Slide 15 din 15">
+        <div class="ob-slide__inner ob-slide__inner--final">
+          <div class="ob-final-lockup">
+            <div class="ob-flow-core ob-flow-core--final"><span class="ob-flow-core__pulse"></span><svg class="ob-icon ob-icon--xl"><use href="#ob-i-flow"></use></svg><strong>FLUX</strong></div>
+            <div class="ob-final-copy">
+              <p>Fluxul nu este o funcție din Scriptica.</p>
+              <h2>Fluxul este fundația pe care este construită fiecare funcție.</h2>
+              <button class="ob-restart" type="button" data-action="start"><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg> Reia prezentarea</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="ob-live" aria-live="polite" aria-atomic="true" data-live></div>
+
+    <footer class="ob-controls" aria-label="Navigarea prezentării">
+      <button class="ob-control ob-control--prev" type="button" data-action="previous" aria-label="Înapoi">
+        <svg class="ob-icon"><use href="#ob-i-arrow"></use></svg><span>Înapoi</span>
+      </button>
+      <div class="ob-progress" aria-label="Progresul prezentării">
+        <div class="ob-progress__meta"><span data-step-label>Fundamentul</span><b><span data-current>01</span> / <span data-total>15</span></b></div>
+        <div class="ob-progress__track"><span data-progress></span></div>
+      </div>
+      <button class="ob-control ob-control--next" type="button" data-action="next">
+        <span data-next-label>Continuă</span><svg class="ob-icon"><use href="#ob-i-arrow"></use></svg>
+      </button>
+    </footer>
+
+    <div class="ob-key-hint" aria-hidden="true"><span>←</span><span>→</span> taste sau click pentru navigare</div>
+  </main>
+</body>
+</html>

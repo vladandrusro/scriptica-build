@@ -7,9 +7,36 @@
    ('scriptica.anexe'). Today is pinned to 2026-04-20.
    ============================================================ */
 
-/* View bootstrap — at script evaluation time, so shell.js renders
-   the admin context (user menu + nav item Administrare). */
-try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore */ }
+/* View bootstrap — constructorul este comun administratorului local și HQ.
+   Parametrul explicit `view=superadmin` păstrează contextul Super Admin. */
+var _isSuperAdminAnexeBuilder = (typeof window.getCurrentView === 'function') && window.getCurrentView() === 'superadmin';
+try {
+  if (!_isSuperAdminAnexeBuilder) localStorage.setItem('scriptica.view', 'admin');
+} catch (e) { /* ignore */ }
+
+if (_isSuperAdminAnexeBuilder) {
+  var _builderSuperAdminNav = document.querySelector('.sidebar__nav');
+  var _builderSuperAdminAside = document.querySelector('.sidebar');
+  var _builderBack = document.querySelector('.builder__back');
+  var _builderBreadcrumb = document.getElementById('builder-breadcrumb');
+  document.title = 'Constructor Anexe — Super Admin — Scriptica';
+  document.body.setAttribute('data-page', 'super-admin-anexe-builder');
+  if (_builderSuperAdminAside) _builderSuperAdminAside.setAttribute('aria-label', 'Navigație Super Admin');
+  if (_builderBack) _builderBack.href = 'administrare.html?view=superadmin#tipuri-anexe';
+  if (_builderBreadcrumb) _builderBreadcrumb.textContent = 'Super Admin · Anexe';
+  if (_builderSuperAdminNav) {
+    _builderSuperAdminNav.innerHTML =
+      '<a class="nav-item" href="super-admin.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">monitoring</span><span class="nav-item__label">Dashboard</span></a>' +
+      '<a class="nav-item" href="super-admin-clienti.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">apartment</span><span class="nav-item__label">Clienți</span></a>' +
+      '<div class="sidebar__group-label" aria-hidden="true">Configurare</div>' +
+      '<a class="nav-item" href="super-admin-fluxuri-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">account_tree</span><span class="nav-item__label">Fluxuri</span></a>' +
+      '<a class="nav-item nav-item--active" data-nav="super-admin-anexe" href="administrare.html?view=superadmin#tipuri-anexe"><span class="material-symbols-outlined nav-item__icon filled" aria-hidden="true">description</span><span class="nav-item__label">Anexe</span></a>' +
+      '<a class="nav-item" href="super-admin-tipuri-clienti-v2.html?view=superadmin"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">category</span><span class="nav-item__label">Tipuri de clienți</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">dns</span><span class="nav-item__label">Infrastructură</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">receipt_long</span><span class="nav-item__label">Facturare</span></a>' +
+      '<a class="nav-item nav-item--stub" href="#" data-stub aria-disabled="true" tabindex="-1"><span class="material-symbols-outlined nav-item__icon" aria-hidden="true">settings</span><span class="nav-item__label">Setări</span></a>';
+  }
+}
 
 (function () {
   'use strict';
@@ -18,6 +45,12 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
 
   var ANEXE_KEY = 'scriptica.anexe';
   var TODAY_ISO = '2026-04-20';
+
+  function anexeRegistryUrl() {
+    return _isSuperAdminAnexeBuilder
+      ? 'administrare.html?view=superadmin#tipuri-anexe'
+      : 'administrare.html#tipuri-anexe';
+  }
 
   /* ============================================================
      FIELD TYPE DEFINITIONS — data contract with mock-data.js
@@ -29,9 +62,9 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     divider: { label: 'Separator', icon: 'horizontal_rule', defaults: {} },
     text_short: { label: 'Text scurt', icon: 'short_text', defaults: { label: 'Text scurt', placeholder: '', required: false, help: '', maxLength: 100 } },
     text_long: { label: 'Text lung', icon: 'subject', defaults: { label: 'Observații', placeholder: '', required: false, help: '', rows: 3 } },
-    number: { label: 'Număr', icon: 'numbers', defaults: { label: 'Cantitate', required: false, help: '', min: null, max: null, decimals: 0 } },
-    currency: { label: 'Sumă monetară', icon: 'payments', defaults: { label: 'Sumă', required: false, currency: 'RON', help: '' } },
-    percent: { label: 'Procent', icon: 'percent', defaults: { label: 'Cotă TVA', required: false, help: '' } },
+    number: { label: 'Număr', icon: 'numbers', defaults: { label: 'Cantitate', required: false, help: '', min: null, max: null, decimals: 0, ref: '' } },
+    currency: { label: 'Sumă monetară', icon: 'payments', defaults: { label: 'Sumă', required: false, currency: 'RON', help: '', ref: '' } },
+    percent: { label: 'Procent', icon: 'percent', defaults: { label: 'Cotă TVA', required: false, help: '', ref: '' } },
     cui: { label: 'Cod fiscal / CUI', icon: 'badge', defaults: { label: 'CUI', required: false, help: 'Cod fiscal românesc, ex: RO12345678' } },
     date: { label: 'Dată', icon: 'calendar_today', defaults: { label: 'Data', required: false, help: '' } },
     month: { label: 'Lună fiscală', icon: 'date_range', defaults: { label: 'Perioada fiscală', required: false, help: '' } },
@@ -47,8 +80,20 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       { name: 'CNP', type: 'text' },
       { name: 'Salariu brut', type: 'currency' }
     ], minRows: 1 } },
-    calculated: { label: 'Câmp calculat', icon: 'function', defaults: { label: 'Total', formula: 'subtotal + tva', help: 'Se calculează automat.' } }
+    calculated: { label: 'Câmp calculat', icon: 'function', defaults: { label: 'Total', formula: 'subtotal + tva', help: 'Se calculează automat.' } },
+    repeater_block: { label: 'Bloc repetabil', icon: 'repeat', defaults: { label: 'Element', help: '', addLabel: 'Adaugă element', minBlocks: 1, maxBlocks: null, blockFields: [
+      { type: 'text_short', label: 'Câmp în bloc', placeholder: '', required: false, help: '', maxLength: 100 }
+    ] } }
   };
+
+  /* Tipurile care NU pot fi adăugate în interiorul unui bloc repetabil
+     (un singur nivel — fără bloc-în-bloc). */
+  var BLOCK_FORBIDDEN_TYPES = { repeater_block: true };
+
+  /* Clasificarea anexei folosește registrul real de verticale. O anexă poate
+     fi disponibilă în mai multe verticale; activitățile în care este folosită
+     sunt derivate separat din atașările la pași. */
+  var FLOW_VERTICALS = ((((window.SCRIPTICA_MOCK || {}).superAdmin || {}).flowVerticals) || []);
 
   /* ============================================================
      STATE
@@ -57,9 +102,15 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   var selectedId = null;
   var mode = 'design';
 
+  /* Mod Previzualizează: câte instanțe afișează fiecare bloc repetabil.
+     Tranzitoriu (nu se salvează în schemă), cheie = field.id. */
+  var previewBlockCounts = {};
+
   var anexaId = null;
   var anexaName = 'Anexă nouă';
   var anexaStatus = 'activ';
+  var anexaCategories = [];
+  var anexaVerticalIds = [];
   var notFound = false;
 
   /* Ultima versiune salvată (pentru Resetează) */
@@ -102,15 +153,46 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return fields.find(function (f) { return f.id === id; }) || null;
   }
 
+  /* Caută un câmp în lista de top + în sub-listele blockFields ale blocurilor
+     repetabile. Întoarce { list, index, field } sau null. */
+  function locate(id) {
+    if (!id) return null;
+    function search(list) {
+      for (var i = 0; i < list.length; i++) {
+        var f = list[i];
+        if (f.id === id) return { list: list, index: i, field: f };
+        if (f.type === 'repeater_block' && f.blockFields) {
+          var r = search(f.blockFields);
+          if (r) return r;
+        }
+      }
+      return null;
+    }
+    return search(fields);
+  }
+
+  function findFieldDeep(id) {
+    var loc = locate(id);
+    return loc ? loc.field : null;
+  }
+
+  /* Recursiv: atribuie uid pe fiecare câmp, inclusiv în blockFields. */
   function withUids(list) {
-    list.forEach(function (f) { f.id = uid(); });
+    (list || []).forEach(function (f) {
+      f.id = uid();
+      if (f.type === 'repeater_block' && f.blockFields) withUids(f.blockFields);
+    });
     return list;
   }
 
+  /* Recursiv: scoate uid din fiecare câmp, inclusiv din blockFields. */
   function stripUids(list) {
-    return list.map(function (f) {
+    return (list || []).map(function (f) {
       var copy = deepCopy(f);
       delete copy.id;
+      if (copy.type === 'repeater_block' && copy.blockFields) {
+        copy.blockFields = stripUids(copy.blockFields);
+      }
       return copy;
     });
   }
@@ -155,6 +237,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       anexaId = found.id;
       anexaName = found.name || 'Anexă nouă';
       anexaStatus = found.status || 'activ';
+      anexaCategories = Array.isArray(found.categories) ? found.categories.slice() : [];
+      anexaVerticalIds = Array.isArray(found.verticalIds) ? found.verticalIds.slice() : [];
       originalFields = deepCopy((found.schema && found.schema.fields) || []);
       originalName = anexaName;
       fields = withUids(deepCopy(originalFields));
@@ -165,6 +249,8 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     var name = (params.get('name') || '').trim();
     anexaName = name || 'Anexă nouă';
     anexaStatus = 'activ';
+    anexaCategories = [];
+    anexaVerticalIds = [];
     anexaId = null;
     originalFields = [];
     originalName = anexaName;
@@ -174,55 +260,72 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   /* ============================================================
      FIELD OPERATIONS
      ============================================================ */
-  function addField(type, atIndex) {
+  /* targetList: lista în care se adaugă (default `fields`, sau blockFields-ul
+     unui bloc repetabil). Blocurile nu pot conține alte blocuri. */
+  function addField(type, atIndex, targetList) {
     if (notFound || mode === 'fill') return;
     var def = FIELD_TYPES[type];
     if (!def) return;
+    var list = targetList || fields;
+    if (list !== fields && BLOCK_FORBIDDEN_TYPES[type]) {
+      toast('critical', 'Un bloc repetabil nu poate conține alt bloc.');
+      return;
+    }
     var newField = deepCopy(def.defaults);
     newField.id = uid();
     newField.type = type;
-    if (atIndex === null || atIndex === undefined || atIndex < 0 || atIndex >= fields.length) {
-      fields.push(newField);
+    /* Sub-câmpurile-șablon ale unui bloc nou primesc uid-uri proprii. */
+    if (type === 'repeater_block' && newField.blockFields) withUids(newField.blockFields);
+    if (atIndex === null || atIndex === undefined || atIndex < 0 || atIndex >= list.length) {
+      list.push(newField);
     } else {
-      fields.splice(atIndex, 0, newField);
+      list.splice(atIndex, 0, newField);
     }
     selectedId = newField.id;
     render();
   }
 
   function removeField(id) {
-    fields = fields.filter(function (f) { return f.id !== id; });
+    var loc = locate(id);
+    if (!loc) return;
+    loc.list.splice(loc.index, 1);
     if (selectedId === id) selectedId = null;
     render();
   }
 
   function duplicateField(id) {
-    var idx = fields.findIndex(function (f) { return f.id === id; });
-    if (idx === -1) return;
-    var copy = deepCopy(fields[idx]);
+    var loc = locate(id);
+    if (!loc) return;
+    var copy = deepCopy(loc.field);
     copy.id = uid();
-    fields.splice(idx + 1, 0, copy);
+    /* Duplicarea unui bloc clonează șablonul cu uid-uri proaspete. */
+    if (copy.type === 'repeater_block' && copy.blockFields) withUids(copy.blockFields);
+    loc.list.splice(loc.index + 1, 0, copy);
     selectedId = copy.id;
     render();
   }
 
   function moveField(id, direction) {
-    var idx = fields.findIndex(function (f) { return f.id === id; });
-    if (idx === -1) return;
-    var newIdx = idx + direction;
-    if (newIdx < 0 || newIdx >= fields.length) return;
-    var tmp = fields[idx];
-    fields[idx] = fields[newIdx];
-    fields[newIdx] = tmp;
+    var loc = locate(id);
+    if (!loc) return;
+    var list = loc.list;
+    var newIdx = loc.index + direction;
+    if (newIdx < 0 || newIdx >= list.length) return;
+    var tmp = list[loc.index];
+    list[loc.index] = list[newIdx];
+    list[newIdx] = tmp;
     render();
   }
 
+  /* Reordonare DOAR în interiorul propriei liste (top sau blockFields). */
   function reorderField(id, targetIndex) {
-    var currentIndex = fields.findIndex(function (f) { return f.id === id; });
-    if (currentIndex === -1) return;
-    var moved = fields.splice(currentIndex, 1)[0];
+    var loc = locate(id);
+    if (!loc) return;
+    var list = loc.list;
+    var currentIndex = loc.index;
+    var moved = list.splice(currentIndex, 1)[0];
     var adjustedTarget = targetIndex > currentIndex ? targetIndex - 1 : targetIndex;
-    fields.splice(adjustedTarget, 0, moved);
+    list.splice(adjustedTarget, 0, moved);
     selectedId = id;
     render();
   }
@@ -242,7 +345,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         '<div class="builder__error">' +
           '<span class="material-symbols-outlined" aria-hidden="true">search_off</span>' +
           '<p>Anexa nu a fost găsită.</p>' +
-          '<a href="administrare.html#tipuri-anexe">Înapoi la Tipuri de Anexe</a>' +
+          '<a href="' + anexeRegistryUrl() + '">Înapoi la Tipuri de Anexe</a>' +
         '</div>';
       return;
     }
@@ -502,6 +605,9 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
           '</div>';
         break;
 
+      case 'repeater_block':
+        return buildRepeaterPreview(field);
+
       default:
         container.innerHTML = '<p class="bfield__paragraph">Tip necunoscut: ' + esc(field.type) + '</p>';
     }
@@ -509,16 +615,189 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     return container;
   }
 
+  function blockNum(v, fallback) {
+    var n = parseInt(v, 10);
+    return isNaN(n) ? fallback : n;
+  }
+
+  /* Randarea blocului repetabil. În „Construiește" = zonă de construire a
+     șablonului (sub-câmpuri editabile + drop target). În „Previzualizează" =
+     instanțe repetabile cu buton de adăugare și ștergere (respectă min/max). */
+  function buildRepeaterPreview(field) {
+    var container = document.createElement('div');
+    container.className = 'bfield__preview';
+    var blockFields = field.blockFields || [];
+    var min = blockNum(field.minBlocks, 1);
+    if (min < 0) min = 0;
+
+    if (mode === 'fill') {
+      var max = field.maxBlocks == null ? null : blockNum(field.maxBlocks, null);
+      var count = previewBlockCounts[field.id];
+      if (count == null) count = Math.max(min, 1);
+      if (count < Math.max(min, 1)) count = Math.max(min, 1);
+      if (max != null && count > max) count = max;
+      previewBlockCounts[field.id] = count;
+
+      var rep = document.createElement('div');
+      rep.className = 'bfield__repeater bfield__repeater--fill';
+
+      var fhead = document.createElement('div');
+      fhead.className = 'bfield__repeater-head';
+      fhead.innerHTML =
+        (field.label ? '<div class="bfield__label">' + esc(field.label) + (field.required ? ' <span class="bfield__required">*</span>' : '') + '</div>' : '') +
+        (field.help ? '<div class="bfield__help">' + esc(field.help) + '</div>' : '');
+      rep.appendChild(fhead);
+
+      for (var i = 0; i < count; i++) {
+        var inst = document.createElement('div');
+        inst.className = 'bfield__rinstance';
+        var ihead = document.createElement('div');
+        ihead.className = 'bfield__rinstance-head';
+        ihead.innerHTML = '<span class="bfield__rinstance-title">' + esc(field.label || 'Element') + ' #' + (i + 1) + '</span>';
+        if (count > min) {
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'bfield__rinstance-del';
+          del.title = 'Șterge';
+          del.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">close</span>';
+          del.addEventListener('click', (function (fid, mn) {
+            return function (e) {
+              e.stopPropagation();
+              if ((previewBlockCounts[fid] || 0) > mn) {
+                previewBlockCounts[fid]--;
+                renderCanvasOnly();
+              }
+            };
+          })(field.id, min));
+          ihead.appendChild(del);
+        }
+        inst.appendChild(ihead);
+        var body = document.createElement('div');
+        body.className = 'bfield__rinstance-body';
+        blockFields.forEach(function (bf) {
+          body.appendChild(renderFieldPreview(bf));
+        });
+        inst.appendChild(body);
+        rep.appendChild(inst);
+      }
+
+      var canAdd = (max == null) || (count < max);
+      var add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'bfield__radd';
+      add.disabled = !canAdd;
+      add.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">add</span> ' + esc(field.addLabel || 'Adaugă');
+      add.addEventListener('click', (function (fid, mn) {
+        return function (e) {
+          e.stopPropagation();
+          var f = findFieldDeep(fid);
+          if (!f) return;
+          var mx = f.maxBlocks == null ? null : blockNum(f.maxBlocks, null);
+          var cur = previewBlockCounts[fid] || Math.max(mn, 1);
+          if (mx == null || cur < mx) {
+            previewBlockCounts[fid] = cur + 1;
+            renderCanvasOnly();
+          }
+        };
+      })(field.id, min));
+      rep.appendChild(add);
+
+      container.appendChild(rep);
+      return container;
+    }
+
+    /* mod „Construiește" — zona de construire a șablonului */
+    var rep2 = document.createElement('div');
+    rep2.className = 'bfield__repeater';
+
+    var head2 = document.createElement('div');
+    head2.className = 'bfield__repeater-head';
+    head2.innerHTML =
+      '<div class="bfield__repeater-title">' +
+        '<span class="material-symbols-outlined" aria-hidden="true">repeat</span>' +
+        '<span>' + esc(field.label || 'Bloc repetabil') + (field.required ? ' <span class="bfield__required">*</span>' : '') + '</span>' +
+      '</div>' +
+      '<span class="bfield__repeater-badge">Bloc repetabil</span>';
+    rep2.appendChild(head2);
+
+    if (field.help) {
+      var help2 = document.createElement('div');
+      help2.className = 'bfield__help';
+      help2.textContent = field.help;
+      rep2.appendChild(help2);
+    }
+
+    var zone = document.createElement('div');
+    zone.className = 'bfield__rzone';
+    zone.setAttribute('data-rzone', field.id);
+    if (!blockFields.length) {
+      var ph = document.createElement('div');
+      ph.className = 'bfield__rzone-empty';
+      ph.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span><span>Trage câmpuri aici pentru a construi blocul</span>';
+      zone.appendChild(ph);
+    } else {
+      blockFields.forEach(function (bf, i) {
+        zone.appendChild(renderField(bf, i));
+      });
+    }
+    rep2.appendChild(zone);
+    attachDropZone(zone, blockFields);
+
+    var foot = document.createElement('div');
+    foot.className = 'bfield__repeater-foot';
+    foot.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">add</span>' +
+      '<span>În Previzualizează: „' + esc(field.addLabel || 'Adaugă') + '" · min ' + esc(min) +
+      (field.maxBlocks == null ? '' : (' · max ' + esc(field.maxBlocks))) + '</span>';
+    rep2.appendChild(foot);
+
+    container.appendChild(rep2);
+    return container;
+  }
+
   /* ============================================================
      RENDER — settings panel
      ============================================================ */
+  function renderAnexaSettings() {
+    var checks = FLOW_VERTICALS.map(function (vertical) {
+      var on = anexaVerticalIds.indexOf(vertical.id) !== -1;
+      return '<div class="builder__srow builder__srow--inline"><label>' +
+        '<input type="checkbox" data-anexa-vertical="' + esc(vertical.id) + '"' + (on ? ' checked' : '') + '> ' +
+        esc(vertical.name) + '</label></div>';
+    }).join('');
+    return '<div class="builder__settings-header">' +
+        '<div class="builder__settings-type">Proprietăți anexă</div>' +
+        '<h3 class="builder__settings-title">Verticale disponibile</h3>' +
+      '</div>' +
+      group('Verticale', checks || '<div class="builder__settings-note">Nu există verticale configurate în registru.</div>') +
+      '<div class="builder__settings-note">Poți selecta mai multe verticale fără să duplici anexa. Fără nicio verticală bifată = anexă partajată, disponibilă peste tot. Tipurile de activitate și conexiunile sunt calculate automat din utilizările reale.</div>';
+  }
+
+  function attachAnexaSettingsHandlers() {
+    settingsContentEl.querySelectorAll('[data-anexa-vertical]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-anexa-vertical');
+        var i = anexaVerticalIds.indexOf(id);
+        if (cb.checked && i === -1) anexaVerticalIds.push(id);
+        else if (!cb.checked && i !== -1) anexaVerticalIds.splice(i, 1);
+      });
+    });
+  }
+
   function renderSettings() {
     if (!settingsEmptyEl || !settingsContentEl) return;
-    var field = findField(selectedId);
-    if (!field || mode === 'fill') {
+    var field = findFieldDeep(selectedId);
+    if (mode === 'fill') {
       settingsEmptyEl.hidden = false;
       settingsContentEl.hidden = true;
       settingsContentEl.innerHTML = '';
+      return;
+    }
+    if (!field) {
+      /* Niciun câmp selectat → proprietăți la nivel de anexă (categorii). */
+      settingsEmptyEl.hidden = true;
+      settingsContentEl.hidden = false;
+      settingsContentEl.innerHTML = renderAnexaSettings();
+      attachAnexaSettingsHandlers();
       return;
     }
 
@@ -575,6 +854,16 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
           selectRow('currency', 'Monedă', field.currency, [
             { v: 'RON', l: 'RON' }, { v: 'EUR', l: 'EUR' }, { v: 'USD', l: 'USD' }
           ])
+        );
+      }
+
+      /* Cod referință — DOAR pe câmpuri numerice. Singurele câmpuri
+         referențiabile în formulele automate (legate la nivel de tip de
+         misiune). Cod scurt, stabil la reordonare. */
+      if (field.type === 'number' || field.type === 'currency' || field.type === 'percent') {
+        html += group('Cod referință (formule)',
+          textRow('ref', 'Cod ref (ex. PROB, IMP, PUNCTAJ)', field.ref || '') +
+          '<div class="builder__formula-help">Cod scurt și stabil pentru a referi acest câmp în <strong>formulele automate</strong> definite la nivelul tipului de misiune. Lasă gol dacă nu e folosit în calcule.</div>'
         );
       }
 
@@ -639,8 +928,18 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         );
       }
 
+      /* Bloc repetabil */
+      if (field.type === 'repeater_block') {
+        html += group('Bloc repetabil',
+          textRow('addLabel', 'Text buton „Adaugă"', field.addLabel || '') +
+          numberRow('minBlocks', 'Număr minim de blocuri', field.minBlocks) +
+          numberRow('maxBlocks', 'Număr maxim de blocuri (gol = nelimitat)', field.maxBlocks)
+        );
+        html += '<div class="builder__settings-note">Selectează un câmp din interiorul blocului (în canvas) pentru a-i edita proprietățile. Trage componente din panoul din stânga în zona blocului pentru a construi șablonul.</div>';
+      }
+
       /* Validare — comună */
-      if (['section_title', 'paragraph', 'banner', 'divider', 'calculated'].indexOf(field.type) === -1) {
+      if (['section_title', 'paragraph', 'banner', 'divider', 'calculated', 'repeater_block'].indexOf(field.type) === -1) {
         html += group('Validare', checkboxRow('required', 'Câmp obligatoriu', field.required));
       }
     }
@@ -750,7 +1049,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function onSettingInput(e) {
     var el = e.target;
     var key = el.getAttribute('data-key');
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (!f || !key) return;
     var val;
     if (el.type === 'checkbox') val = el.checked;
@@ -762,7 +1061,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
 
   function onOptionInput(e) {
     var idx = parseInt(e.target.getAttribute('data-opt-idx'), 10);
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.options && idx >= 0 && idx < f.options.length) {
       f.options[idx] = e.target.value;
       renderCanvasOnly();
@@ -772,7 +1071,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   function onColumnInput(e) {
     var idx = parseInt(e.target.getAttribute('data-col-idx'), 10);
     var key = e.target.getAttribute('data-col-key');
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.columns && f.columns[idx] && key) {
       f.columns[idx][key] = e.target.value;
       renderCanvasOnly();
@@ -780,22 +1079,22 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
   }
 
   function addOption() {
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.options) { f.options.push('Opțiune nouă'); render(); }
   }
 
   function removeOption(idx) {
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.options && f.options.length > 1) { f.options.splice(idx, 1); render(); }
   }
 
   function addColumn() {
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.columns) { f.columns.push({ name: 'Coloană nouă', type: 'text' }); render(); }
   }
 
   function removeColumn(idx) {
-    var f = findField(selectedId);
+    var f = findFieldDeep(selectedId);
     if (f && f.columns && f.columns.length > 1) { f.columns.splice(idx, 1); render(); }
   }
 
@@ -892,28 +1191,47 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     });
   }
 
-  function initCanvasDnd() {
-    canvasEl.addEventListener('dragover', function (e) {
+  /* Doar .bfield-urile copil DIRECT ai zonei (nu și cele imbricate în blocuri). */
+  function directBfields(zoneEl) {
+    return Array.prototype.slice.call(zoneEl.querySelectorAll(':scope > .bfield'));
+  }
+
+  /* Atașează comportamentul de drop pe o zonă (canvas-ul de top SAU zona unui
+     bloc repetabil). `list` este lista de câmpuri pe care o mută zona. */
+  function attachDropZone(zoneEl, list) {
+    zoneEl.addEventListener('dragover', function (e) {
       if (!dragState.active) return;
+
+      /* Reordonare: zona acceptă DOAR câmpuri din propria listă. */
+      if (dragState.source === 'reorder') {
+        var home = locate(dragState.draggedId);
+        if (!home || home.list !== list) return;
+      }
+      /* Fără bloc-în-bloc: o sub-listă nu acceptă tipul repeater_block. */
+      if (dragState.source === 'toolbox' && list !== fields && BLOCK_FORBIDDEN_TYPES[dragState.draggedType]) {
+        e.preventDefault();
+        e.stopPropagation();
+        removeDropIndicator();
+        dragState.insertIndex = -1;
+        return;
+      }
+
       e.preventDefault();
+      e.stopPropagation();
       e.dataTransfer.dropEffect = dragState.source === 'reorder' ? 'move' : 'copy';
 
-      var fieldEls = Array.prototype.slice.call(canvasEl.querySelectorAll('.bfield'));
+      var fieldEls = directBfields(zoneEl);
       var mouseY = e.clientY;
       var insertIndex = fieldEls.length;
-
       for (var i = 0; i < fieldEls.length; i++) {
         var rect = fieldEls[i].getBoundingClientRect();
         var midpoint = rect.top + rect.height / 2;
-        if (mouseY < midpoint) {
-          insertIndex = i;
-          break;
-        }
+        if (mouseY < midpoint) { insertIndex = i; break; }
       }
 
       /* No-op: reordonare pe propria poziție — ascunde indicatorul */
       if (dragState.source === 'reorder') {
-        var draggedIdx = fields.findIndex(function (f) { return f.id === dragState.draggedId; });
+        var draggedIdx = list.findIndex(function (f) { return f.id === dragState.draggedId; });
         if (insertIndex === draggedIdx || insertIndex === draggedIdx + 1) {
           removeDropIndicator();
           dragState.insertIndex = -1;
@@ -922,23 +1240,27 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       }
 
       dragState.insertIndex = insertIndex;
-      showDropIndicator(insertIndex);
+      dragState.dropList = list;
+      dragState.dropZone = zoneEl;
+      showDropIndicator(zoneEl, insertIndex);
     });
 
-    canvasEl.addEventListener('dragleave', function (e) {
-      if (e.target === canvasEl && !canvasEl.contains(e.relatedTarget)) {
+    zoneEl.addEventListener('dragleave', function (e) {
+      if (e.target === zoneEl && !zoneEl.contains(e.relatedTarget)) {
         removeDropIndicator();
       }
     });
 
-    canvasEl.addEventListener('drop', function (e) {
+    zoneEl.addEventListener('drop', function (e) {
+      if (!dragState.active) return;
       e.preventDefault();
-      if (!dragState.active || dragState.insertIndex < 0) {
+      e.stopPropagation();
+      if (dragState.insertIndex < 0 || dragState.dropList !== list) {
         cleanupDrag();
         return;
       }
       if (dragState.source === 'toolbox') {
-        addField(dragState.draggedType, dragState.insertIndex);
+        addField(dragState.draggedType, dragState.insertIndex, list);
       } else if (dragState.source === 'reorder') {
         reorderField(dragState.draggedId, dragState.insertIndex);
       }
@@ -946,25 +1268,29 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     });
   }
 
+  function initCanvasDnd() {
+    attachDropZone(canvasEl, fields);
+  }
+
   function cleanupDrag() {
-    dragState = { active: false, source: null, draggedType: null, draggedId: null, insertIndex: 0 };
+    dragState = { active: false, source: null, draggedType: null, draggedId: null, insertIndex: 0, dropList: null, dropZone: null };
     removeDropIndicator();
-    canvasEl.classList.remove('builder__canvas--drag-active');
-    canvasEl.querySelectorAll('.bfield--dragging').forEach(function (el) {
+    if (canvasEl) canvasEl.classList.remove('builder__canvas--drag-active');
+    document.querySelectorAll('.bfield--dragging').forEach(function (el) {
       el.classList.remove('bfield--dragging');
     });
   }
 
-  function showDropIndicator(idx) {
+  function showDropIndicator(zoneEl, idx) {
     removeDropIndicator();
     var indicator = document.createElement('div');
     indicator.className = 'builder__drop-indicator';
     indicator.id = 'drop-indicator';
-    var fieldEls = canvasEl.querySelectorAll('.bfield');
+    var fieldEls = directBfields(zoneEl);
     if (idx >= fieldEls.length) {
-      canvasEl.appendChild(indicator);
+      zoneEl.appendChild(indicator);
     } else {
-      canvasEl.insertBefore(indicator, fieldEls[idx]);
+      zoneEl.insertBefore(indicator, fieldEls[idx]);
     }
   }
 
@@ -992,7 +1318,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
         var isFill = (mode === 'fill');
         if (workspace) workspace.classList.toggle('builder__workspace--fill', isFill);
         canvasEl.classList.toggle('builder__canvas--fill', isFill);
-        if (isFill) selectedId = null;
+        if (isFill) { selectedId = null; previewBlockCounts = {}; }
         render();
       });
     });
@@ -1082,7 +1408,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
     if (!anexaId) {
       anexaId = 'anx_' + Date.now();
       try {
-        history.replaceState(null, '', 'constructor-anexe.html?id=' + encodeURIComponent(anexaId));
+        history.replaceState(null, '', 'constructor-anexe.html?id=' + encodeURIComponent(anexaId) + (_isSuperAdminAnexeBuilder ? '&view=superadmin' : ''));
       } catch (e) { /* ignore */ }
     }
 
@@ -1092,6 +1418,12 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
       id: anexaId,
       name: name,
       status: anexaStatus || 'activ',
+      categories: anexaVerticalIds.map(function (verticalId) {
+        var vertical = FLOW_VERTICALS.find(function (item) { return item.id === verticalId; });
+        return vertical ? vertical.domain : null;
+      }).filter(Boolean),
+      verticalIds: anexaVerticalIds.slice(),
+      verticalIdsVersion: 2,
       updatedAt: TODAY_ISO,
       schema: { fields: stripUids(fields) }
     };
@@ -1154,7 +1486,7 @@ try { localStorage.setItem('scriptica.view', 'admin'); } catch (e) { /* ignore *
      NAV — marchează Administrare ca activ (injectat de shell.js)
      ============================================================ */
   function markAdminNavActive() {
-    var item = document.querySelector('[data-nav="administrare"]');
+    var item = document.querySelector(_isSuperAdminAnexeBuilder ? '[data-nav="super-admin-anexe"]' : '[data-nav="administrare"]');
     if (!item) return;
     item.classList.add('nav-item--active');
     var icon = item.querySelector('.material-symbols-outlined');

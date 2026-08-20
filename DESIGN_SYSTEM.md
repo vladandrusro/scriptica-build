@@ -43,6 +43,7 @@ Single source of truth for design tokens and component styles. All values come f
 | `--color-text-muted` | `#918D9C` | Placeholders, timestamps, disabled labels |
 | `--color-border` | `#D4CFDA` | Standard border (cards, inputs) |
 | `--color-border-strong` | `#B4AEC4` | Stronger border, dividers |
+| `--color-critical-surface` | `#FFE9F1` | Tinted surface behind critical text (late badges, negative report rows) |
 | `--color-chat-left` | `#F7F7F7` | Incoming chat bubble |
 | `--color-chat-right` | `#F4F0FF` | Outgoing chat bubble |
 | `--color-important-hover` | `#E5A800` | Yellow CTA hover state |
@@ -112,7 +113,7 @@ All shadows use a tinted dark-purple (`rgba(39, 35, 67, …)`) instead of pure b
 
 ### 6.1 Buttons
 
-Height `40px`, padding `0 16px`, radius `--radius-md`, font `14px / 700`.
+Height `40px`, padding `8px 16px`, radius `--radius-sm`, font `14px / 700`.
 
 | Variant | Background | Text | Border | Hover |
 |---|---|---|---|---|
@@ -123,6 +124,10 @@ Height `40px`, padding `0 16px`, radius `--radius-md`, font `14px / 700`.
 | **Disabled** (any variant) | `#D4CFDA` | `--color-text-muted` | none | — |
 
 Icons inside buttons use Material Symbols Outlined at `20px`.
+
+#### Table-specific primary actions
+
+A primary action that directly creates or adds a record to a specific table is placed **above that table, aligned to its top-right edge**. The table title, result count, or filtering context stays on the left of the same toolbar. Do not place this action below the table or detach it into a distant page-level action area. Page-wide actions that do not belong to one particular table remain in the page header.
 
 ### 6.2 Inputs
 
